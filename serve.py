@@ -37,10 +37,27 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import search_engine as se
 
-# Best guess from the inhouse_music paths. Almost certainly needs adjusting -
-# edit it here, or override it live in the page.
-IMAGE_TEMPLATE = "https://www.123greetings.com/c/{q1}/thumb/{number}.{thumb_extn}"
-PAGE_TEMPLATE = "https://www.123greetings.com/{occasion}/{subcat}/{page}.html"
+# Confirmed against card 123057 - q1_value birth_happybirthday, card_number
+# 123057 - which really is served at
+#     https://i.123g.us/c/birth_happybirthday/pc/123057_pc.jpg
+# so the image path is q1_value and card_number with nothing in between.
+IMAGE_TEMPLATE = "https://i.123g.us/c/{q1}/pc/{number}_pc.jpg"
+
+# The _pc derivative appears to be jpg regardless of card_thumb_extn - 123057 is
+# a jpg card, and the same category holds gif, png and empty ones. Rather than
+# guess, the page retries with the card's own extension when the jpg 404s, so
+# both conventions work without anyone having to know which is in force.
+IMAGE_FALLBACK = "https://i.123g.us/c/{q1}/pc/{number}_pc.{thumb_extn}"
+
+# NOT derivable from the export. The same card lives at
+#     /birthday/happy_birthday/birthday191.html
+# while its q1_value is birth_happybirthday: "birth" has to become "birthday"
+# and "happybirthday" has to become "happy_birthday". Neither follows from
+# splitting the slug, and the export carries no column holding the URL path.
+# Left blank so tiles are not linked to a guessed 404 - set it once the
+# slug-to-path mapping is available, or point it at a redirect that resolves a
+# card by number.
+PAGE_TEMPLATE = ""
 
 PORT = 8000
 INDEX = None
@@ -112,7 +129,8 @@ def do_search(query, limit, boost):
             "capped": old_total >= se.OLD_CAP,
         },
         "boost": boost,
-        "defaults": {"image": IMAGE_TEMPLATE, "page": PAGE_TEMPLATE},
+        "defaults": {"image": IMAGE_TEMPLATE, "fallback": IMAGE_FALLBACK,
+                     "page": PAGE_TEMPLATE},
     }
 
 
@@ -253,24 +271,39 @@ function fill(tpl, c){
 }
 
 function cardHTML(c){
-  const img = fill(T.img || defaults.image || "", c);
+  const img  = fill(T.img || defaults.image || "", c);
+  // The _pc derivative may be jpg for every card or may follow the card's own
+  // extension. Rather than make anyone find out, try the primary and swap to
+  // the fallback once on error; only if BOTH miss does the tile show the URL,
+  // which keeps a genuinely wrong template obvious instead of silently blank.
+  const alt  = fill(T.img ? "" : (defaults.fallback || ""), c);
   const href = fill(T.page || defaults.page || "", c);
   const facets = Object.entries(c.facets || {})
     .flatMap(([k, v]) => v.map(x => `<span class="tag">${k}:${x}</span>`)).join("");
-  // If the image 404s the placeholder shows the URL that was tried, which makes
-  // a wrong template obvious instead of silently blank.
-  return `<a class="card" href="${href}" target="_blank" rel="noopener">
-    <div class="thumbwrap">
-      ${img ? `<img loading="lazy" src="${img}" alt=""
-        onerror="this.parentNode.innerHTML='<div class=ph>${img.replace(/'/g,"")}</div>'">`
-       : `<div class="ph">set an image URL template</div>`}
-    </div>
+
+  let thumb;
+  if(!img){
+    thumb = `<div class="ph">set an image URL template</div>`;
+  } else {
+    const onerr = alt && alt !== img
+      ? `if(!this.dataset.retried){this.dataset.retried=1;this.src='${alt}';}`
+        + `else{this.parentNode.innerHTML='<div class=ph>${img.replace(/'/g,"")}</div>';}`
+      : `this.parentNode.innerHTML='<div class=ph>${img.replace(/'/g,"")}</div>';`;
+    thumb = `<img loading="lazy" src="${img}" alt="" onerror="${onerr}">`;
+  }
+
+  const body = `<div class="thumbwrap">${thumb}</div>
     <div class="meta">
       <div class="t">${c.title}</div>
       <div class="c">${c.category} &middot; ${c.year || "?"} &middot; #${c.number}</div>
       ${c.why ? `<div class="why">${c.why}</div>` : ""}
       <div class="tags">${facets}</div>
-    </div></a>`;
+    </div>`;
+
+  // No card-page template yet, so do not dress tiles as links to a guessed 404.
+  return href
+    ? `<a class="card" href="${href}" target="_blank" rel="noopener">${body}</a>`
+    : `<div class="card">${body}</div>`;
 }
 
 function paneHTML(title, list, note){

@@ -189,18 +189,31 @@ Open **http://localhost:8000**. Type and results appear as you go.
   result year, so you can pick the setting by looking rather than guessing.
 - **Image URLs** — see below.
 
-**Thumbnails will not load until you set the URL template.** The one in the code
-is a guess, reverse-engineered from `inhouse_music` paths like
-`/c/ejul_barnday/mp3/12440.mp3`. Click **Image URLs**, paste your real pattern,
-press Apply. Each broken tile prints the URL it tried, so a wrong template is
-obvious rather than silently blank. Placeholders available:
+**Thumbnails work out of the box.** The template is confirmed against card
+123057 (`q1_value` = `birth_happybirthday`), which really is served at
+`https://i.123g.us/c/birth_happybirthday/pc/123057_pc.jpg`:
+
+```python
+IMAGE_TEMPLATE = "https://i.123g.us/c/{q1}/pc/{number}_pc.jpg"
+```
+
+The `_pc` derivative may be jpg for every card or may follow `card_thumb_extn`.
+The page tries jpg first and retries once with the card's own extension, so both
+conventions work. Only if both miss does the tile show the URL it tried.
+
+**Card links are off.** The card page for that same card is
+`/birthday/happy_birthday/birthday191.html`, but its `q1_value` is
+`birth_happybirthday` — `birth` has to become `birthday` and `happybirthday` has
+to become `happy_birthday`. Neither follows from splitting the slug, and the
+export has no column holding the URL path. `PAGE_TEMPLATE` is left blank so
+tiles are not dressed as links to a guessed 404. Set it once the slug-to-path
+mapping exists, or point it at a redirect that resolves a card by number.
+
+Both are editable live via **Image URLs** in the page. Placeholders:
 
 ```
 {number} {q1} {occasion} {subcat} {page} {thumb_extn} {big_extn}
 ```
-
-Once you know the correct pattern, set `IMAGE_TEMPLATE` at the top of `serve.py`
-and it becomes the default for everyone.
 
 ### Step 7 — check the claims for yourself
 
