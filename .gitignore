@@ -9,7 +9,11 @@ env/
 
 # editors
 .idea/
-.vscode/
+# .vscode/ is shared on purpose - tasks.json is how you run this from VS Code.
+# Personal settings are excluded individually.
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.code-workspace
 
 # the card export - your data, never committed
 data/*

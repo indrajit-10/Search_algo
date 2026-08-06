@@ -1,0 +1,83 @@
+{
+  // VS Code: Terminal > Run Task...  (or Ctrl+Shift+P > "Run Task")
+  //
+  // These call the Python files directly rather than run.sh / run.bat, so they
+  // behave identically on Windows, macOS and Linux and do not care which shell
+  // the integrated terminal happens to be using. ${command:python.interpreterPath}
+  // is whichever interpreter is selected in the status bar, so if you have made
+  // a .venv it is already being used.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Search: open the interface",
+      "detail": "Starts the browser test bench on http://localhost:8000",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": ["serve.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Search: old vs new (compare)",
+      "detail": "Same query through the current Sphinx pipeline and the new engine",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": ["search_engine.py", "--compare"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Search: run all tests",
+      "detail": "Engine tests, then edge cases, then the query log replay",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Search: engine tests",
+        "Search: edge cases",
+        "Search: replay query log"
+      ],
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "Search: engine tests",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": ["search_engine.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Search: edge cases",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": ["test_edge_cases.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Search: replay query log",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": ["evaluate.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Search: audit the catalogue",
+      "detail": "Measures the old system's failures from your export",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": ["audit_catalogue.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}
