@@ -1,0 +1,528 @@
+# Real search queries from 123greetings, with how often each was searched and how
+# many results production returned. "results" is the OLD engine's count, so it is
+# the baseline to beat: 0 means the user hit the zero-results carousel, and a
+# five-figure count means the query matched most of the catalogue and told them
+# nothing. The empty query returning 13,035 also confirms the live catalogue size.
+query	times	results
+birthday	344	852
+friendship day	224	1848
+anniversary	189	274
+happy birthday	177	852
+birthday wishes	167	852
+birthday cards free	158	852
+get well	139	48
+anniversary cards	121	274
+get well soon	102	45
+sympathy	98	38
+thank you	96	1046
+good morning	92	85
+daughter birthday free ecards	90	35
+anniversary for husband	85	55
+thinking of you	83	208
+family birthday	82	127
+happy anniversary	82	274
+belated birthday	78	23
+daughter birthday	76	35
+dad birthday	76	52
+free birthday cards	75	852
+miss you	74	310
+birthday cards	70	852
+free birthday e-cards	67	852
+friendship	65	1848
+love	64	5702
+anniversary card for couple	63	79
+happy birthday dad	63	51
+happy friendship day	61	1848
+good night	61	40
+birthday for son	57	38
+funny birthday cards	57	182
+wedding anniversary	56	96
+happy anniversary to husband	54	55
+happy birthday sister	54	41
+belated birthday cards free	54	23
+birthday funny	53	183
+thank you cards	52	1046
+hugs	52	987
+son birthday	51	38
+sorry	50	53
+brother birthday	49	32
+sister birthday	49	41
+birthday brother	49	32
+daughters birthday	47	35
+sister	46	215
+friend birthday cards	44	138
+congratulations	44	140
+grandson birthday	43	3
+brother birthday free cards	41	32
+singing birthday cards	41	12
+birthday daughters funny	41	3
+happy anniversary to a special couple	41	17
+loves greeting	41	5702
+hug	40	987
+funny birthday	40	145
+free anniversary cards	39	275
+granddaughter birthday	39	2
+21	39	2176
+birthday son	39	38
+lovings	38	5702
+religious birthday	38	14
+flowers	38	685
+girlfriend day	38	409
+birthday card	38	852
+sister birthday cards free	37	41
+happy birthday brother	37	32
+funny birthday ecards	37	183
+birthday daughter	36	35
+70th birthday	36	3
+cat birthday	36	12
+niece birthday	35	13
+i love you	35	728
+february	35	614
+funny birthday wishes	35	183
+friend birthday	35	137
+son in law birthday	35	7
+happy birthday daughter	34	35
+birthday husband	34	54
+belated birthday wishes	34	23
+birthday invite	34	15
+sympathy and condolences	34	33
+songs	34	278
+chocolate chip day	33	16
+happy birthday mom	33	54
+daughter	33	202
+retirement	32	13
+son birthday cards	32	38
+happy birthday best friend	32	46
+happy 60th birthday	31	2
+first	31	2082
+goodnight	31	27
+birthday cat	31	12
+angel	31	123
+blessing	31	869
+dog	30	108
+daughter in law birthday	29	2
+august flowers	29	20
+best friend birthday	29	46
+son	29	127
+happy birthday son	29	38
+dog birthday cards	29	10
+sympathy and condolence cards	28	33
+thank you card	28	1046
+thinking of you special	28	37
+get well soon recovery	28	6
+i love you card	28	728
+anniversary wishes	27	275
+get well recovery	27	7
+apology	27	29
+love cardes	27	5702
+birthday cards free funny	27	183
+cat	27	126
+father	27	269
+condolences	27	33
+new baby	26	17
+back to school	26	1
+niece	26	20
+wedding wishes	26	170
+wedding card	26	170
+hello	26	95
+50th birthday	25	11
+friends	25	1990
+birthday penguin	25	4
+son-in-law birthday cards	25	7
+"><script>alert('xss by vipe	25	0
+friend	25	1882
+birthday friend her	25	12
+birthday card for son	25	38
+16th birthday	25	10
+birthday for friend	24	138
+free birthday	24	852
+2019	24	8830
+friendship e-card	24	1849
+birthday wishes for husband	24	54
+9th	24	2304
+national girlfriends day	24	30
+retirement free ecards	24	13
+husband birthday	24	54
+friend card	24	1848
+graduation	24	27
+good morning greetings	24	85
+september 1	24	962
+dear friend birthday	24	19
+2013	23	8362
+thinking of you cards	23	208
+happy birthday husband	23	54
+sympathy cards	23	38
+happy birthday friend	23	138
+boyfriend	23	343
+get well e cards	23	48
+50th birthday cards	23	11
+happy birthday daddy	23	53
+birthday card for sister	23	41
+funny friendship day e cards	23	314
+thank you my friend	22	13
+good luck	22	43
+happy birthday wife	22	39
+cat birthday cards	22	12
+anniversary couple	22	80
+happy birthday to a special friend	22	32
+80th birthday free cards	22	1
+missing you	22	310
+friends day	22	1990
+invitation e-card	22	151
+birthday card with cat	22	12
+husband birthday card from wife	21	37
+father birthday	21	53
+anniversary for wife	21	62
+80th birthday	21	1
+9th birthday	21	6
+luv	21	5704
+cats	21	126
+animated birthdays cards	21	852
+dad	21	269
+just because	21	35
+brother	21	114
+thinking of you friend	21	29
+birthday free animated cards	20	852
+sons birthday	20	38
+husband birthday card	20	54
+husband	20	438
+	20	13035
+baby	20	107
+warm day	20	1631
+birthday for brother	20	32
+watermelon day	20	4
+love & romance	20	5702
+husband anniversary	20	55
+2018	20	8827
+congratulations wedding	19	13
+golf	19	9
+get well soon, thinking of you	19	1
+christmas	19	454
+recovery	19	18
+birthdays	19	852
+dance or dancing	19	85
+birthday card for a brother	19	32
+friends ecard	19	1990
+free birthday card	19	852
+send off cards	19	4468
+minions	19	2
+wife birthday	19	39
+congratulations on your exams	19	1
+religious happy birthday	19	14
+1st day	19	2169
+happy birthday nephew	19	1
+free funny e card birthday	18	183
+son in law	18	12
+happy birthday cousin	18	13
+inspirational	18	354
+hindu wishes	18	27
+2014	18	8646
+dog birthday	18	10
+anniversary to husband	18	55
+grandson	18	3
+sympathy free e-card	18	38
+happy sunday	18	42
+for you	18	4085
+spanish	18	117
+get well funny	18	2
+wedding	18	170
+great	18	372
+condolences for death	18	19
+birthday fireworks	18	6
+birthday dad	18	53
+mom birthday from daughter	18	11
+teacher	17	91
+granddaughters birthday	17	2
+50th birthday free	17	11
+hug for you	17	359
+sobriety	17	0
+good morning blessings	17	7
+you rock	17	33
+apology card	17	29
+new born baby boy	17	2
+birthday dog	17	10
+wedding day	17	170
+sorry card	17	53
+birthday wife	17	39
+anniversary husband	17	55
+fishing	17	8
+new hopes	17	96
+sisters	17	215
+congratulations on your success	17	7
+friends cards	17	1990
+parents anniversary	16	8
+get well e-cards	16	48
+2015	16	8764
+mariachi	16	1
+13	16	2218
+feel better get well	16	8
+september	16	2100
+belated birthday cards	16	23
+death of a loved one	16	4
+sisters day	16	215
+20 year old	16	2
+1st	16	2169
+love images	16	5702
+birthday sister	16	41
+friends ecards	16	1990
+free happy birthday card	16	852
+old birthday	16	4
+30	16	1866
+beautiful events	16	9770
+25th	16	2076
+happy birthday mother	16	54
+elvis	16	7
+birthday for sister	16	41
+romantic birthday	16	47
+birthday cats	16	12
+lily	15	9
+niece birthday ecard free	15	13
+hug day flash card	15	987
+marriage anniversary	15	94
+to special	15	1537
+123greetings pet loss sympathy	15	0
+red roses	15	37
+happy birthday granddaughter	15	2
+good night images	15	40
+farewell	15	9
+thank	15	1107
+anniversary greetings	15	275
+birthday invitations	15	15
+special	15	1537
+you got this	15	11
+best wishes	15	496
+appreciation cards	15	337
+1st birthday	15	28
+birthday ecard	15	852
+thank you postcard	15	1046
+humorous birthday wishes	15	5
+jazz birthday	15	1
+birthday granddaughter	15	2
+birthday animals	14	852
+hurting your feelings	14	0
+birthday card for daughter	14	35
+birthday candl	14	8
+marriage wishes cards	14	170
+proud of you	14	12
+warm wishes	14	1631
+birthday day card	14	852
+hindi	14	92
+birthday+cards+free	14	852
+60th birthday	14	0
+family ecards	14	1941
+anniversary cards wife	14	62
+wife birthday from husband	14	37
+smiles	14	731
+bon voyage	14	8
+feel better soon	14	17
+birthday greetings images	14	852
+wedding anniversary to husband	14	19
+birthday mom	14	54
+birthday wish	14	852
+travel	14	6
+mom birthday from son	14	10
+uncle	14	55
+weekend wishes	14	89
+july	14	643
+mother in law birthday	14	1
+postcard birthday greetings	14	852
+congratulations on your engagement	14	6
+national chocolate chip day	14	13
+hi	13	221
+happy birthday grandson	13	3
+blessings	13	869
+happy birthday mom from daughter	13	11
+happy family	13	1941
+friend birthday cards funny	13	44
+england	13	1
+happy birthday to him	13	22
+happy anniversary sweetheart	13	21
+get+well+	13	48
+daughter in law birthday cards	13	2
+e birthday card for aunt	13	15
+sexual humor	13	0
+congrats	13	45
+feelings	13	557
+free thank you cards	13	1046
+birthday wishes for daughter	13	35
+thank you animated	13	1046
+national sisters day	13	2
+friends free	13	1990
+love you image kisses	13	145
+cousin birthday cards	13	13
+feel better	13	23
+sister+birthday	13	41
+a warm wish	13	1631
+candle birthday	13	8
+happy birthday dear friend	13	19
+musical birthday card	13	22
+birthday cards to cousins	13	13
+mom birthday	13	54
+free birthday ecards	13	852
+breast cancer	13	0
+happy birthday for husband	13	54
+new year	13	525
+grandson birthday wishes	13	3
+happy belated birthday	13	23
+fathers day card.	13	269
+birthday ecards free'	12	852
+beer	12	32
+laugh	12	68
+new home	12	13
+loss of pet	12	10
+funny	12	1144
+white cat birthday	12	0
+august events	12	870
+romantic	12	771
+love poems	12	76
+birthday card for a special someone	12	163
+friends postcard	12	1991
+boat	12	5
+funny get well	12	2
+feeling better	12	23
+special person birthday	12	5
+girlfriend	12	409
+flowers ecards	12	685
+animated birthday ecard	12	852
+funny 50th birthday wishes	12	3
+anniversary dughter and son in law	12	0
+farewell to a colleague	12	6
+thank you from dog	12	14
+new	12	735
+girlfriends day	12	409
+national sister day	12	2
+we are thinking	12	1
+birthday card for a niece	12	13
+birthday white cat	12	0
+love day	12	5702
+smile cards	12	731
+birthday happy	12	852
+just	12	177
+have a great day	12	91
+grandmother	12	30
+sister birthday sister	12	41
+birthday funny free	12	183
+love cards for your guy	12	2
+birthday cards for a special daughter	12	8
+halloween ecard	12	586
+christmas greetings	12	454
+happy 75th birthday	12	1
+birthday candles	12	8
+family funny birthday wishes	12	43
+printable cards for birthday	11	852
+golf birthday card	11	1
+wedding anniversary husband to wife	11	6
+free christmas	11	454
+new born baby	11	6
+sympathy for loss of brother	11	0
+love invitation	11	39
+married anniversary	11	23
+free birthday card for brother	11	32
+happy 10th birthday	11	32
+animated hugs	11	988
+free+ecards+anniversary	11	276
+baby congratulations	11	10
+love you	11	2130
+condolences loss of brother	11	0
+bday	11	757
+funny feel better	11	2
+thank you e-cards	11	1046
+happiness month	11	393
+youtube	11	954
+birthday card with a cat	11	12
+happy friendship day postcards	11	1849
+fourth	11	2302
+celebration	11	883
+good day	11	533
+cat birthday card	11	12
+marriage ecard	11	170
+thinking	11	245
+birthday wishes niece	11	13
+penguin	11	30
+wife cat	11	10
+sympathy loss of a pet	11	5
+sending hugs	11	542
+condolences with deepest sympathy	11	3
+free e-card thank you	11	1046
+christian	11	43
+50th birthday cards free	11	11
+birthdays wishes	11	852
+birthday card for her	11	59
+newyear	11	587
+animated birthday greetings	11	852
+across the miles birthday	11	18
+puppies	11	31
+free+birthday+e-cards	11	852
+flower day	11	685
+free birthday day cards	11	852
+cousin birthday	11	13
+boyfriend birthday	11	19
+romantic ecards	11	771
+august	11	425
+free ecards anniversary	11	275
+friendship+day	11	1849
+# --- Second export. The zero-result column is the finding: every apostrophe
+# --- query returned nothing at all in production.
+love's	2489	0
+friend's	2364	0
+family's	2010	0
+s's x	1975	0
+goodness's	823	0
+birthday's	735	0
+friendship's	598	0
+s's than	558	0
+1cards	535	0
+father's day	527	0
+mother's day	520	0
+specials'	507	0
+s's s's	476	0
+it's	475	0
+funny happy father's day	468	0
+love's cards	467	0
+mother's	401	0
+cat's	368	0
+saying's	365	0
+sweet's	360	0
+mother's+day	345	0
+father's	338	0
+smile's	330	0
+inspirational'	319	0
+new year's	305	0
+i'm sorry	288	0
+thinking's	281	0
+flower's	274	0
+valentine's	272	0
+my happy birthday's	271	0
+mother's day ecard	270	0
+women's	240	0
+april's	244	0
+b'day cards	226	0
+thank you '	224	0
+happy father's day	211	0
+mother's day card	200	0
+mothers' day	192	0
+season's greetings	145	0
+daughter's day	143	0
+father\'s day cards	125	0
+musicality's	129	0
+60th birthday	152	0
+# --- For contrast, the SAME occasion without the apostrophe:
+mothers day	91	1125
+fathers day	433	1002
+new year	262	1548
+valentines	123	1136
+daughters day	206	387
+# --- Queries no human typed. Something in production rewrites terms into
+# --- morphological nonsense: music -> musicality's, little -> littleness's,
+# --- christmas -> christmastide's, easter -> easterly's, german -> germanic's.
+littleness's	107	0
+religiousness's	40	0
+christmastide's	90	0
+easterly's	16	0
+germanic's	54	0
+mothering's	58	0
+adorer's	139	0
+betterment's	12	0
+brothered	65	422
+sistering	41	485
+thankgiving	20	811

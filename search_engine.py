@@ -76,6 +76,9 @@ PREFIX_DISCOUNT = 0.4      # "valentin" matching "valentines" is weaker evidence
 PREFIX_DOMINANCE = 5       # a completion this much more common means a partial word
 MAX_RESULTS = 20
 
+# Which slot survives longest as the query is relaxed. Lower is kept longer.
+SLOT_PRIORITY = {"occasion": 0, "format": 1, "tone": 2, "recipient": 3}
+
 # ---------------------------------------------------------------------------
 # FACET LEXICONS
 #
@@ -101,20 +104,39 @@ TONE = {
                    "bereavement", "mourning"},
 }
 
+# Recipient is the single most common modifier in the real query log: daughter,
+# dad, son, brother, sister, grandson, niece, son-in-law and cousin all appear in
+# the top few hundred queries. Anything missing here silently degrades to a
+# generic occasion result.
 RECIPIENT = {
     "wife": {"wife", "wifey"}, "husband": {"husband", "hubby"},
-    "mother": {"mother", "mom", "mum", "mommy", "mummy", "mama", "ma"},
-    "father": {"father", "dad", "daddy", "papa", "pop"},
-    "sister": {"sister", "sis"}, "brother": {"brother", "bro"},
-    "daughter": {"daughter"}, "son": {"son"},
+    "mother": {"mother", "mom", "mum", "mommy", "mummy", "mama", "moms", "mothers"},
+    "father": {"father", "dad", "daddy", "papa", "pop", "dads", "fathers"},
+    "sister": {"sister", "sis", "sisters"}, "brother": {"brother", "bro", "brothers"},
+    "daughter": {"daughter", "daughters"}, "son": {"son", "sons"},
     "friend": {"friend", "friends", "buddy", "pal", "bestie"},
     "girlfriend": {"girlfriend", "gf"}, "boyfriend": {"boyfriend", "bf"},
     "boss": {"boss", "manager", "colleague", "coworker"},
     "teacher": {"teacher", "professor", "mentor"},
-    "grandmother": {"grandmother", "grandma", "granny", "nana"},
-    "grandfather": {"grandfather", "grandpa", "grandad"},
+    "grandmother": {"grandmother", "grandma", "granny", "nana", "grandmom"},
+    "grandfather": {"grandfather", "grandpa", "grandad", "granddad"},
+    "grandson": {"grandson", "grandsons"},
+    "granddaughter": {"granddaughter", "granddaughters"},
+    "niece": {"niece", "nieces"}, "nephew": {"nephew", "nephews"},
+    "cousin": {"cousin", "cousins"},
+    "uncle": {"uncle", "uncles"}, "aunt": {"aunt", "aunty", "auntie", "aunts"},
     "couple": {"couple", "newlyweds"},
+    "baby": {"baby", "newborn", "babies"},
+    "pet": {"pet", "dog", "dogs", "puppy", "puppies", "cat", "cats", "kitten"},
 }
+
+# Ordinals are a facet of their own. "60th birthday" returned ZERO in production
+# and was searched 14 times; "50th birthday", "70th", "80th", "16th", "9th",
+# "1st birthday", "happy 75th birthday" and "20 year old" are all in the log.
+# The catalogue does carry them - "Musical 95th Birthday Card" - they were just
+# never addressable.
+MILESTONE_RE = re.compile(r"\b(\d{1,3})\s*(?:st|nd|rd|th)?\b")
+MILESTONE_WORDS = {"year", "years", "old", "th", "st", "nd", "rd"}
 
 # Format lives in card_label_type and card_music_extn. The old stop-word list
 # deleted "animated" and "flash" from queries, throwing away information the
@@ -202,13 +224,46 @@ def decode_entities(text):
     return text
 
 
+# Every apostrophe variant users and editors actually produce: straight, curly,
+# backtick, acute, and the backslash-escaped form that leaks out of SQL quoting.
+_APOSTROPHES = "'‘’ʼ´`"
+_APOSTROPHE_RE = re.compile(f"\\\\?[{_APOSTROPHES}]")
+
+
 def normalise(text):
+    """
+    THE MOST IMPORTANT FUNCTION IN THIS FILE.
+
+    An apostrophe returned ZERO results in production, every time. From the
+    query log: "mother's day" was searched 520 times and returned 0, while
+    "mothers day" returned 1,125. "father's day" - 527 searches, 0 results.
+    Across the log's top queries alone that is roughly 27,000 searches a period
+    landing on an empty page, and it takes out two of the largest occasions on a
+    greeting-card site.
+
+    The cause is on both sides. Stored text holds %92 (a Windows-1252 curly
+    apostrophe) rather than an apostrophe, and the typed apostrophe was being
+    escaped or split rather than folded. So the two never met.
+
+    An apostrophe JOINS a word, it does not split one: "mother's" -> "mothers",
+    "b'day" -> "bday". Splitting produces a stray "s" token that matches nothing
+    and drags the whole AND query to zero.
+    """
     text = decode_entities(text or "")
+    text = text.replace("+", " ")          # URL-encoded spaces: "mother's+day"
     text = unicodedata.normalize("NFKD", text)
     text = "".join(c for c in text if not unicodedata.combining(c))
     text = text.lower()
+    text = _APOSTROPHE_RE.sub("", text)    # join, never split
     text = re.sub(r"[^a-z0-9\s]", " ", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def depossess(token):
+    """"mothers" -> "mother". Applied as an ALTERNATIVE, never a replacement."""
+    if len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
+        return token[:-1]
+    return None
 
 
 def tokenise(text):
@@ -413,6 +468,18 @@ class SearchIndex:
         self.corrector = SpellCorrector(self.document_frequency)
         self.sorted_terms = sorted(self.postings)
 
+        # A facet's boost scales with how much it narrows the catalogue, for the
+        # same reason IDF exists. occasion=edec covers every December card -
+        # Christmas, Boxing Day, ice cream day - so a flat boost would add the
+        # same 12 points to all of them and flatten the text ranking that tells
+        # "christmas" apart from "boxing day". A narrow facet like tone=humour
+        # really is worth more.
+        reference = math.log(1 + self.total / 100.0)
+        self.facet_boost = {}
+        for key, docs in self.facet_docs.items():
+            selectivity = math.log(1 + self.total / max(len(docs), 1))
+            self.facet_boost[key] = FACET_BOOST * min(selectivity / reference, 1.6)
+
         # Reverse the derived occasion lexicon so a query word can name an
         # occasion. A word that maps to many occasions ("love", "wishes") is
         # not evidence of any one of them, so only keep the discriminating ones.
@@ -420,7 +487,12 @@ class SearchIndex:
         for prefix, words in self.occasions.items():
             for phrase in words:
                 for word in phrase.split():
-                    if len(word) >= 4:
+                    # A word that already names a tone, format or recipient is
+                    # not an occasion. "musical" is distinctive of birth_songs,
+                    # so the derivation happily concluded musical => birthday -
+                    # which made "musical christmas" ask for a card that is both
+                    # a birthday and a December card, and there is no such thing.
+                    if len(word) >= 4 and word not in FACET_VOCABULARY:
                         reverse[word].add(prefix)
         self.occasion_of = {w: p for w, p in reverse.items() if len(p) <= 2}
 
@@ -457,11 +529,20 @@ class SearchIndex:
         raw = row["card_page_url"].replace(".html", "").replace("_", " ").replace("-", " ")
         return [re.sub(r"\d+$", "", w) or w for w in tokenise(raw)]
 
-    def _category_tokens(self, row):
-        prefix = row["q1_value"].split("_")[0]
-        words = tokenise(row["q1_value"].replace("_", " "))
-        words += sorted(self.occasions.get(prefix, ()))
-        return [w for chunk in words for w in chunk.split()]
+    @staticmethod
+    def _category_tokens(row):
+        """
+        Only the slug's own words. The derived occasion lexicon deliberately
+        does NOT go in here.
+
+        Injecting it made every December card contain the literal token
+        "christmas", so "animated christmas card" ranked Boxing Day and ice
+        cream day cards as highly as actual Christmas ones - the term stopped
+        discriminating inside its own occasion. The lexicon's job is to let a
+        query REACH an occasion, which is the facet's role; it is not evidence
+        about an individual card.
+        """
+        return tokenise(row["q1_value"].replace("_", " "))
 
     def _index_fields(self, doc, fields):
         for field, words in fields.items():
@@ -562,6 +643,12 @@ def understand(raw, index):
         # be the start of a longer one the user meant.
         group = {word}
         group.update(index.prefix_terms(word))
+        # "mother's day" normalises to "mothers day"; the catalogue mostly says
+        # "mother". Accept either without forcing one over the other.
+        base = depossess(word)
+        if base and base in index.document_frequency:
+            group.add(base)
+            group.update(index.prefix_terms(base))
         query.groups[word] = group
 
         for kind, lexicon in (("tone", TONE), ("recipient", RECIPIENT),
@@ -638,7 +725,7 @@ def score(index, terms, facets, required):
                 total += index.idf.get(term, 0.0) * weight * multiplier
         for kind, value, _ in facets:
             if doc in index.facet_docs.get((kind, value), ()):
-                total += FACET_BOOST
+                total += index.facet_boost.get((kind, value), FACET_BOOST)
         if total > 0:
             scores[doc] = total
     return scores
@@ -726,9 +813,19 @@ def search(index, raw_query, limit=MAX_RESULTS, popularity=None):
     consumed = {source for _, _, source in facets for source in source.split()}
     text_terms = [t for t in ordered if t not in consumed]
 
-    # Facets are ordered most-selective first, so the vaguest one relaxes first.
+    # Facets relax by SLOT IMPORTANCE, not by selectivity.
+    #
+    # Sorting by selectivity alone gets this exactly backwards. For "funny
+    # birthday for mom" the occasion birth is the broadest facet, so it would be
+    # discarded first and the query would land on Mother's Day cards - losing
+    # the one word that anchors what the user actually wants. Occasion is the
+    # anchor of a greeting-card query and is given up last; recipient is the
+    # easiest to give up, since a birthday card that is not mother-specific is
+    # still a birthday card.
     ranked_facets = sorted(
-        facets, key=lambda f: len(index.facet_docs.get(f[:2], ())))
+        facets,
+        key=lambda f: (SLOT_PRIORITY.get(f[0], 9),
+                       len(index.facet_docs.get(f[:2], ()))))
 
     weights = scoring_weights(query, index)
 
@@ -913,6 +1010,30 @@ def run_tests(index):
         landed = sum(1 for c in out["results"] if c.category.startswith(occasion))
         check(f"{partial!r} -> {occasion}_* cards ({landed}/{len(out['results'])})",
               out["results"] and landed >= len(out["results"]) / 2)
+
+    print("\n-- THE APOSTROPHE BUG: real queries that returned ZERO in production --")
+    # Volumes are from the production query log. Every one of these returned no
+    # results at all, and together they are ~27,000 searches a period landing on
+    # the fallback carousel - including the two biggest occasions on the site.
+    for query, volume in [("mother's day", 520), ("father's day", 527),
+                          ("love's", 2489), ("friend's", 2364), ("family's", 2010),
+                          ("birthday's", 735), ("it's", 475), ("new year's", 305),
+                          ("i'm sorry", 288), ("valentine's", 272),
+                          ("mother's+day", 345), ("b'day cards", 226),
+                          ("father\\'s day cards", 125), ("season's greetings", 145)]:
+        out = search(index, query, limit=5)
+        check(f"{query!r:<26} ({volume:>4}/period, was 0) -> {len(out['results'])}",
+              len(out["results"]) > 0)
+
+    print("\n-- occasion queries must survive their apostrophe --")
+    for apostrophe, plain in [("mother's day", "mothers day"),
+                              ("father's day", "fathers day"),
+                              ("new year's", "new year"),
+                              ("valentine's day", "valentines day")]:
+        a = {c.doc for c in search(index, apostrophe, limit=10)["results"]}
+        b = {c.doc for c in search(index, plain, limit=10)["results"]}
+        overlap = len(a & b) / max(len(b), 1)
+        check(f"{apostrophe!r} matches {plain!r} ({overlap:.0%} overlap)", overlap >= 0.6)
 
     print("\n-- complaint 1: queries that used to return zero --")
     for query in ["flash card", "animated birthday", "funny birthday card for wife",
