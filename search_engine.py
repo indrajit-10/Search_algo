@@ -76,6 +76,16 @@ def load_rows(path):
             f"  Extract it:            7z x {path}\n"
             f"  or re-compress as gz:  gzip -9 <the .csv>\n"
             f"  .csv, .csv.gz and .zip all work directly.")
+    if lower.endswith((".xlsx", ".xls", ".xlsm", ".ods")):
+        raise SystemExit(
+            f"{path} is a spreadsheet, and CSV is what you want here anyway.\n\n"
+            "  In Excel: File > Save As > CSV UTF-8 (Comma delimited)\n"
+            f"  Save it as data/card_database.csv and re-run.\n\n"
+            "  Reading it directly would need a third-party library, and Excel\n"
+            "  quietly damages this particular export on the way through: it\n"
+            "  reformats card_created_date, strips leading zeros from\n"
+            "  card_number, and mangles the %92 sequences in card_title. Export\n"
+            "  straight from the database to CSV if you can.")
     with open(path, encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 

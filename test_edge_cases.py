@@ -1,11 +1,10 @@
 """
 test_edge_cases.py  --  hostile input, and the promise that the page is never empty.
 
-    python test_edge_cases.py card_database.csv
+    python test_edge_cases.py
 
-test_injection.py covers the original toy matcher. This covers the real engine
-against the real 13,042-card catalogue, and adds the invariant the product now
-depends on:
+Hostile and malformed input against the real 13,042-card catalogue, plus the
+invariant the product now depends on:
 
     EVERY input returns cards. There is no such thing as zero results.
 
