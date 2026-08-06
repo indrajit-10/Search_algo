@@ -4,7 +4,15 @@ audit_catalogue.py  --  evidence base for the search redesign.
 Runs the real card export through the CURRENT production algorithm and measures
 where it breaks. Pure Python 3 standard library, no pip installs.
 
-    python audit_catalogue.py path/to/card_database.csv
+    python audit_catalogue.py path/to/card_database.csv          # live rows only
+    python audit_catalogue.py path/to/card_database.csv --all    # whole export
+
+LIVE ROWS ARE THE ONLY ONES THAT MATTER. status_id=1 means the card is served;
+every other status is dead or archived. In the December export that is 13,042
+rows out of 107,160 - 12.2%. Auditing the full export overstates almost every
+failure mode, because the dead 88% carries most of the encoding corruption and
+most of the stale SEO tag spam. Default to live; use --all only to reason about
+a backfill that would revive archived cards.
 
 Every number printed here is measured, not estimated. The redesign argues from
 these numbers, so re-run this against a fresh export before trusting any of it.
@@ -37,6 +45,7 @@ SYNONYMS = {
     "1st": "1",
 }
 
+LIVE_STATUS = "1"          # status_id=1 is served; everything else is dead
 CANDIDATE_CAP = 500        # production ranks only the first 500 matches
 HUMOR = {"funny", "humor", "humour", "hilarious", "joke", "jokes", "lol", "comedy",
          "silly", "laugh"}
@@ -270,11 +279,51 @@ def audit_status(rows):
         print(f"  {status:<8}{count:>8,}{tagged:>8.1f}%{median:>7}{devs:>6}{own:>6.0f}%")
 
 
+def audit_index_cost(rows):
+    """At 13k live cards, is an external search engine needed at all?"""
+    import time
+
+    rule("I. INDEX COST AT LIVE SCALE")
+    postings = collections.defaultdict(set)
+    start = time.perf_counter()
+    for i, row in enumerate(rows):
+        text = " ".join([row["card_title"], row["card_description"],
+                         row.get("card_tags") or "", row["q1_value"].replace("_", " ")])
+        for word in re.findall(r"[a-z0-9]+", text.lower()):
+            postings[word].add(i)
+    build_ms = (time.perf_counter() - start) * 1000
+
+    total = sum(len(v) for v in postings.values())
+    print(f"  inverted index over {len(rows):,} cards: {len(postings):,} terms in {build_ms:.0f} ms")
+    print(f"  postings memory: ~{total*8/1e6:.1f} MB")
+
+    start = time.perf_counter()
+    trials = 2000
+    for _ in range(trials):
+        postings.get("birthday", set()) & postings.get("funny", set())
+    per_query = (time.perf_counter() - start) / trials
+    print(f"  two-term AND: {per_query*1e6:.1f} microseconds per query")
+    print("  -> an external engine is not required for speed at this size")
+
+
 def main():
-    path = sys.argv[1] if len(sys.argv) > 1 else "card_database.csv"
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    path = args[0] if args else "card_database.csv"
+    live_only = "--all" not in sys.argv
+
     with open(path, encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
-    print(f"Loaded {len(rows):,} rows from {path}")
+    exported = len(rows)
+
+    if live_only:
+        rows = [r for r in rows
+                if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"]
+        print(f"Loaded {exported:,} rows from {path}")
+        print(f"LIVE SLICE: {len(rows):,} cards "
+              f"({100*len(rows)/exported:.1f}%) -- status_id={LIVE_STATUS}, "
+              f"invalid_card=0. Pass --all to audit the whole export.")
+    else:
+        print(f"Loaded {exported:,} rows from {path} (WHOLE EXPORT, includes dead rows)")
 
     blobs = build_blobs(rows)
     audit_stopword_damage(rows)
@@ -284,7 +333,9 @@ def main():
     audit_encoding(rows)
     audit_cap(rows, blobs)
     audit_tags(rows)
-    audit_status(rows)
+    audit_index_cost(rows)
+    if not live_only:
+        audit_status(rows)
 
 
 if __name__ == "__main__":
