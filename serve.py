@@ -346,15 +346,13 @@ $("#tSave").onclick = () => {
 def main():
     global INDEX, LIVE_ROWS
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    path = args[0] if args else "card_database.csv"
+    path = args[0] if args else None
     port = PORT
     for arg in sys.argv[1:]:
         if arg.startswith("--port="):
             port = int(arg.split("=", 1)[1])
 
-    csv.field_size_limit(10 ** 9)
-    with open(path, encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+    rows = se.load_rows(se.find_export(path))
 
     started = time.perf_counter()
     INDEX = se.SearchIndex(rows)

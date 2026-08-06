@@ -11,33 +11,28 @@ that size needs a search engine, so there isn't one.
 
 ## Testing it, step by step
 
-### Step 1 — get the two things you need
+### Step 1 — drop your export in `data/`
 
-You need Python 3.8+ and your card export. Nothing else.
+You need Python 3.8+ and your card export. Nothing else — no pip install, no
+virtualenv, no config file.
 
 ```bash
 git clone <this repo>
 cd Search_algo
-python3 --version          # 3.8 or newer
+cp /wherever/card_database.csv data/
 ```
 
-Put your export in the repo folder as `card_database.csv`. It must be the
-`cards` table with these columns — the same export you already have:
+That is the whole setup. Every script looks in `data/` on its own, so none of
+them need a path argument. If the file is missing you get a message saying
+exactly where to put it, not a stack trace.
 
-```
-card_adcode, card_bg_extn, card_bigimage_extn, card_created_date,
-card_description, card_font_color, card_icon_extn, card_label_type,
-card_last_modified, card_loader_type, card_music_extn, card_number,
-card_page_url, card_size, card_tags, card_thumb_extn, card_title,
-dev_id, dimension_id, q1_value, status_id, invalid_card, inhouse_music
-```
-
-It is gitignored, so it will never be committed.
+The file must be the `cards` table with its normal columns — the same export you
+already have. `data/` is gitignored, so production data can never be committed.
 
 ### Step 2 — run the engine's own tests
 
 ```bash
-python3 search_engine.py card_database.csv
+python3 search_engine.py
 ```
 
 71 tests, one per reported complaint. You should see `71 passed, 0 failed`, then
@@ -55,7 +50,7 @@ Press Enter on a blank line to quit.
 ### Step 3 — see old versus new, side by side
 
 ```bash
-python3 search_engine.py card_database.csv --compare
+python3 search_engine.py --compare
 ```
 
 Runs the same query through a faithful simulation of the current Sphinx pipeline
@@ -71,7 +66,7 @@ QUERY: 'flash card'
 ### Step 4 — replay your real query log
 
 ```bash
-python3 evaluate.py card_database.csv
+python3 evaluate.py
 ```
 
 Replays every query in `fixtures/real_queries.tsv` through both engines, weighted
@@ -88,10 +83,18 @@ hand; your full export is far bigger. Replace `fixtures/real_queries.tsv` with a
 tab-separated file of `query`, `times`, `results` — where `results` is what
 production returned — and re-run. 5,000 queries replay in about 9 seconds.
 
+If your export is too large to move around, `gzip -9 -k card_database.csv` takes
+33 MB to 8 MB, and `.csv.gz` and `.zip` are both read directly. Or export only
+what the site serves, which is all the engine uses anyway:
+
+```sql
+SELECT * FROM cards WHERE status_id = 1 AND invalid_card = 0;   -- 13,042 rows, 3.6 MB
+```
+
 ### Step 5 — hostile input
 
 ```bash
-python3 test_edge_cases.py card_database.csv
+python3 test_edge_cases.py
 ```
 
 513 assertions across nine sections: crash resistance, the no-empty-page
@@ -102,7 +105,7 @@ attempt someone ran 25 times. Expect `513 passed, 0 failed`.
 ### Step 6 — the browser test bench
 
 ```bash
-python3 serve.py card_database.csv
+python3 serve.py
 ```
 
 Open **http://localhost:8000**. Type and results appear as you go.
@@ -128,7 +131,7 @@ and it becomes the default for everyone.
 ### Step 7 — check the claims for yourself
 
 ```bash
-python3 audit_catalogue.py card_database.csv
+python3 audit_catalogue.py
 ```
 
 Every number in the design was measured, not assumed. This prints them from your
@@ -147,6 +150,7 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
+| `data/` | Where your export goes. Gitignored. |
 
 ---
 

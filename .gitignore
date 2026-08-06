@@ -11,8 +11,11 @@ env/
 .idea/
 .vscode/
 
-# the card export - your data, 34 MB, never committed
-card_database.csv
-card_database.7z
+# the card export - your data, never committed
+data/*
+!data/.gitkeep
+!data/README.md
 *.csv
+*.csv.gz
+*.7z
 !fixtures/*.tsv

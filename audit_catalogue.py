@@ -307,12 +307,13 @@ def audit_index_cost(rows):
 
 
 def main():
+    import search_engine as se          # only for locating and reading the export
+
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    path = args[0] if args else "card_database.csv"
+    path = se.find_export(args[0] if args else None)
     live_only = "--all" not in sys.argv
 
-    with open(path, encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+    rows = se.load_rows(path)
     exported = len(rows)
 
     if live_only:

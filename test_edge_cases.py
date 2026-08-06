@@ -137,11 +137,7 @@ class Suite:
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    path = args[0] if args else "card_database.csv"
-    import csv
-    csv.field_size_limit(10 ** 9)
-    with open(path, encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+    rows = se.load_rows(se.find_export(args[0] if args else None))
     index = se.SearchIndex(rows)
     print(f"Indexed {index.total:,} live cards")
 

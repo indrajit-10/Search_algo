@@ -33,13 +33,95 @@ WHAT WAS WRONG WITH THE OLD ONE, AND WHERE IT IS FIXED
 
 import collections
 import csv
+import gzip
+import io
 import math
+import os
 import re
 import sys
 import time
 import unicodedata
+import zipfile
 
 csv.field_size_limit(10 ** 9)
+
+
+def load_rows(path):
+    """
+    Read a card export. Accepts .csv, .csv.gz and .zip without unpacking first.
+
+    A full export is around 33 MB, over the limit most upload forms allow, so
+    the file that actually gets moved around is usually compressed. Requiring it
+    to be extracted first is a step that exists only to be forgotten.
+
+    gzip and zip are both standard library. 7-zip is not - if you have a .7z,
+    extract it, or re-compress as .gz, rather than adding a dependency for it.
+    """
+    lower = path.lower()
+    if lower.endswith(".zip"):
+        with zipfile.ZipFile(path) as archive:
+            names = [n for n in archive.namelist()
+                     if n.lower().endswith(".csv") and not n.startswith("__MACOSX")]
+            if not names:
+                raise ValueError(f"{path} contains no .csv: {archive.namelist()}")
+            with archive.open(names[0]) as raw:
+                text = io.TextIOWrapper(raw, encoding="utf-8", newline="")
+                return list(csv.DictReader(text))
+    if lower.endswith(".gz"):
+        with gzip.open(path, "rt", encoding="utf-8", newline="") as handle:
+            return list(csv.DictReader(handle))
+    if lower.endswith(".7z"):
+        raise SystemExit(
+            f"{path} is 7-zip, which is not in the standard library.\n"
+            f"  Extract it:            7z x {path}\n"
+            f"  or re-compress as gz:  gzip -9 <the .csv>\n"
+            f"  .csv, .csv.gz and .zip all work directly.")
+    with open(path, encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+# Where the export lives. Drop the file in data/ and every script finds it, so
+# nothing takes a path argument unless you want it to.
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+EXPORT_NAMES = ("card_database.csv", "card_database.csv.gz", "card_database.zip",
+                "card_database.csv.zip", "cards.csv", "cards.csv.gz")
+
+
+def find_export(explicit=None):
+    """
+    Locate the card export.
+
+    Order: an explicit path, then data/ by known name, then any csv-ish file in
+    data/. Raises with a readable message rather than a stack trace, because
+    "which file, where" is the single most common way to get stuck on step one.
+    """
+    if explicit:
+        if not os.path.exists(explicit):
+            raise SystemExit(f"No such file: {explicit}")
+        return explicit
+
+    for name in EXPORT_NAMES:
+        candidate = os.path.join(DATA_DIR, name)
+        if os.path.exists(candidate):
+            return candidate
+
+    if os.path.isdir(DATA_DIR):
+        found = sorted(f for f in os.listdir(DATA_DIR)
+                       if f.lower().endswith((".csv", ".csv.gz", ".zip"))
+                       and not f.startswith("."))
+        if len(found) == 1:
+            return os.path.join(DATA_DIR, found[0])
+        if found:
+            raise SystemExit(
+                "More than one export in data/, so I will not guess:\n  "
+                + "\n  ".join(found)
+                + "\nName one card_database.csv, or pass the path as an argument.")
+
+    raise SystemExit(
+        "No card export found.\n\n"
+        f"  Put your export here:  {os.path.join('data', 'card_database.csv')}\n"
+        "  .csv, .csv.gz and .zip all work - no need to unpack.\n\n"
+        "  Or pass a path:  python3 search_engine.py /path/to/export.csv")
 
 LIVE_STATUS = "1"          # status_id=1 is served; every other status is dead
 MAX_EDIT_DISTANCE = 2
@@ -1286,15 +1368,14 @@ COMPARE_QUERIES = [
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    path = args[0] if args else "card_database.csv"
-    with open(path, encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+    path = find_export(args[0] if args else None)
+    rows = load_rows(path)
 
     start = time.perf_counter()
     index = SearchIndex(rows)
     build_ms = (time.perf_counter() - start) * 1000
-    print(f"Indexed {index.total:,} live cards from {len(rows):,} exported rows "
-          f"in {build_ms:.0f} ms")
+    print(f"Indexed {index.total:,} live cards from {len(rows):,} rows "
+          f"in {os.path.relpath(path)} ({build_ms:.0f} ms)")
     print(f"  {len(index.postings):,} terms, "
           f"{len(index.facet_docs):,} facet buckets, "
           f"{sum(len(v) for v in index.corrector.index):,} spell-correction keys\n")
