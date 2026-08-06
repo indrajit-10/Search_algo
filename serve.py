@@ -54,6 +54,7 @@ def card_payload(card, why, index):
         "title": card.title,
         "description": card.description,
         "category": card.category,
+        "q1": card.category,          # the {q1} placeholder in the URL templates
         "occasion": occasion,
         "subcat": subcat or occasion,
         "page": card.url.replace(".html", ""),
@@ -84,6 +85,7 @@ def do_search(query, limit):
             "title": se.decode_entities(row["card_title"]),
             "description": se.decode_entities(row["card_description"]),
             "category": row["q1_value"],
+            "q1": row["q1_value"],
             "occasion": occasion,
             "subcat": subcat or occasion,
             "page": row["card_page_url"].replace(".html", ""),
