@@ -1,0 +1,534 @@
+<title>Card search — how a query is answered</title>
+
+<style>
+  :root{
+    --paper:#ffffff;
+    --ink:#16181d;
+    --muted:#5c6270;
+    --rule:#c9cdd6;
+    --hair:#e4e7ec;
+    --signal:#0b5fbf;
+    --signal-wash:#eaf1fb;
+    --rust:#a8341b;
+    --rust-wash:#fbeeea;
+
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+            Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+      --rule:#333944; --hair:#252a33;
+      --signal:#77a9f5; --signal-wash:#1a2331;
+      --rust:#e58a70; --rust-wash:#2c1f1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+    --rule:#333944; --hair:#252a33;
+    --signal:#77a9f5; --signal-wash:#1a2331;
+    --rust:#e58a70; --rust-wash:#2c1f1c;
+  }
+  :root[data-theme="light"]{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --rust:#a8341b; --rust-wash:#fbeeea;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:940px; margin:0 auto; padding:48px 32px 72px; }
+
+  /* ---------- masthead ---------- */
+  .masthead{ border-bottom:2px solid var(--ink); padding-bottom:18px; margin-bottom:8px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:38px; line-height:1.1;
+    margin:0 0 8px; letter-spacing:-.01em; text-wrap:balance;
+  }
+  .standfirst{ margin:0; max-width:64ch; color:var(--muted); font-size:16px; }
+  .meta{
+    display:flex; flex-wrap:wrap; gap:0 28px; margin:14px 0 0;
+    font-family:var(--mono); font-size:11.5px; color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .meta b{ color:var(--ink); font-weight:600; }
+
+  /* ---------- sections ---------- */
+  section{ margin-top:44px; }
+  h2{
+    font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  h2 .num{
+    font-family:var(--mono); font-size:12px; color:var(--signal);
+    letter-spacing:.1em; margin-right:10px; vertical-align:2px;
+  }
+  .lede{ margin:0 0 20px; color:var(--muted); max-width:66ch; }
+
+  figure{ margin:0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    margin-top:12px; padding-top:10px; border-top:1px solid var(--hair);
+    font-size:13px; color:var(--muted); max-width:70ch;
+  }
+
+  /* ---------- key ---------- */
+  .key{
+    display:flex; flex-wrap:wrap; gap:8px 22px; margin:18px 0 0;
+    font-family:var(--mono); font-size:11.5px; color:var(--muted);
+  }
+  .key span{ display:flex; align-items:center; gap:7px; }
+  .swatch{ width:16px; height:9px; border:1.5px solid var(--rule); border-radius:2px; }
+  .swatch.sig{ border-color:var(--signal); background:var(--signal-wash); }
+  .swatch.rst{ border-color:var(--rust); background:var(--rust-wash); }
+
+  /* ---------- numbers ---------- */
+  table{ width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+  caption{
+    text-align:left; font-family:var(--mono); font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); padding-bottom:8px;
+  }
+  th,td{ text-align:left; padding:7px 12px 7px 0; border-bottom:1px solid var(--hair); }
+  th{ font-weight:600; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--muted); }
+  td.n{ font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right;
+        padding-right:0; white-space:nowrap; }
+  td.was{ color:var(--rust); }
+  td.now{ color:var(--signal); font-weight:600; }
+
+  .foot{
+    margin-top:44px; padding-top:14px; border-top:1px solid var(--rule);
+    font-size:12.5px; color:var(--muted); display:flex; justify-content:space-between;
+    gap:20px; flex-wrap:wrap;
+  }
+  .foot code{ font-family:var(--mono); }
+
+  /* ---------- print ---------- */
+  @page{ size:A4 portrait; margin:13mm; }
+  @media print{
+    :root{
+      --paper:#fff; --ink:#000; --muted:#444; --rule:#999; --hair:#ccc;
+      --signal:#0b5fbf; --signal-wash:#eaf1fb; --rust:#a8341b; --rust-wash:#fbeeea;
+    }
+    body{ font-size:10pt; }
+    .sheet{ max-width:none; padding:0; }
+
+    /* The masthead plus the pipeline figure came to 1,100px against a 1,024px
+       page, so the figure - which must not split - was pushed to sheet two and
+       left sheet one nearly blank. Everything below reclaims those 76px. */
+    h1{ font-size:19pt; margin-bottom:3px; }
+    .standfirst{ font-size:9.5pt; max-width:78ch; }
+    .masthead{ padding-bottom:8px; margin-bottom:0; }
+    .eyebrow{ font-size:8.5pt; margin-bottom:6px; }
+    .meta{ margin-top:7px; font-size:8.5pt; }
+    h2{ font-size:13pt; }
+    section{ margin-top:13px; }
+    .lede{ margin-bottom:9px; font-size:9.5pt; }
+    /* Each section is one page. Cap the figure height so the pipeline cannot
+       spill a few millimetres onto a second sheet, which is the difference
+       between a printout you pin up and one you staple. */
+    figure svg{ max-height:196mm; width:auto; max-width:100%; margin:0 auto; }
+    /* The pipeline is square, so at full column width it is also full column
+       height. Capping it costs about 5% of the drawn scale and buys the 34px
+       that keeps it on the same sheet as the masthead. */
+    #pipeline svg{ max-height:168mm; }
+    figcaption{ margin-top:6px; padding-top:6px; font-size:8.5pt; }
+    .key{ margin-top:7px; font-size:8.5pt; }
+    .foot{ margin-top:20px; }
+    figure, table{ break-inside:avoid; }
+    h2{ break-after:avoid; }
+    .lede{ break-after:avoid; }
+    .page-break{ break-before:page; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">123Greetings &middot; card search &middot; reference sheet</p>
+    <h1>How a query is answered</h1>
+    <p class="standfirst">
+      Everything that happens between someone typing in the search box and cards
+      appearing on screen. The margin notes say why each step exists — most of
+      them fix a specific, measured failure in the system this replaces.
+    </p>
+    <p class="meta">
+      <span><b>12,087</b> cards searched</span>
+      <span><b>7,463</b> distinct words</span>
+      <span><b>~2 ms</b> per query</span>
+      <span><b>0%</b> empty pages, was 64%</span>
+    </p>
+  </header>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">01</span>The pipeline</h2>
+    <p class="lede">
+      Six stages, top to bottom. The loop is the important part: when too little
+      matches, the search widens and comes back rather than giving up.
+    </p>
+
+    <figure id="pipeline">
+      <svg viewBox="0 0 1010 1010" role="img"
+           aria-label="Flowchart of the card search pipeline: typed text is cleaned, typos corrected, meaning resolved into four slots, cards found and scored, then a decision on whether enough matched which loops back to a broadening step, and finally ranking into results.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="arS" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--signal)"/>
+          </marker>
+        </defs>
+
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+           fill="currentColor" color="currentColor">
+
+          <!-- terminal: input -->
+          <rect x="150" y="10" width="240" height="40" rx="20"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="270" y="35" font-size="13" text-anchor="middle">someone types</text>
+
+          <line x1="270" y1="50" x2="270" y2="86" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+          <text x="282" y="72" font-size="11" fill="var(--muted)">raw text</text>
+
+          <!-- 1 CLEAN -->
+          <rect x="60" y="86" width="420" height="86" rx="4"
+                fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="76" y="110" font-size="12" font-weight="700" fill="var(--rust)"
+                letter-spacing="1.2">1 &nbsp;CLEAN UP</text>
+          <text x="76" y="132" font-size="12.5">apostrophes join words, never split</text>
+          <text x="76" y="150" font-size="12.5">%92 decoded &middot; “+” becomes a space</text>
+          <text x="76" y="166" font-size="12.5">lowercased, punctuation stripped</text>
+
+          <line x1="270" y1="172" x2="270" y2="208" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+          <text x="282" y="194" font-size="11" fill="var(--muted)">clean text</text>
+
+          <!-- 2 CORRECT -->
+          <rect x="60" y="208" width="420" height="76" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="76" y="232" font-size="12" font-weight="700" letter-spacing="1.2">2 &nbsp;FIX TYPOS</text>
+          <text x="76" y="254" font-size="12.5">unknown word → nearest real one</text>
+          <text x="76" y="272" font-size="12.5">“birthdya” → “birthday”</text>
+
+          <line x1="270" y1="284" x2="270" y2="320" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+          <text x="282" y="306" font-size="11" fill="var(--muted)">real words</text>
+
+          <!-- 3 UNDERSTAND -->
+          <rect x="60" y="320" width="420" height="122" rx="4"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+          <text x="76" y="344" font-size="12" font-weight="700" fill="var(--signal)"
+                letter-spacing="1.2">3 &nbsp;WORK OUT WHAT THEY MEANT</text>
+          <text x="76" y="366" font-size="12.5">fill four slots from the words:</text>
+          <rect x="76" y="378" width="92" height="24" rx="3" fill="none"
+                stroke="var(--signal)" stroke-width="1"/>
+          <text x="122" y="394" font-size="11.5" text-anchor="middle" fill="var(--signal)">occasion</text>
+          <rect x="176" y="378" width="72" height="24" rx="3" fill="none"
+                stroke="var(--signal)" stroke-width="1"/>
+          <text x="212" y="394" font-size="11.5" text-anchor="middle" fill="var(--signal)">tone</text>
+          <rect x="256" y="378" width="96" height="24" rx="3" fill="none"
+                stroke="var(--signal)" stroke-width="1"/>
+          <text x="304" y="394" font-size="11.5" text-anchor="middle" fill="var(--signal)">recipient</text>
+          <rect x="360" y="378" width="76" height="24" rx="3" fill="none"
+                stroke="var(--signal)" stroke-width="1"/>
+          <text x="398" y="394" font-size="11.5" text-anchor="middle" fill="var(--signal)">format</text>
+          <text x="76" y="424" font-size="12" fill="var(--signal)">read from TAGS + TITLE only —</text>
+          <text x="76" y="438" font-size="12" fill="var(--signal)">never from the description</text>
+
+          <line x1="270" y1="442" x2="270" y2="478" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+          <text x="282" y="464" font-size="11" fill="var(--muted)">words + slots</text>
+
+          <!-- 4 SCORE -->
+          <rect x="60" y="478" width="420" height="94" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="76" y="502" font-size="12" font-weight="700" letter-spacing="1.2">4 &nbsp;FIND &amp; SCORE</text>
+          <text x="76" y="524" font-size="12.5">rarer word = worth more (no banned list)</text>
+          <text x="76" y="542" font-size="12.5">title 3.0 &middot; tags 2.5 &middot; category 2.0 &middot; blurb 1.0</text>
+          <text x="76" y="560" font-size="12.5">matching a slot beats matching prose</text>
+
+          <line x1="270" y1="572" x2="270" y2="606" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- decision -->
+          <path d="M 270 606 L 400 660 L 270 714 L 140 660 Z"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="270" y="656" font-size="12.5" text-anchor="middle">enough</text>
+          <text x="270" y="672" font-size="12.5" text-anchor="middle">cards?</text>
+
+          <!-- no → widen -->
+          <line x1="400" y1="660" x2="520" y2="660" stroke="var(--signal)"
+                stroke-width="1.5" marker-end="url(#arS)"/>
+          <text x="452" y="650" font-size="11" fill="var(--signal)" text-anchor="middle">no</text>
+          <rect x="520" y="628" width="180" height="64" rx="4"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+          <text x="610" y="653" font-size="12" font-weight="700" fill="var(--signal)"
+                text-anchor="middle" letter-spacing="1.2">WIDEN</text>
+          <text x="610" y="673" font-size="12" fill="var(--signal)" text-anchor="middle">give up least</text>
+          <text x="610" y="687" font-size="12" fill="var(--signal)" text-anchor="middle">important part</text>
+
+          <!-- widen loops back to score -->
+          <path d="M 610 628 L 610 525 L 480 525" fill="none" stroke="var(--signal)"
+                stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arS)"/>
+          <text x="616" y="576" font-size="11" fill="var(--signal)">retry, keeping</text>
+          <text x="616" y="590" font-size="11" fill="var(--signal)">what was found</text>
+
+          <!-- yes -->
+          <line x1="270" y1="714" x2="270" y2="750" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+          <text x="282" y="736" font-size="11" fill="var(--muted)">yes</text>
+
+          <!-- 5 RANK -->
+          <rect x="60" y="750" width="420" height="94" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="76" y="774" font-size="12" font-weight="700" letter-spacing="1.2">5 &nbsp;PUT THE BEST FIRST</text>
+          <text x="76" y="796" font-size="12.5">how well it matches — in ten bands</text>
+          <text x="76" y="814" font-size="12.5">then newness, capped at +15%</text>
+          <text x="76" y="832" font-size="12.5">then popularity, inside a band</text>
+
+          <line x1="270" y1="844" x2="270" y2="880" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <rect x="150" y="880" width="240" height="40" rx="20"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+          <text x="270" y="905" font-size="13" text-anchor="middle" font-weight="700">cards on screen</text>
+
+          <!-- ============ margin notes ============ -->
+          <line x1="740" y1="86" x2="740" y2="466" stroke="var(--hair)" stroke-width="1"/>
+
+          <text x="756" y="104" font-size="11" font-weight="700" fill="var(--rust)">WHY IT EXISTS</text>
+          <text x="756" y="124" font-size="11.5" fill="var(--muted)">An apostrophe used to</text>
+          <text x="756" y="138" font-size="11.5" fill="var(--muted)">return zero. Every time.</text>
+          <text x="756" y="156" font-size="11.5" fill="var(--rust)">“mother’s day” — 520</text>
+          <text x="756" y="170" font-size="11.5" fill="var(--rust)">searches, nothing back.</text>
+
+          <text x="756" y="234" font-size="11" font-weight="700">NEVER EXISTED BEFORE</text>
+          <text x="756" y="254" font-size="11.5" fill="var(--muted)">A word must sit on 3+</text>
+          <text x="756" y="268" font-size="11.5" fill="var(--muted)">cards to count as real —</text>
+          <text x="756" y="282" font-size="11.5" fill="var(--muted)">the tags contain typos.</text>
+
+          <text x="756" y="344" font-size="11" font-weight="700" fill="var(--signal)">THE KEY RULE</text>
+          <text x="756" y="364" font-size="11.5" fill="var(--muted)">1,105 cards say “a fun</text>
+          <text x="756" y="378" font-size="11.5" fill="var(--muted)">ecard” in the blurb.</text>
+          <text x="756" y="392" font-size="11.5" fill="var(--muted)">Only 150 are tagged</text>
+          <text x="756" y="406" font-size="11.5" fill="var(--muted)">funny. A card is funny</text>
+          <text x="756" y="420" font-size="11.5" fill="var(--muted)">because it was</text>
+          <text x="756" y="434" font-size="11.5" fill="var(--muted)">labelled, not described.</text>
+
+          <line x1="740" y1="500" x2="740" y2="844" stroke="var(--hair)" stroke-width="1"/>
+
+          <text x="756" y="518" font-size="11" font-weight="700">NO BANNED WORDS</text>
+          <text x="756" y="538" font-size="11.5" fill="var(--muted)">The old list held “flash”</text>
+          <text x="756" y="552" font-size="11.5" fill="var(--muted)">and “animated”, so</text>
+          <text x="756" y="566" font-size="11.5" fill="var(--rust)">“flash card” searched</text>
+          <text x="756" y="580" font-size="11.5" fill="var(--rust)">for nothing at all.</text>
+
+          <text x="756" y="644" font-size="11" font-weight="700" fill="var(--signal)">NEVER EMPTY</text>
+          <text x="756" y="664" font-size="11.5" fill="var(--muted)">The last rung always</text>
+          <text x="756" y="678" font-size="11.5" fill="var(--muted)">returns the newest</text>
+          <text x="756" y="692" font-size="11.5" fill="var(--muted)">cards, so “no results”</text>
+          <text x="756" y="706" font-size="11.5" fill="var(--muted)">cannot happen.</text>
+
+          <text x="756" y="774" font-size="11" font-weight="700">WHY CAPPED</text>
+          <text x="756" y="794" font-size="11.5" fill="var(--muted)">Old ranking used lifetime</text>
+          <text x="756" y="808" font-size="11.5" fill="var(--muted)">sends, so a 2002 card</text>
+          <text x="756" y="822" font-size="11.5" fill="var(--muted)">could never be caught.</text>
+          <text x="756" y="836" font-size="11.5" fill="var(--muted)">15% only breaks ties.</text>
+        </g>
+      </svg>
+
+      <figcaption>
+        The loop between <strong>find &amp; score</strong> and <strong>widen</strong> is
+        what replaced all-or-nothing matching. The old search required every word to
+        match and showed an empty page otherwise — 64% of all logged searches ended
+        there.
+      </figcaption>
+    </figure>
+
+    <p class="key">
+      <span><i class="swatch rst"></i> fixes a measured failure</span>
+      <span><i class="swatch sig"></i> the decision that matters most</span>
+      <span><i class="swatch"></i> ordinary step</span>
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="page-break">
+    <h2><span class="num">02</span>How the search widens</h2>
+    <p class="lede">
+      Rungs are given up from the top down, least important first, collecting
+      results as it goes. It stops as soon as the page is full.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 900 470" role="img"
+           aria-label="The relaxation ladder: eight rungs from everything asked for down to newest cards, each exiting to results when enough cards are found, with the last rung guaranteeing a non-empty page.">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="currentColor">
+
+          <text x="20" y="22" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.2">GIVEN UP IN THIS ORDER</text>
+          <text x="620" y="22" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.2">EXITS WHEN THE PAGE IS FULL</text>
+
+          <!-- rungs -->
+          <g font-size="12.5">
+            <rect x="20" y="36"  width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="36" y="58">everything they asked for</text>
+
+            <rect x="20" y="80"  width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+            <text x="36" y="102">drop the least informative word</text>
+            <text x="330" y="102" fill="var(--muted)" font-size="11.5">“card”, “for”, “my”</text>
+
+            <rect x="20" y="124" width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+            <text x="36" y="146">keep the slots + the strongest word</text>
+
+            <rect x="20" y="168" width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+            <text x="36" y="190">keep the slots only</text>
+
+            <rect x="20" y="212" width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+            <text x="36" y="234">give up the vaguest slot, then the next</text>
+
+            <rect x="20" y="256" width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+            <text x="36" y="278">the strongest single word alone</text>
+
+            <rect x="20" y="300" width="470" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+            <text x="36" y="322">any word at all</text>
+
+            <rect x="20" y="344" width="470" height="38" rx="3"
+                  fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
+            <text x="36" y="368" fill="var(--signal)" font-weight="700">the newest cards</text>
+            <text x="250" y="368" fill="var(--signal)" font-size="11.5">— always returns something</text>
+          </g>
+
+          <!-- exits -->
+          <g stroke="currentColor" stroke-width="1" fill="none">
+            <line x1="490" y1="53"  x2="600" y2="53"  marker-end="url(#ar2)"/>
+            <line x1="490" y1="97"  x2="600" y2="97"  marker-end="url(#ar2)"/>
+            <line x1="490" y1="141" x2="600" y2="141" marker-end="url(#ar2)"/>
+            <line x1="490" y1="185" x2="600" y2="185" marker-end="url(#ar2)"/>
+            <line x1="490" y1="229" x2="600" y2="229" marker-end="url(#ar2)"/>
+            <line x1="490" y1="273" x2="600" y2="273" marker-end="url(#ar2)"/>
+            <line x1="490" y1="317" x2="600" y2="317" marker-end="url(#ar2)"/>
+          </g>
+          <line x1="490" y1="363" x2="600" y2="363" stroke="var(--signal)"
+                stroke-width="2" marker-end="url(#ar2)" fill="none"/>
+
+          <!-- results rail -->
+          <rect x="600" y="36" width="280" height="346" rx="4"
+                fill="none" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <text x="740" y="196" font-size="14" text-anchor="middle" font-weight="700">results</text>
+          <text x="740" y="216" font-size="11.5" text-anchor="middle" fill="var(--muted)">best matches first,</text>
+          <text x="740" y="232" font-size="11.5" text-anchor="middle" fill="var(--muted)">broader ones below</text>
+
+          <!-- flag -->
+          <text x="20" y="410" font-size="11.5" fill="var(--muted)">
+            The page is told which rung answered, so it can say “showing results for
+            anniversary”
+          </text>
+          <text x="20" y="426" font-size="11.5" fill="var(--muted)">
+            or “no matches — here is what is new” instead of passing a fallback off as
+            a real match.
+          </text>
+
+          <text x="20" y="456" font-size="11.5" fill="var(--rust)">
+            Occasion is given up LAST. A birthday card that is not mother-specific is
+            still a birthday card.
+          </text>
+        </g>
+      </svg>
+      <figcaption>
+        Every rung feeds the same result list, so a precise match always sits above a
+        broadened one. The old system had only the first rung and an empty page below
+        it.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="page-break">
+    <h2><span class="num">03</span>What changed</h2>
+    <p class="lede">
+      Each row is a reported complaint, its measured cause, and where in the flow
+      above it is fixed.
+    </p>
+
+    <table>
+      <caption>measured against the live catalogue</caption>
+      <thead>
+        <tr>
+          <th style="width:24%">Complaint</th>
+          <th style="width:44%">What was actually happening</th>
+          <th style="width:14%">Fixed at</th>
+          <th class="n" style="width:18%">Effect</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nothing found</td>
+          <td>“flash” and “animated” were on the banned-word list, so
+              <em>flash card</em> searched for nothing</td>
+          <td>Step 4</td>
+          <td class="n now">now works</td>
+        </tr>
+        <tr>
+          <td>Typos find nothing</td>
+          <td>No spell correction had ever existed, in any version</td>
+          <td>Step 2</td>
+          <td class="n">0 → 819 cards</td>
+        </tr>
+        <tr>
+          <td>“Funny” wrong</td>
+          <td>1,105 blurbs say “fun ecard”; only 150 cards are tagged humour</td>
+          <td>Step 3</td>
+          <td class="n now">10 of 10</td>
+        </tr>
+        <tr>
+          <td>Old cards first</td>
+          <td>Ranked on lifetime sends — a 2002 card could never be caught</td>
+          <td>Step 5</td>
+          <td class="n">capped at +15%</td>
+        </tr>
+        <tr>
+          <td><em>Not reported</em></td>
+          <td>Any query with an apostrophe returned zero — including
+              <em>mother’s day</em> and <em>father’s day</em></td>
+          <td>Step 1</td>
+          <td class="n was">27,000 searches</td>
+        </tr>
+        <tr>
+          <td>Empty pages</td>
+          <td>All-or-nothing matching, then an unrelated popular-cards carousel</td>
+          <td>Step 4 loop</td>
+          <td class="n">64% → 0%</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="foot">
+    <span>Full explanation in <code>LOGIC.md</code> · code in <code>search_engine.py</code></span>
+    <span>102 engine tests · 513 edge cases · query log replayed, no regressions</span>
+  </div>
+</div>

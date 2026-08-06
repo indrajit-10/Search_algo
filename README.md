@@ -244,6 +244,7 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `data/` | Where your export goes. Gitignored. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
+| `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
 
 ---
@@ -251,6 +252,11 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 > **Want the reasoning rather than the commands?** [LOGIC.md](LOGIC.md) explains
 > the whole thing in plain English — what happens between someone typing and
 > cards appearing, and why each decision was made. No code, no jargon.
+>
+> **Want it on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
+> as a diagram — the query pipeline, the relaxation ladder, and a what-changed
+> table. Open it in a browser and print: three A4 pages, one per section, and the
+> colours were chosen to stay readable in greyscale.
 
 ---
 
