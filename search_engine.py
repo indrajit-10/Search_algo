@@ -134,6 +134,19 @@ def find_export(explicit=None):
         "  Or pass a path:  python3 search_engine.py /path/to/export.csv")
 
 LIVE_STATUS = "1"          # status_id=1 is served; every other status is dead
+
+# Card formats kept out of results entirely.
+#
+# "Y" is YouTube. Those cards embed a video and have no artwork of their own:
+# every one of the 955 live ones has an empty card_thumb_extn AND an empty
+# card_bigimage_extn, so there is nothing to put in a results grid.
+#
+# Filtered on the label rather than on card_number starting with 8, which is the
+# other way to spot them. The label says what a card IS; the number says only
+# where it landed in an ID range. They agree exactly today - across all 107,160
+# exported rows the two rules select the same 19,555 cards - but an ID range is
+# an accident of allocation and would not survive a renumbering.
+EXCLUDE_LABEL_TYPES = {"Y"}
 MAX_EDIT_DISTANCE = 2
 MIN_CORRECTABLE = 4        # never "correct" a 3-letter word, too many neighbours
 MAX_QUERY_CHARS = 120
@@ -573,7 +586,8 @@ class SearchIndex:
     def __init__(self, rows, live_only=True):
         if live_only:
             rows = [r for r in rows
-                    if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"]
+                    if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"
+                    and r["card_label_type"] not in EXCLUDE_LABEL_TYPES]
         self.occasions = derive_occasion_lexicon(rows)
         self.cards = []
         self.postings = collections.defaultdict(dict)
@@ -633,7 +647,12 @@ class SearchIndex:
                     # a birthday and a December card, and there is no such thing.
                     if len(word) >= 4 and word not in FACET_VOCABULARY:
                         reverse[word].add(prefix)
-        self.occasion_of = {w: p for w, p in reverse.items() if len(p) <= 2}
+        # Only words that name exactly ONE occasion. A card has a single
+        # occasion, so two occasion facets can never both hold and the query is
+        # forced to relax immediately. "year" is the case that matters: it is
+        # distinctive of both ejan (New Year) and edec (Christmas and New Year),
+        # so as an occasion signal it says nothing while looking like it does.
+        self.occasion_of = {w: p for w, p in reverse.items() if len(p) == 1}
 
     def prefix_terms(self, prefix, limit=24):
         """
@@ -801,7 +820,18 @@ def understand(raw, index):
         # The occasion slot. "birthday card for mom" must mean occasion=birth
         # AND recipient=mother; without this the recipient facet alone wins and
         # Mother's Day cards outrank birthday-for-mother cards.
-        for prefix in index.occasion_of.get(word, ()):
+        #
+        # Inflected forms have to reach it too. "new year's" normalises to
+        # "new years", and without the base form "years" names no occasion while
+        # "year" does - so the possessive and the plain query answered from
+        # different rungs of the ladder and shared no results at all.
+        occasions = index.occasion_of.get(word)
+        if not occasions:
+            for base in word_variants(word):
+                occasions = index.occasion_of.get(base)
+                if occasions:
+                    break
+        for prefix in occasions or ():
             query.facets.append(("occasion", prefix, word))
 
     # de-duplicate facets, keep order
@@ -1300,6 +1330,24 @@ def run_tests(index):
     check(f"'funny' still {still_funny}/10 tagged humour with the boost on",
           still_funny >= 8)
 
+    print("\n-- YouTube cards must never appear --")
+    # They embed a video and carry no artwork of their own, so they would render
+    # as permanently broken tiles. Checked against the index rather than trusted:
+    # nothing indexed may carry an excluded label.
+    excluded = [c for c in index.cards if c.label in EXCLUDE_LABEL_TYPES]
+    check(f"no excluded label ({'/'.join(sorted(EXCLUDE_LABEL_TYPES))}) in the "
+          f"index (found {len(excluded)})", not excluded)
+    eights = [c for c in index.cards if str(c.number).startswith("8")]
+    check(f"no card_number starting with 8 survived (found {len(eights)})", not eights)
+    # And they must not sneak back in through the never-empty fallback.
+    floor = latest_cards(index, "zzzzqqqxyz", 20)["results"]
+    check("the latest-cards fallback is free of them",
+          not [c for c in floor if c.label in EXCLUDE_LABEL_TYPES])
+    for query in ["youtube", "youtube birthday", "birthday videos", "you tube"]:
+        out = search(index, query, limit=10)
+        bad = [c for c in out["results"] if c.label in EXCLUDE_LABEL_TYPES]
+        check(f"{query!r} returns {len(out['results'])} cards, none excluded", not bad)
+
     print("\n-- stability: nothing may crash, hang, or dump the catalogue --")
     payloads = ["", "   ", "a", "'", "' OR '1'='1", "<script>alert(1)</script>",
                 "../../etc/passwd", "\x00", "%92", "&#x27;", "zzzqqq",
@@ -1324,7 +1372,9 @@ def run_tests(index):
 
 
 def compare(index, rows, queries):
-    live = [r for r in rows if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"]
+    live = [r for r in rows
+            if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"
+            and r["card_label_type"] not in EXCLUDE_LABEL_TYPES]
     print("=" * 76)
     print("OLD (Sphinx pipeline)  vs  NEW")
     print("=" * 76)

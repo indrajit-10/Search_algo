@@ -393,7 +393,8 @@ def main():
     # extensions so it can build image URLs.
     INDEX.thumb_extn, INDEX.big_extn = {}, {}
     live = [r for r in rows
-            if r["status_id"] == se.LIVE_STATUS and r["invalid_card"] == "0"]
+            if r["status_id"] == se.LIVE_STATUS and r["invalid_card"] == "0"
+            and r["card_label_type"] not in se.EXCLUDE_LABEL_TYPES]
     for doc, row in enumerate(live):
         INDEX.thumb_extn[doc] = row["card_thumb_extn"]
         INDEX.big_extn[doc] = row["card_bigimage_extn"]

@@ -3,9 +3,11 @@
 A replacement for the Sphinx search on 123Greetings. Pure Python 3 standard
 library — no pip installs, no search server, no external service.
 
-The live catalogue is 13,042 cards (`status_id = 1`). The whole inverted index is
-about 2 MB and builds in under 1.5 seconds; a query answers in 1–4 ms. Nothing at
-that size needs a search engine, so there isn't one.
+The searchable catalogue is 12,087 cards — `status_id = 1`, minus YouTube cards
+(`card_label_type = 'Y'`), which embed a video and have no artwork to show in a
+grid. The whole inverted index is about 2 MB and builds in under 1.5 seconds; a
+query answers in 1–4 ms. Nothing at that size needs a search engine, so there
+isn't one.
 
 ---
 
