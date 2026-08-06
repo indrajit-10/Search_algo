@@ -275,11 +275,32 @@ def normalise(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
-def depossess(token):
-    """"mothers" -> "mother". Applied as an ALTERNATIVE, never a replacement."""
-    if len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
-        return token[:-1]
-    return None
+# Inflectional endings, longest first so "sistering" strips "ing" before "s".
+_SUFFIXES = ("ings", "ing", "edly", "ed", "ness", "less", "fully", "ful",
+             "ly", "es", "s")
+
+
+def word_variants(token):
+    """
+    Candidate base forms for an inflected word. ALTERNATIVES, never replacements
+    - each one is only used if it is a term the catalogue actually contains.
+
+    Spell correction cannot cover this: "sistering" is three edits from "sister",
+    past the distance-2 ceiling, so it corrects to nothing and the query dies.
+    The production log is full of these because something upstream is inflecting
+    query terms - "sistering", "brothered", "lovings", "thankgiving" - but the
+    same fallback also catches a user typing "singing" when the card says "sing".
+    """
+    out = []
+    for suffix in _SUFFIXES:
+        if len(token) > len(suffix) + 2 and token.endswith(suffix):
+            stem = token[: -len(suffix)]
+            out.append(stem)
+            out.append(stem + "e")               # loving -> love, danc -> dance
+            if len(stem) > 2 and stem[-1] == stem[-2]:
+                out.append(stem[:-1])            # running -> run
+            break                                 # one ending is enough
+    return out
 
 
 def tokenise(text):
@@ -660,12 +681,14 @@ def understand(raw, index):
         # be the start of a longer one the user meant.
         group = {word}
         group.update(index.prefix_terms(word))
-        # "mother's day" normalises to "mothers day"; the catalogue mostly says
-        # "mother". Accept either without forcing one over the other.
-        base = depossess(word)
-        if base and base in index.document_frequency:
-            group.add(base)
-            group.update(index.prefix_terms(base))
+        # "mother's day" normalises to "mothers day" but the catalogue mostly
+        # says "mother"; "sistering" needs to reach "sister". Accept the base
+        # form as an alternative without forcing it over the typed word.
+        for base in word_variants(word):
+            if base in index.document_frequency:
+                group.add(base)
+                group.update(index.prefix_terms(base))
+                break
         query.groups[word] = group
 
         for kind, lexicon in (("tone", TONE), ("recipient", RECIPIENT),
