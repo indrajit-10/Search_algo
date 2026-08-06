@@ -176,6 +176,10 @@ it.**
 Instead the search gives things up gradually, in order of least important first,
 and keeps collecting results until the page is full:
 
+**Full is 20 cards.** That is the number the whole ladder is aimed at: it climbs
+down rung by rung until 20 unique cards have been collected, then stops. (The
+browser test bench asks for 24; it is one setting, `MAX_RESULTS`.)
+
 ```
 1.  everything the user asked for
 2.  drop the least informative word          ("card", "for", "my")
@@ -191,6 +195,26 @@ and keeps collecting results until the page is full:
 the anchor of a card search. Recipient goes first: a birthday card that is not
 mother-specific is still a birthday card, but a Mother's Day card is no use to
 someone who asked for a birthday.
+
+### How many cards actually come back
+
+Replaying the 515 real queries in the log:
+
+| | Cards | Queries |
+|---|---|---|
+| Filled the page | 20 | 495 — 96% |
+| Ran out of rungs with fewer | 1–13 | 20 — 4% |
+| Came back empty | 0 | **0** |
+| Nothing matched, so the newest were shown | 20 | 12 — 2% |
+
+The more interesting number is how many cards match **before** any widening. The
+typical query matches **24** — just over a page. But that average hides the
+spread: 10% of queries match more than 500 cards, and **17% match nothing at all**
+until the search widens.
+
+That is the whole argument for the ladder. Just under two thirds of queries (62%)
+are answered on the first rung and never need it. For the rest it is the
+difference between a full page and an empty one.
 
 ### Zero results is now impossible
 
@@ -234,12 +258,30 @@ The system is ready for them; until then, newer stands in.
 
 ## Autocomplete
 
-Suggestions appear from the second character. They are ranked by **how often your
-users actually searched each phrase** — which is why *"birthday cards free"*
-appears even though no card contains that phrase. 158 people a period type it.
+Suggestions appear from the **second character**, and at most **eight** are
+shown. They are ranked by **how often your users actually searched each phrase** —
+which is why *"birthday cards free"* appears even though no card contains that
+phrase. 158 people a period type it.
 
-The query log is raw user input, so three filters run before anything is shown
-back:
+The list is built once when the server starts and takes about 1.5 seconds. It
+starts from 8,319 candidates — 516 phrases from the query log, weighted by search
+volume, plus 7,803 card tags at a heavy discount — and four filters cut it down:
+
+| | Removed | Left |
+|---|---|---|
+| Safe and sensible in shape | 63 | 8,256 |
+| Every word used by 3 or more cards | 769 | 7,487 |
+| Merged onto one spelling | 462 | 7,025 |
+| Verified to return cards | 0 | **7,025** |
+
+A lookup then takes about **0.4 milliseconds**. Two passes run: phrases that start
+with what was typed, then phrases with a word inside starting with the last word
+typed — which is what lets *"birthday f"* reach *"funny birthday cards"*. 82% of
+the time all eight rows fill; 3% of the time nothing matches and the dropdown
+simply stays shut.
+
+Three of those four filters are worth explaining, because the query log is raw
+user input and none of it can be trusted:
 
 **Attacks are removed.** The log contains an attempted script injection someone
 ran 25 times, along with path-traversal attempts. Suggesting those would hand one
@@ -252,8 +294,12 @@ a suggestion must be a word the catalogue actually uses. **This upstream rewrite
 still exists and should be switched off** — it is generating roughly 900
 guaranteed-empty searches a period on its own.
 
-**Every suggestion is checked to return cards.** A suggestion leading to an empty
-page is the search box breaking its own promise.
+**Every suggestion is checked to return cards.** This one currently removes
+nothing — the word filter above already guarantees it, since a phrase made
+entirely of words the catalogue uses will always find something. It is kept as a
+backstop rather than deleted: a suggestion leading to an empty page is the search
+box breaking its own promise, and that guarantee should not depend on a side
+effect of another rule.
 
 ---
 
@@ -288,9 +334,13 @@ independence day"* returned Bastille Day.
 | Rows in the export | 107,160 (the rest are archived or YouTube) |
 | Distinct words indexed | 7,463 |
 | Slot values | 64 across occasion, tone, recipient, format |
-| Autocomplete phrases | 7,025 |
+| Cards on a page | 20 |
+| Cards matching a typical query outright | 24 |
+| Autocomplete phrases | 7,025, from 8,319 candidates |
+| Autocomplete suggestions shown | 8, from the 2nd character |
 | Index build time | under 4 seconds |
 | Typical query | ~2 milliseconds |
+| Typical autocomplete lookup | ~0.4 milliseconds |
 | Searches now hitting an empty page | **0**, down from 64% |
 
 **Tests:** 102 on the engine, 513 on hostile and malformed input, plus every

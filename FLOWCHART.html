@@ -106,6 +106,16 @@
         padding-right:0; white-space:nowrap; }
   td.was{ color:var(--rust); }
   td.now{ color:var(--signal); font-weight:600; }
+  /* A count and its share of the whole are one fact, not two columns. */
+  /* Fixed width so the counts stay a column: “4%” must not shove 20 right of 495. */
+  .pc{ color:var(--muted); font-size:12px; display:inline-block;
+       width:3.2em; text-align:right; }
+  .counts{ margin-top:26px; }
+  .counts tr.rule td{ border-top:1.5px solid var(--rule); padding-top:12px; }
+  .note{
+    margin:12px 0 0; font-size:13px; color:var(--muted); max-width:72ch;
+  }
+  .note code{ font-family:var(--mono); font-size:12px; color:var(--ink); }
 
   .foot{
     margin-top:44px; padding-top:14px; border-top:1px solid var(--rule);
@@ -145,6 +155,14 @@
     #pipeline svg{ max-height:168mm; }
     figcaption{ margin-top:6px; padding-top:6px; font-size:8.5pt; }
     .key{ margin-top:7px; font-size:8.5pt; }
+    /* Tables kept their screen size while the prose scaled down, which wrapped
+       rows that fit comfortably on screen. */
+    table{ font-size:9pt; }
+    caption{ font-size:8pt; }
+    th{ font-size:8pt; }
+    .pc{ font-size:8pt; }
+    .counts{ margin-top:14px; }
+    .note{ font-size:8.5pt; margin-top:8px; }
     .foot{ margin-top:20px; }
     figure, table{ break-inside:avoid; }
     h2{ break-after:avoid; }
@@ -166,7 +184,8 @@
     </p>
     <p class="meta">
       <span><b>12,087</b> cards searched</span>
-      <span><b>7,463</b> distinct words</span>
+      <span><b>20</b> cards a page</span>
+      <span><b>7,025</b> suggestions</span>
       <span><b>~2 ms</b> per query</span>
       <span><b>0%</b> empty pages, was 64%</span>
     </p>
@@ -269,8 +288,10 @@
           <!-- decision -->
           <path d="M 270 606 L 400 660 L 270 714 L 140 660 Z"
                 fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <text x="270" y="656" font-size="12.5" text-anchor="middle">enough</text>
-          <text x="270" y="672" font-size="12.5" text-anchor="middle">cards?</text>
+          <text x="270" y="650" font-size="12.5" text-anchor="middle">enough</text>
+          <text x="270" y="666" font-size="12.5" text-anchor="middle">cards?</text>
+          <text x="270" y="686" font-size="11" text-anchor="middle"
+                fill="var(--signal)">20 fills a page</text>
 
           <!-- no → widen -->
           <line x1="400" y1="660" x2="520" y2="660" stroke="var(--signal)"
@@ -464,11 +485,283 @@
         it.
       </figcaption>
     </figure>
+
+    <table class="counts">
+      <caption>“full” is 20 &mdash; replayed over 515 real queries</caption>
+      <thead>
+        <tr>
+          <th style="width:56%">How many cards come back</th>
+          <th class="n" style="width:22%">Cards</th>
+          <th class="n" style="width:22%">Queries</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A full page &mdash; the ladder stops here</td>
+          <td class="n now">20</td>
+          <td class="n">495 &nbsp;<span class="pc">96%</span></td>
+        </tr>
+        <tr>
+          <td>Ran out of rungs with fewer</td>
+          <td class="n">1&ndash;13</td>
+          <td class="n">20 &nbsp;<span class="pc">4%</span></td>
+        </tr>
+        <tr>
+          <td>Came back empty</td>
+          <td class="n now">0</td>
+          <td class="n">0 &nbsp;<span class="pc">0%</span></td>
+        </tr>
+        <tr>
+          <td>Nothing matched, so the newest were shown instead</td>
+          <td class="n">20</td>
+          <td class="n">12 &nbsp;<span class="pc">2%</span></td>
+        </tr>
+        <tr class="rule">
+          <td>Matched the whole query before any widening &mdash; typical</td>
+          <td class="n">24</td>
+          <td class="n">&mdash; &nbsp;<span class="pc"></span></td>
+        </tr>
+        <tr>
+          <td>&hellip; far more than a page holds</td>
+          <td class="n">500+</td>
+          <td class="n">49 &nbsp;<span class="pc">10%</span></td>
+        </tr>
+        <tr>
+          <td>&hellip; nothing at all, so widening did the work</td>
+          <td class="n was">0</td>
+          <td class="n">85 &nbsp;<span class="pc">17%</span></td>
+        </tr>
+        <tr>
+          <td>Answered on the first rung, no widening needed</td>
+          <td class="n">&mdash;</td>
+          <td class="n">318 &nbsp;<span class="pc">62%</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">
+      So a page is nearly always full, but rarely from one rung alone. The typical
+      query matches 24 cards outright — just over a page — and a sixth of them match
+      nothing until the search widens. <code>MAX_RESULTS</code> in
+      <code>search_engine.py</code> is the single knob; the browser test bench asks
+      for 24.
+    </p>
   </section>
 
   <!-- ================================================================= -->
   <section class="page-break">
-    <h2><span class="num">03</span>What changed</h2>
+    <h2><span class="num">03</span>Autocomplete</h2>
+    <p class="lede">
+      A separate path, running before anything is submitted. The list is built once
+      when the server starts; every keystroke is a lookup against it.
+    </p>
+
+    <figure id="suggest">
+      <svg viewBox="0 0 1010 710" role="img"
+           aria-label="Autocomplete in two parts. Built once at startup: the query log and card tags feed a stack of four filters that remove unsafe shapes, words the catalogue does not use, duplicate spellings and phrases returning no cards, leaving 7,025 phrases ranked by search volume. Then on every keystroke: once two characters are typed, two passes match the phrases, results are ranked, and the top eight are shown in a dropdown.">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ar3S" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--signal)"/>
+          </marker>
+        </defs>
+
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+           fill="currentColor" color="currentColor">
+
+          <!-- ============ BAND A: built once ============ -->
+          <text x="20" y="20" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.2">BUILT ONCE, WHEN THE SERVER STARTS &mdash; 1.5 SECONDS</text>
+
+          <!-- sources -->
+          <rect x="20" y="34" width="170" height="62" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="34" y="54" font-size="12.5" font-weight="700">the query log</text>
+          <text x="34" y="71" font-size="11.5" fill="var(--muted)">516 phrases</text>
+          <text x="34" y="87" font-size="11.5" fill="var(--muted)">weight = searches</text>
+
+          <rect x="20" y="110" width="170" height="62" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="34" y="130" font-size="12.5" font-weight="700">card tags</text>
+          <text x="34" y="147" font-size="11.5" fill="var(--muted)">7,803 phrases</text>
+          <text x="34" y="163" font-size="11.5" fill="var(--muted)">weight &times; 0.05</text>
+
+          <path d="M 190 65 L 218 65 L 218 156 L 248 156" fill="none"
+                stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+          <path d="M 190 141 L 218 141" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="212" y="106" font-size="11" text-anchor="end"
+                fill="var(--muted)">8,319</text>
+          <text x="212" y="120" font-size="11" text-anchor="end"
+                fill="var(--muted)">in</text>
+
+          <!-- filter stack -->
+          <rect x="250" y="38" width="260" height="42" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="264" y="64" font-size="12">safe + sensible shape</text>
+          <text x="496" y="64" font-size="11.5" text-anchor="end" fill="var(--rust)">&minus;63</text>
+          <line x1="380" y1="80" x2="380" y2="98" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar3)"/>
+
+          <rect x="250" y="98" width="260" height="42" rx="3"
+                fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="264" y="124" font-size="12" fill="var(--rust)">every word on 3+ cards</text>
+          <text x="496" y="124" font-size="11.5" text-anchor="end" fill="var(--rust)">&minus;769</text>
+          <line x1="380" y1="140" x2="380" y2="158" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar3)"/>
+
+          <rect x="250" y="158" width="260" height="42" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="264" y="184" font-size="12">merged onto one spelling</text>
+          <text x="496" y="184" font-size="11.5" text-anchor="end" fill="var(--rust)">&minus;462</text>
+          <line x1="380" y1="200" x2="380" y2="218" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar3)"/>
+
+          <rect x="250" y="218" width="260" height="56" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="264" y="242" font-size="12">verified to return cards</text>
+          <text x="496" y="242" font-size="11.5" text-anchor="end">&minus;0</text>
+          <text x="264" y="260" font-size="10.5" fill="var(--muted)">the word filter already ensures this</text>
+
+          <line x1="510" y1="156" x2="551" y2="156" stroke="var(--signal)"
+                stroke-width="1.5" marker-end="url(#ar3S)"/>
+
+          <rect x="551" y="110" width="196" height="92" rx="4"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
+          <text x="649" y="150" font-size="26" font-weight="700" text-anchor="middle"
+                fill="var(--signal)">7,025</text>
+          <text x="649" y="170" font-size="12" text-anchor="middle"
+                fill="var(--signal)">phrases offered</text>
+          <text x="649" y="189" font-size="10.5" text-anchor="middle"
+                fill="var(--muted)">ranked by search volume</text>
+
+          <!-- margin notes -->
+          <line x1="773" y1="38" x2="773" y2="274" stroke="var(--hair)" stroke-width="1"/>
+          <text x="788" y="54" font-size="11" font-weight="700" fill="var(--rust)">WHAT GETS REMOVED</text>
+          <text x="788" y="76" font-size="11.5" fill="var(--muted)">“motherings” (58 searches),</text>
+          <text x="788" y="90" font-size="11.5" fill="var(--muted)">“brothered” (65), “1cards”</text>
+          <text x="788" y="104" font-size="11.5" fill="var(--muted)">(535). No human types these</text>
+          <text x="788" y="118" font-size="11.5" fill="var(--muted)">— something upstream is</text>
+          <text x="788" y="132" font-size="11.5" fill="var(--muted)">rewriting queries into forms</text>
+          <text x="788" y="146" font-size="11.5" fill="var(--muted)">no card can ever match.</text>
+
+          <text x="788" y="176" font-size="11.5" fill="var(--rust)">Also an XSS probe someone</text>
+          <text x="788" y="190" font-size="11.5" fill="var(--rust)">ran 25 times, and attempts</text>
+          <text x="788" y="204" font-size="11.5" fill="var(--rust)">at path traversal.</text>
+
+          <text x="788" y="234" font-size="11.5" fill="var(--muted)">A suggestion is the search</text>
+          <text x="788" y="248" font-size="11.5" fill="var(--muted)">box speaking in its own</text>
+          <text x="788" y="262" font-size="11.5" fill="var(--muted)">voice. It must never hand</text>
+          <text x="788" y="276" font-size="11.5" fill="var(--muted)">one user another’s attack.</text>
+
+          <!-- ============ divider ============ -->
+          <line x1="20" y1="304" x2="990" y2="304" stroke="var(--rule)" stroke-width="1"/>
+
+          <!-- ============ BAND B: every keystroke ============ -->
+          <text x="20" y="330" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.2">THEN ON EVERY KEYSTROKE &mdash; 0.4 MILLISECONDS</text>
+
+          <rect x="20" y="346" width="250" height="38" rx="19"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="145" y="370" font-size="12.5" text-anchor="middle">a character is typed</text>
+
+          <line x1="145" y1="384" x2="145" y2="404" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar3)"/>
+
+          <path d="M 145 404 L 250 434 L 145 464 L 40 434 Z"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="145" y="430" font-size="12" text-anchor="middle">two letters</text>
+          <text x="145" y="446" font-size="12" text-anchor="middle">yet?</text>
+
+          <line x1="250" y1="434" x2="300" y2="434" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar3)"/>
+          <text x="264" y="426" font-size="11" fill="var(--muted)">no</text>
+          <text x="310" y="431" font-size="11.5" fill="var(--muted)">the dropdown stays</text>
+          <text x="310" y="445" font-size="11.5" fill="var(--muted)">shut — one letter is</text>
+          <text x="310" y="459" font-size="11.5" fill="var(--muted)">not a search yet</text>
+
+          <line x1="145" y1="464" x2="145" y2="492" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ar3)"/>
+          <text x="157" y="482" font-size="11" fill="var(--muted)">yes</text>
+
+          <rect x="20" y="492" width="440" height="46" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="36" y="513" font-size="11" font-weight="700">PASS 1</text>
+          <text x="100" y="513" font-size="12">the phrase starts with what was typed</text>
+          <text x="36" y="530" font-size="11.5" fill="var(--muted)">“mothe” → “mothers day”</text>
+
+          <rect x="20" y="546" width="440" height="46" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="36" y="567" font-size="11" font-weight="700">PASS 2</text>
+          <text x="100" y="567" font-size="12">a word inside starts with the last word</text>
+          <text x="36" y="584" font-size="11.5" fill="var(--muted)">“birthday f” → “funny birthday cards”</text>
+
+          <line x1="240" y1="592" x2="240" y2="618" stroke="var(--signal)"
+                stroke-width="1.5" marker-end="url(#ar3S)"/>
+
+          <rect x="20" y="618" width="440" height="52" rx="3"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+          <text x="36" y="639" font-size="11" font-weight="700" fill="var(--signal)">RANK</text>
+          <text x="100" y="639" font-size="12" fill="var(--signal)">pass 1 first, then search volume, then shortest</text>
+          <text x="36" y="657" font-size="11.5" fill="var(--signal)">top 8 shown</text>
+
+          <text x="20" y="692" font-size="11" fill="var(--muted)">both passes run over the 7,025 phrases above</text>
+
+          <!-- ============ the dropdown, as the user sees it ============ -->
+          <text x="520" y="330" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.2">WHAT THE USER SEES</text>
+
+          <rect x="520" y="346" width="440" height="40" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="540" y="371" font-size="13">birthday f</text>
+          <line x1="617" y1="357" x2="617" y2="377" stroke="currentColor" stroke-width="1.5"/>
+
+          <rect x="520" y="386" width="440" height="232" rx="4"
+                fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+          <rect x="521" y="387" width="438" height="28" fill="var(--signal-wash)"/>
+          <g font-size="12.5">
+            <text x="540" y="406"><tspan fill="var(--muted)">birthday f</tspan>or son</text>
+            <text x="540" y="435"><tspan fill="var(--muted)">birthday f</tspan>unny</text>
+            <text x="540" y="464"><tspan fill="var(--muted)">birthday f</tspan>riend her</text>
+            <text x="540" y="493"><tspan fill="var(--muted)">birthday f</tspan>or friend</text>
+            <text x="540" y="522"><tspan fill="var(--muted)">birthday f</tspan>or brother</text>
+            <text x="540" y="551"><tspan fill="var(--muted)">birthday f</tspan>ree animated cards</text>
+            <text x="540" y="580"><tspan fill="var(--muted)">birthday f</tspan>ireworks</text>
+            <text x="540" y="609"><tspan fill="var(--muted)">birthday f</tspan>or sister</text>
+          </g>
+          <g stroke="var(--hair)" stroke-width="1">
+            <line x1="520" y1="415" x2="960" y2="415"/>
+            <line x1="520" y1="444" x2="960" y2="444"/>
+            <line x1="520" y1="473" x2="960" y2="473"/>
+            <line x1="520" y1="502" x2="960" y2="502"/>
+            <line x1="520" y1="531" x2="960" y2="531"/>
+            <line x1="520" y1="560" x2="960" y2="560"/>
+            <line x1="520" y1="589" x2="960" y2="589"/>
+          </g>
+
+          <text x="520" y="642" font-size="11.5" fill="var(--muted)">Real output, not a mock-up. The faded part is</text>
+          <text x="520" y="656" font-size="11.5" fill="var(--muted)">what was typed; the rest is what is offered.</text>
+          <text x="520" y="678" font-size="11.5" fill="var(--muted)">82% of prefixes fill all eight rows. 3% find</text>
+          <text x="520" y="692" font-size="11.5" fill="var(--muted)">nothing and the dropdown simply stays shut.</text>
+        </g>
+      </svg>
+
+      <figcaption>
+        The two filters in the middle do the real work. <strong>Every word on 3+
+        cards</strong> is what removes the upstream rewriter’s output — phrases with
+        enough search volume to rank first and no card that can ever match them.
+        <strong>Verified to return cards</strong> removes nothing today, and is kept
+        as a guarantee: a suggestion leading to an empty page is the search box
+        breaking its own promise.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="page-break">
+    <h2><span class="num">04</span>What changed</h2>
     <p class="lede">
       Each row is a reported complaint, its measured cause, and where in the flow
       above it is fixed.
@@ -529,6 +822,6 @@
 
   <div class="foot">
     <span>Full explanation in <code>LOGIC.md</code> · code in <code>search_engine.py</code></span>
-    <span>102 engine tests · 513 edge cases · query log replayed, no regressions</span>
+    <span>Every figure measured from the live catalogue · 515 real queries replayed</span>
   </div>
 </div>
