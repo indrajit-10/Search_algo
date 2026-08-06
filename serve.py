@@ -102,6 +102,7 @@ def do_search(query, limit, boost):
             "strategy": out["strategy"],
             "message": out["message"],
             "corrections": out["corrections"],
+            "fallback": out.get("fallback", False),
             "ms": round(elapsed, 1),
         },
         "old": {
@@ -286,6 +287,8 @@ function render(){
   if(n.corrections && Object.keys(n.corrections).length)
     bits.push(`<span class="pill good">corrected: ${
       Object.entries(n.corrections).map(([a,b])=>`${a} &rarr; ${b}`).join(", ")}</span>`);
+  if(n.fallback)
+    bits.push(`<span class="pill bad">no matches &mdash; showing newest cards</span>`);
   bits.push(`<span class="pill">strategy: ${n.strategy}</span>`);
   bits.push(`<span class="pill">${n.results.length} shown &middot; ${n.ms} ms</span>`);
   const meanYear = n.results.length
@@ -306,7 +309,9 @@ function render(){
           "Zero results &mdash; production falls through to the popular-cards carousel.");
   } else {
     panes.className = "panes";
-    panes.innerHTML = paneHTML("Results", n.results);
+    panes.innerHTML = paneHTML(
+      n.fallback ? "Latest cards (nothing matched your search)" : "Results",
+      n.results);
   }
 }
 

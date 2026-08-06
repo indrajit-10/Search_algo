@@ -499,6 +499,11 @@ class SearchIndex:
 
         self.total = len(self.cards)
         self.newest_year = max((c.year for c in self.cards if c.year), default=0)
+        # Newest first, most recently inserted breaking ties. This is the floor
+        # of the relaxation ladder: the page is never empty, so "0 results"
+        # cannot happen. See search().
+        self.newest_cards = sorted(
+            self.cards, key=lambda c: (-(c.year or 0), -int(c.number or 0)))
         self.idf = {
             term: math.log(1 + (self.total - freq + 0.5) / (freq + 0.5))
             for term, freq in self.document_frequency.items()
@@ -853,14 +858,46 @@ def rank(index, scores, limit, popularity=None, recency_boost=RECENCY_BOOST):
     return [index.cards[doc] for *_, doc in ranked[:limit]]
 
 
+def latest_cards(index, raw_query, limit, corrections=None, strategy="latest"):
+    """
+    THE FLOOR. Every search returns cards, always.
+
+    A blank page is the worst result a search box can produce: the user has told
+    you exactly what they want and you answer with nothing. Production already
+    knew this - v3.2 added a carousel of popular cards - but that carousel is
+    where 64% of logged searches ended up, and popular on a catalogue running
+    since 2002 means old.
+
+    Newest-first instead. It gives the freshest work its only guaranteed
+    exposure, and it turns a dead end into a browse surface.
+
+    `fallback` is set so the front end can be honest about what happened -
+    "we could not find that, here is what is new" reads completely differently
+    from silently pretending these are matches.
+    """
+    results = index.newest_cards[:limit]
+    return {
+        "query": raw_query,
+        "strategy": strategy,
+        "fallback": True,
+        "message": "No matching cards. Showing the latest additions.",
+        "corrections": corrections or {},
+        "results": results,
+        "explain": {c.doc: f"newest ({c.year})" for c in results},
+    }
+
+
 def search(index, raw_query, limit=MAX_RESULTS, popularity=None,
            recency_boost=RECENCY_BOOST):
     query = understand(raw_query, index)
     terms, facets = query.terms, query.facets
 
     if not terms and not facets:
-        return {"query": raw_query, "strategy": "empty", "message": None,
-                "corrections": {}, "results": [], "explain": {}}
+        # Nothing searchable was typed - blank, punctuation, or a payload that
+        # normalised away entirely. Show the newest cards rather than a void.
+        out = latest_cards(index, raw_query, limit, strategy="empty")
+        out["message"] = "Showing the latest cards."
+        return out
 
     # Order terms by IDF so the least informative one is dropped first.
     ordered = sorted(terms, key=lambda t: index.idf.get(t, 0.0), reverse=True)
@@ -943,25 +980,26 @@ def search(index, raw_query, limit=MAX_RESULTS, popularity=None,
         return {
             "query": raw_query,
             "strategy": landed_on,
+            "fallback": False,          # these are genuine matches
             "message": _message(landed_on, query),
             "corrections": query.corrections,
             "results": results[:limit],
             "explain": explanations,
         }
 
-    # Last rung: the occasion the query most resembles, so the page is never blank.
-    fallback = _nearest_occasion(index, terms)
-    if fallback:
-        docs = list(index.facet_docs[("occasion", fallback)])
+    # Second-to-last rung: the occasion the query most resembles. Still related
+    # to what was typed, so it beats a generic fallback when it fires at all.
+    nearest = _nearest_occasion(index, terms)
+    if nearest:
+        docs = list(index.facet_docs[("occasion", nearest)])
         docs.sort(key=lambda d: -index.cards[d].year)
         results = [index.cards[d] for d in docs[:limit]]
-        return {"query": raw_query, "strategy": "nearest occasion",
-                "message": f"No exact match. Showing {fallback} cards.",
+        return {"query": raw_query, "strategy": "nearest occasion", "fallback": True,
+                "message": "No exact match. Showing the closest occasion.",
                 "corrections": query.corrections, "results": results,
-                "explain": {c.doc: f"occasion={fallback}" for c in results}}
+                "explain": {c.doc: f"occasion={nearest}" for c in results}}
 
-    return {"query": raw_query, "strategy": "exhausted", "corrections": query.corrections,
-            "message": "No matching cards.", "results": [], "explain": {}}
+    return latest_cards(index, raw_query, limit, query.corrections)
 
 
 def _message(strategy, query):
