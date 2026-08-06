@@ -243,7 +243,14 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `data/` | Where your export goes. Gitignored. |
+| `LOGIC.md` | How the search works, in plain English. No code. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
+
+---
+
+> **Want the reasoning rather than the commands?** [LOGIC.md](LOGIC.md) explains
+> the whole thing in plain English — what happens between someone typing and
+> cards appearing, and why each decision was made. No code, no jargon.
 
 ---
 
