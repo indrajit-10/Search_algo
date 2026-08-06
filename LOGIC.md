@@ -81,9 +81,58 @@ bait. Without this rule the system treats those typos as real words, so
 *"aniversary"* stays misspelled and finds the 1 spam card instead of the 269 real
 anniversary cards.
 
+**How wrong a word is allowed to be depends on how long it is.** This sounds
+fussy and it is the difference between finding a card and not. Two mistakes is
+half of a four-letter word but a sixth of a twelve-letter one, so one fixed
+allowance is simultaneously too generous for short words and far too mean for
+long ones.
+
+Long words are exactly the ones people get wrong by three or more letters —
+transliterated festival names above all. *"roshasana"* is three slips from
+*"roshhashanah"*, so it found **nothing at all**, while 240 Rosh Hashanah cards
+sat in the catalogue. Allowing three mistakes on long words takes the success
+rate on that kind of word from **27% to 92%**.
+
+The catch is that three mistakes is a lot of licence, so it has to be earned:
+the mistakes must be **under 30% of the word**. That is what separates
+*"roshasana"* → *"roshhashanah"* — three letters out of twelve, a believable
+slip — from *"mariachi"* → *"march"*, three out of eight, which is a different
+word. Answering a mariachi search with March cards is worse than answering it
+with nothing, and that is precisely what happened before the rule was added.
+
+**Two words typed as one are pulled apart.** *"merrychristmas"*,
+*"happyanniversary"*, *"congratulationsgraduate"* all used to reach the
+newest-cards fallback. They are only split once the spell corrector has given up,
+so a genuine typo is always fixed rather than carved up — *"aniversary"* becomes
+*"anniversary"*, never *"ani versary"*.
+
 **Partial words are not typos.** Someone typing *"valentin"* is mid-word, not
 wrong — and *"Valentín"* is a real Spanish word in this catalogue. Partial words
 are completed, not corrected.
+
+### The same festival under another name
+
+Some words are not misspelled at all and still find almost nothing.
+*"Deepavali"* is the Sanskrit name for Diwali. It is spelled correctly, sits on
+21 real cards, and is five letters away from *"diwali"* — so the spell corrector
+rightly leaves it alone, and the searcher gets 21 cards instead of 470. Same for
+*"Chanukah"* against *"Hanukkah"*, and *"Dasara"* against *"Dussehra"*.
+
+These are linked by name, so searching either spelling reaches all the cards.
+Both spellings stay searchable — a card that really does say *"deepavali"* still
+ranks above one that only says *"diwali"*.
+
+**Each link is checked against the catalogue before it is believed.** A claim
+that two words mean the same thing is a claim about the world, and that is
+exactly the kind of claim that went wrong with Independence Day. The test is
+whether both spellings live in the same part of the catalogue. Of twelve pairs
+offered, **five were dropped** — including one where the catalogue showed the
+link pointing the wrong way round.
+
+The obvious alternative — link any two words that keep appearing on the same
+cards — was tried and rejected. It proposes 1,707 pairs, and they are mostly
+topical rather than synonymous: *"solstice"* sits beside *"family"*, *"wishes"*
+and *"friends"* on every one of its 54 cards without meaning any of them.
 
 ---
 
@@ -338,12 +387,12 @@ independence day"* returned Bastille Day.
 | Cards matching a typical query outright | 24 |
 | Autocomplete phrases | 7,025, from 8,319 candidates |
 | Autocomplete suggestions shown | 8, from the 2nd character |
-| Index build time | under 4 seconds |
-| Typical query | ~2 milliseconds |
+| Index build time | about 5 seconds |
+| Typical query | ~1.2 milliseconds |
 | Typical autocomplete lookup | ~0.4 milliseconds |
 | Searches now hitting an empty page | **0**, down from 64% |
 
-**Tests:** 102 on the engine, 513 on hostile and malformed input, plus every
+**Tests:** 120 on the engine, 513 on hostile and malformed input, plus every
 query in the log replayed through both the old and new systems with no
 regressions.
 

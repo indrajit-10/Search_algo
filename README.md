@@ -5,9 +5,8 @@ library — no pip installs, no search server, no external service.
 
 The searchable catalogue is 12,087 cards — `status_id = 1`, minus YouTube cards
 (`card_label_type = 'Y'`), which embed a video and have no artwork to show in a
-grid. The whole inverted index is about 2 MB and builds in under 1.5 seconds; a
-query answers in 1–4 ms. Nothing at that size needs a search engine, so there
-isn't one.
+grid. The whole index builds in about 5 seconds; a query answers in 1–2 ms.
+Nothing at that size needs a search engine, so there isn't one.
 
 ---
 
@@ -111,7 +110,7 @@ If you only run two, make them `compare` and the interface.
 ./run.sh search
 ```
 
-71 tests, one per reported complaint. You should see `71 passed, 0 failed`, then
+120 tests, one per reported complaint. You should see `120 passed, 0 failed`, then
 a `search>` prompt. Type anything — each result shows *why* it matched and which
 ladder rung answered:
 
@@ -236,7 +235,7 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 
 | File | What it does |
 |---|---|
-| `search_engine.py` | The engine. Index, query understanding, ranking, relaxation ladder, 71 tests, interactive prompt, `--compare`. |
+| `search_engine.py` | The engine. Index, query understanding, ranking, relaxation ladder, 120 tests, interactive prompt, `--compare`. |
 | `serve.py` | Browser test bench. Stdlib HTTP server, no framework. |
 | `evaluate.py` | Replays the production query log through both engines. |
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
@@ -263,7 +262,13 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 ## How a query is answered
 
 **1. Understand.** Normalise (apostrophes join words, `%92` and `+` decoded) →
-alias → spell-correct → extract facets.
+alias → spell-correct → split run-together words → extract facets.
+
+Correction spends up to 3 edits, but only where they are under 30% of the word.
+A flat ceiling of 2 is half a four-letter word and a sixth of a twelve-letter
+one: `roshasana` is 3 edits from `roshhashanah` and so found nothing, while the
+ratio still blocks `mariachi` → `march`. Success on 3-edit typos of long words
+goes from 27% to 92%; 1- and 2-edit behaviour is untouched.
 
 A query fills four slots, and each maps to a column you already have:
 

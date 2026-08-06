@@ -147,8 +147,36 @@ LIVE_STATUS = "1"          # status_id=1 is served; every other status is dead
 # exported rows the two rules select the same 19,555 cards - but an ID range is
 # an accident of allocation and would not survive a renumbering.
 EXCLUDE_LABEL_TYPES = {"Y"}
-MAX_EDIT_DISTANCE = 2
+
+# How many edits a correction may spend. A flat ceiling is the wrong shape: two
+# edits is half of a four-letter word and a sixth of a twelve-letter one, so a
+# single number is simultaneously too loose for short words and far too tight
+# for long ones. Long words are exactly the ones people mistype by three or more
+# characters - transliterated festival names above all. "roshasana" is three
+# edits from "roshhashanah" and so found nothing at all, while the catalogue
+# holds 240 Rosh Hashanah cards.
+#
+# So the ceiling scales, and the loosest tier has to earn itself: three edits
+# are allowed only when they are a small share of the word. That ratio is what
+# separates "roshasana" -> "roshhashanah" (3 of 12 characters, a plausible slip)
+# from "mariachi" -> "march" (3 of 8, a different word entirely). Without it the
+# corrector confidently answered a mariachi search with March cards.
+MAX_EDIT_DISTANCE = 2      # the ordinary ceiling
+LOOSE_EDIT_DISTANCE = 3    # the most any correction may ever spend
+LOOSE_EDIT_RATIO = 0.3     # ...and only if the edits are under 30% of the word
+
+# The ratio is not just a filter, it bounds the work. Three edits can only ever
+# be within 30% of a word that is at least ceil(3 / 0.3) = 10 characters, so no
+# shorter term can be a three-edit target and only terms that long need the
+# deeper delete index. A query word can be three shorter than the term it
+# reaches, so it qualifies from 7.
+#
+# Skipping this and indexing every term deeply built the same index three times
+# larger for no extra recall - 9.4 seconds of startup instead of 2.4.
+LOOSE_MIN_TARGET = int(math.ceil(LOOSE_EDIT_DISTANCE / LOOSE_EDIT_RATIO))
+LOOSE_MIN_QUERY = LOOSE_MIN_TARGET - LOOSE_EDIT_DISTANCE
 MIN_CORRECTABLE = 4        # never "correct" a 3-letter word, too many neighbours
+MIN_COMPOUND_PART = 3      # "merrychristmas" splits; "sofa" must not
 MAX_QUERY_CHARS = 120
 MAX_TOKENS = 10
 
@@ -324,6 +352,30 @@ ALIASES = {
     "cumpleanos": "birthday", "feliz": "happy",
 }
 
+# Festivals this catalogue files under one name and the world spells several
+# ways. These are NOT misspellings: "deepavali" is the Sanskrit name for Diwali,
+# five edits from it, and it is a correctly spelled word sitting on 21 real
+# cards - so the corrector rightly leaves it alone, and the searcher gets 21
+# cards out of 470.
+#
+# Every pair below is a claim that two words name the same thing, and claims
+# about the world are exactly what went wrong with the month hints. So none of
+# them is trusted: _validate_variants checks each against the catalogue and
+# keeps it only where both spellings really do live in the same section. See
+# there for what that catches.
+#
+# Unlike ALIASES these do not REPLACE the typed word. Both spellings stay
+# searchable, so a card that genuinely says "deepavali" still ranks above one
+# that only says "diwali".
+VARIANTS = {
+    "deepavali": "diwali", "dipavali": "diwali", "deepawali": "diwali",
+    "chanukah": "hanukkah", "chanukkah": "hanukkah", "hannukah": "hanukkah",
+    "dasara": "dussehra", "dashera": "dussehra", "dussera": "dussehra",
+    "navratri": "navaratri",
+    "shivratri": "shivaratri",
+    "onam": "thiruonam",
+}
+
 
 # ---------------------------------------------------------------------------
 # NORMALISATION
@@ -490,17 +542,49 @@ def edit_distance(a, b, max_distance):
 
 class SpellCorrector:
     def __init__(self, vocabulary, max_distance=MAX_EDIT_DISTANCE,
-                 min_frequency=MIN_DICTIONARY_FREQUENCY):
+                 min_frequency=MIN_DICTIONARY_FREQUENCY,
+                 loose_distance=LOOSE_EDIT_DISTANCE,
+                 loose_ratio=LOOSE_EDIT_RATIO):
         # Only well-attested terms are allowed to be "correct" or to be a
         # correction target. See MIN_DICTIONARY_FREQUENCY.
         self.vocabulary = {t: f for t, f in vocabulary.items() if f >= min_frequency}
         self.max_distance = max_distance
+        self.loose_distance = max(loose_distance, max_distance)
+        self.loose_ratio = loose_ratio
         self.index = collections.defaultdict(list)
         for term in self.vocabulary:
             if len(term) < MIN_CORRECTABLE:
                 continue
-            for variant in deletes(term, max_distance):
+            # Deeper deletes only for terms long enough to be a loose-tier
+            # target. See LOOSE_MIN_TARGET - anything shorter can never be
+            # reached at three edits, so indexing it deeply is pure cost.
+            depth = (self.loose_distance if len(term) >= LOOSE_MIN_TARGET
+                     else self.max_distance)
+            for variant in deletes(term, depth):
                 self.index[variant].append(term)
+        # Nothing longer than this can be within reach of any term, because a
+        # length gap alone already exceeds the ceiling. Checking it before
+        # generating deletes matters: the deletions of a 120-character payload
+        # number about 280,000 at depth three, which took 1.5 seconds to build
+        # and could never match anything.
+        self.longest = max((len(t) for t in self.vocabulary), default=0)
+
+    def ceiling(self, word):
+        return (self.loose_distance if len(word) >= LOOSE_MIN_QUERY
+                else self.max_distance)
+
+    def _plausible(self, word, candidate, distance):
+        """
+        Is spending this many edits proportionate to the word?
+
+        Only the loose tier is questioned - one and two edits behave exactly as
+        they always did. Above that the edits must be a small fraction of the
+        longer of the two words, which is what keeps "roshasana" reaching
+        "roshhashanah" while "mariachi" stops short of "march".
+        """
+        if distance <= self.max_distance:
+            return True
+        return distance <= self.loose_ratio * max(len(word), len(candidate))
 
     def correct(self, word):
         """Returns (word, distance). distance 0 means it was already a real term."""
@@ -509,16 +593,19 @@ class SpellCorrector:
         if len(word) < MIN_CORRECTABLE:
             return word, -1
 
+        cap = self.ceiling(word)
+        if len(word) > self.longest + cap:
+            return word, -1
         seen = set()
-        for variant in deletes(word, self.max_distance):
+        for variant in deletes(word, cap):
             seen.update(self.index.get(variant, ()))
         if not seen:
             return word, -1
 
         best = None
         for candidate in seen:
-            distance = edit_distance(word, candidate, self.max_distance)
-            if distance > self.max_distance:
+            distance = edit_distance(word, candidate, cap)
+            if distance > cap or not self._plausible(word, candidate, distance):
                 continue
             # closest first, then the term that appears on more cards
             rank = (distance, -self.vocabulary[candidate], candidate)
@@ -527,6 +614,32 @@ class SpellCorrector:
         if best is None:
             return word, -1
         return best[2], best[0]
+
+
+def split_compound(word, document_frequency, min_part=MIN_COMPOUND_PART,
+                   min_frequency=MIN_DICTIONARY_FREQUENCY):
+    """
+    Two real words typed as one: "merrychristmas", "happyanniversary".
+
+    Only reached when the corrector has already given up, so a plain typo is
+    never split instead of fixed - "aniversary" gets corrected, not carved into
+    pieces. Both halves must be words the catalogue actually uses, and the split
+    maximising the rarer half wins, which prefers "merry|christmas" over the
+    many ways to shave a common fragment off either end.
+
+    Returns a (left, right) pair, or None.
+    """
+    best = None
+    for cut in range(min_part, len(word) - min_part + 1):
+        left, right = word[:cut], word[cut:]
+        left_df = document_frequency.get(left, 0)
+        right_df = document_frequency.get(right, 0)
+        if left_df < min_frequency or right_df < min_frequency:
+            continue
+        strength = min(left_df, right_df)
+        if best is None or strength > best[0]:
+            best = (strength, left, right)
+    return (best[1], best[2]) if best else None
 
 
 # ---------------------------------------------------------------------------
@@ -574,6 +687,54 @@ def _validate_hints(rows, hints=None):
                                 counts[best]))
         if survivors:
             kept[prefix] = survivors
+    return kept, dropped
+
+
+def _validate_variants(index, variants=None):
+    """
+    Keep only the naming variants this catalogue actually supports.
+
+    A variant pair claims two spellings name the same thing. The test is whether
+    they live in the same part of the catalogue: every section a card of the
+    rare spelling sits in must be one the common spelling occupies too, and the
+    two must share a dominant section.
+
+    That is a much sharper instrument than co-occurrence. Measuring which words
+    merely appear together on the same cards proposes 1,707 pairs, and they are
+    mostly topical rather than synonymous - "solstice" occurs beside "family",
+    "wishes" and "friends" on every single one of its 54 cards. The section test
+    drops those flat: solstice cards are filed under March, family cards under
+    October. It also drops a pair whose target is barely in the catalogue, which
+    is why "navratri" -> "navaratri" does not survive - the target spelling sits
+    on 1 card and the source on 35, so the link points the wrong way.
+
+    Returns (kept, dropped) where kept maps word -> the word it also searches.
+    """
+    variants = VARIANTS if variants is None else variants
+
+    def sections(term):
+        return collections.Counter(
+            index.cards[doc].category.split("_")[0]
+            for doc in index.postings.get(term, ()))
+
+    kept, dropped = {}, []
+    for word, target in variants.items():
+        here, there = sections(word), sections(target)
+        source_df = index.document_frequency.get(word, 0)
+        target_df = index.document_frequency.get(target, 0)
+        if not here or not there:
+            dropped.append((word, target, "one spelling is not in the catalogue"))
+            continue
+        if target_df <= source_df:
+            dropped.append((word, target, "target is the rarer spelling"))
+            continue
+        shared = sum(n for section, n in here.items() if section in there)
+        if here.most_common(1)[0][0] != there.most_common(1)[0][0]:
+            dropped.append((word, target, "different dominant section"))
+        elif shared / sum(here.values()) < 0.9:
+            dropped.append((word, target, "sections mostly disagree"))
+        else:
+            kept[word] = target
     return kept, dropped
 
 
@@ -691,6 +852,7 @@ class SearchIndex:
         }
         self.corrector = SpellCorrector(self.document_frequency)
         self.sorted_terms = sorted(self.postings)
+        self.variants, self.dropped_variants = _validate_variants(self)
 
         # A facet's boost scales with how much it narrows the catalogue, for the
         # same reason IDF exists. occasion=edec covers every December card -
@@ -839,6 +1001,41 @@ class Query:
         self.notes = []
 
 
+def _split_run_together(words, index, query):
+    """
+    Expand words that are two words typed as one.
+
+    Ordering is the whole safety argument. A word is only offered to the
+    splitter once it is neither a real term, nor a facet name, nor something the
+    corrector can rescue - so "aniversary" is corrected to "anniversary" rather
+    than carved up, and any word the catalogue already knows is left entirely
+    alone. What is left is the genuine run-together case: "merrychristmas",
+    "happyanniversary", "congratulationsgraduate", each of which used to reach
+    the newest-cards fallback.
+
+    Returns the expanded words and the corrections already computed getting
+    there, so understand() does not correct the same word a second time.
+    """
+    out, corrected = [], {}
+    for word in words:
+        if word in FACET_VOCABULARY or word in index.document_frequency:
+            out.append(word)
+            continue
+        result = index.corrector.correct(word)
+        if result[1] >= 0:
+            corrected[word] = result
+            out.append(word)
+            continue
+        parts = split_compound(word, index.document_frequency)
+        if parts:
+            query.corrections[word] = " ".join(parts)
+            out.extend(parts)
+        else:
+            corrected[word] = result
+            out.append(word)
+    return out[:MAX_TOKENS], corrected
+
+
 def understand(raw, index):
     """Normalise, alias, spell-correct, then pull out any facet the user named."""
     query = Query(raw)
@@ -847,6 +1044,7 @@ def understand(raw, index):
     words = [ALIASES.get(w, w) for w in tokenise(raw)][:MAX_TOKENS]
     if not words:
         return query
+    words, already_corrected = _split_run_together(words, index, query)
 
     # Multi-word facet values ("thank you", "get well") before single words.
     joined = " ".join(words)
@@ -862,7 +1060,8 @@ def understand(raw, index):
         # card FORMAT, and the database knows it via card_label_type. A word
         # that means something structurally is already spelled correctly.
         if word not in FACET_VOCABULARY:
-            corrected, distance = index.corrector.correct(word)
+            corrected, distance = (already_corrected.get(word)
+                                   or index.corrector.correct(word))
             if distance > 0:
                 query.corrections[word] = corrected
                 word = corrected
@@ -872,6 +1071,13 @@ def understand(raw, index):
         # be the start of a longer one the user meant.
         group = {word}
         group.update(index.prefix_terms(word))
+        # A different name for the same festival. Added to the group rather than
+        # replacing the word, so "deepavali" reaches all 470 Diwali cards while
+        # the 21 that say "deepavali" themselves still score higher.
+        variant = index.variants.get(word)
+        if variant:
+            group.add(variant)
+            group.update(index.prefix_terms(variant))
         # "mother's day" normalises to "mothers day" but the catalogue mostly
         # says "mother"; "sistering" needs to reach "sister". Accept the base
         # form as an alternative without forcing it over the typed word.
@@ -897,6 +1103,8 @@ def understand(raw, index):
         # "year" does - so the possessive and the plain query answered from
         # different rungs of the ladder and shared no results at all.
         occasions = index.occasion_of.get(word)
+        if not occasions and variant:
+            occasions = index.occasion_of.get(variant)
         if not occasions:
             for base in word_variants(word):
                 occasions = index.occasion_of.get(base)
@@ -1495,6 +1703,55 @@ def run_tests(index):
         corrected = out["corrections"].get(typo, "")
         check(f"{typo!r} -> {expect!r} (got {corrected!r}, {len(out['results'])} results)",
               corrected.startswith(expect[:6]) and len(out["results"]) > 0)
+
+    print("\n-- long words: the ceiling has to scale with the word --")
+    # "roshasana" is three edits from "roshhashanah" and so found nothing at all
+    # under a flat two-edit ceiling, while 240 Rosh Hashanah cards sat in the
+    # catalogue. Two edits is half a four-letter word and a sixth of a
+    # twelve-letter one; transliterated festival names are exactly where people
+    # slip by three.
+    for typo, expect in [("roshasana", "roshhashanah"), ("roshashana", "roshhashanah"),
+                         ("thanksgivin", "thanksgiving"), ("annivarsery", "anniversary")]:
+        out = search(index, typo, limit=5)
+        got = out["corrections"].get(typo, "")
+        check(f"{typo!r} -> {expect!r} (got {got!r}, {len(out['results'])} results)",
+              got == expect and out["results"] and not out["fallback"])
+
+    # ...and the loose tier must not become a licence to guess. Three edits are
+    # only proportionate on a long word: "mariachi" is three from "march", and
+    # answering a mariachi search with March cards is worse than answering it
+    # with nothing.
+    for word, must_not in [("mariachi", "march"), ("sobriety", "society")]:
+        got = index.corrector.correct(word)[0]
+        check(f"{word!r} is not rewritten to {must_not!r} (got {got!r})",
+              got != must_not)
+
+    print("\n-- two words typed as one --")
+    for typed, expect in [("merrychristmas", "merry christmas"),
+                          ("happyanniversary", "happy anniversary"),
+                          ("congratulationsgraduate", "congratulations graduate")]:
+        out = search(index, typed, limit=5)
+        got = out["corrections"].get(typed, "")
+        check(f"{typed!r} -> {expect!r} ({len(out['results'])} results)",
+              got == expect and out["results"] and not out["fallback"])
+    # A typo must be corrected, never carved up: "aniversary" splits into
+    # "ani"+"versary" if the splitter is allowed to run first.
+    check("'aniversary' is corrected, not split",
+          search(index, "aniversary", limit=3)["corrections"]
+          .get("aniversary") == "anniversary")
+
+    print("\n-- the same festival under another name --")
+    # Not misspellings: "deepavali" is the Sanskrit name for Diwali, five edits
+    # away and correctly spelled on 21 real cards, so the corrector rightly
+    # leaves it alone and the searcher used to get 21 cards out of 470.
+    for word, twin in index.variants.items():
+        mine = {c.doc for c in search(index, word, limit=40)["results"]}
+        theirs = {c.doc for c in search(index, twin, limit=40)["results"]}
+        check(f"{word!r} reaches {twin!r} cards ({len(mine & theirs)}/40 shared)",
+              len(mine & theirs) >= 10)
+    check("unsupported variant claims are dropped, not trusted",
+          any(why == "target is the rarer spelling"
+              for _, _, why in index.dropped_variants))
 
     print("\n-- partial words are not typos: prefix expansion, not correction --")
     # "valentin" is a real token here - it is the Spanish "San Valentin" - so
