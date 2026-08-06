@@ -76,6 +76,22 @@ PREFIX_DISCOUNT = 0.4      # "valentin" matching "valentines" is weaker evidence
 PREFIX_DOMINANCE = 5       # a completion this much more common means a partial word
 MAX_RESULTS = 20
 
+# Freshness. A newly uploaded card gets its relevance score multiplied by at
+# most (1 + RECENCY_BOOST), decaying by half every RECENCY_HALFLIFE years.
+#
+# Deliberately small. The old ranker sorted on lifetime send count, which on a
+# catalogue running since 2002 is a permanent incumbency: a card uploaded last
+# month cannot out-accumulate one with twenty years of head start, so new work
+# was structurally unrankable. The fix is not to flip that around - a large
+# freshness boost would just recreate the same complaint pointing the other way,
+# with 2026 cards burying a better 2011 match.
+#
+# At 0.15 a brand new card is worth 15% more than an identical ancient one,
+# which decides ties and near-ties and nothing else. A clearly better older
+# match still wins, and there is a test below that holds that line.
+RECENCY_BOOST = 0.15
+RECENCY_HALFLIFE = 5.0     # years for the boost to halve
+
 # Which slot survives longest as the query is relaxed. Lower is kept longer.
 SLOT_PRIORITY = {"occasion": 0, "format": 1, "tone": 2, "recipient": 3}
 
@@ -461,6 +477,7 @@ class SearchIndex:
             self.cards.append(card)
 
         self.total = len(self.cards)
+        self.newest_year = max((c.year for c in self.cards if c.year), default=0)
         self.idf = {
             term: math.log(1 + (self.total - freq + 0.5) / (freq + 0.5))
             for term, freq in self.document_frequency.items()
@@ -775,27 +792,46 @@ def explain(index, card, terms, facets):
 # reports which rung it landed on, so the UI can say what it did.
 # ---------------------------------------------------------------------------
 
-def rank(index, scores, limit, popularity=None):
+def recency_factor(year, newest, boost=RECENCY_BOOST):
+    """1.0 for an undated or very old card, up to 1+boost for the newest."""
+    if not year or not newest or boost <= 0:
+        return 1.0
+    age = max(0, newest - year)
+    return 1.0 + boost * (0.5 ** (age / RECENCY_HALFLIFE))
+
+
+def rank(index, scores, limit, popularity=None, recency_boost=RECENCY_BOOST):
     """
     Relevance first, in buckets. Raw scores are so fine-grained that a secondary
     sort would never apply, so we round into tiers and break ties inside a tier.
     That keeps popularity useful without letting a 2002 card with 24 years of
     accumulated sends outrank a genuinely better match.
+
+    Freshness is applied to the score BEFORE bucketing, so a recent card can
+    climb a tier when it is already close - but the boost is capped, so it can
+    never leapfrog a card that is clearly a better match.
     """
     if not scores:
         return []
-    top = max(scores.values())
+    boosted = {
+        doc: value * recency_factor(index.cards[doc].year, index.newest_year,
+                                    recency_boost)
+        for doc, value in scores.items()
+    }
+    top = max(boosted.values())
     ranked = []
-    for doc, value in scores.items():
+    for doc, value in boosted.items():
         bucket = int(10 * value / top)            # 10 relevance tiers
         card = index.cards[doc]
+        # Inside a tier, popularity decides when we have it, recency otherwise.
         tiebreak = popularity.get(card.number, 0) if popularity else card.year
         ranked.append((-bucket, -tiebreak, card.title, doc))
     ranked.sort()
     return [index.cards[doc] for *_, doc in ranked[:limit]]
 
 
-def search(index, raw_query, limit=MAX_RESULTS, popularity=None):
+def search(index, raw_query, limit=MAX_RESULTS, popularity=None,
+           recency_boost=RECENCY_BOOST):
     query = understand(raw_query, index)
     terms, facets = query.terms, query.facets
 
@@ -869,7 +905,7 @@ def search(index, raw_query, limit=MAX_RESULTS, popularity=None):
         scores = score(index, weights, use_facets, required)
         if not scores:
             continue
-        for card in rank(index, scores, limit * 2, popularity):
+        for card in rank(index, scores, limit * 2, popularity, recency_boost):
             if card.doc in seen:
                 continue
             seen.add(card.doc)
@@ -1054,6 +1090,58 @@ def run_tests(index):
     out = search(index, "funny birthday", limit=10)
     check("'funny birthday' top result is tagged humour",
           bool(out["results"]) and out["results"][0].doc in humour)
+
+    print("\n-- freshness: newer cards lifted, but only a little --")
+    # Direction: with the boost on, results should skew newer than with it off.
+    for query in ["birthday", "anniversary", "thank you", "get well soon"]:
+        warm = search(index, query, limit=20, recency_boost=RECENCY_BOOST)["results"]
+        cold = search(index, query, limit=20, recency_boost=0.0)["results"]
+        warm_year = sum(c.year for c in warm) / max(len(warm), 1)
+        cold_year = sum(c.year for c in cold) / max(len(cold), 1)
+        check(f"{query!r} mean year {cold_year:.0f} -> {warm_year:.0f} with boost",
+              warm_year >= cold_year)
+
+    # The line that must hold: a boost big enough to bury a better match is a
+    # bug, not a feature. It would be complaint 5 again, pointing the other way.
+    #
+    # Top-10 overlap is the wrong way to check that. For a query like
+    # "mother's day" hundreds of cards tie on relevance, so WHICH ten of an
+    # equally-good set you show is arbitrary - reordering them by date is
+    # precisely the thing being asked for, not a regression. What actually
+    # matters is that the single best match is never displaced.
+    for query in ["funny", "funny birthday", "sympathy", "mother's day",
+                  "60th birthday", "animated birthday"]:
+        cold = search(index, query, limit=40, recency_boost=0.0)["results"]
+        warm = search(index, query, limit=10, recency_boost=RECENCY_BOOST)["results"]
+        survived = not cold or cold[0].doc in {c.doc for c in warm}
+        check(f"{query!r} best unboosted match still in the boosted top 10", survived)
+
+    # The hard guarantee is on the MULTIPLIER, so that is what gets checked.
+    # Freshness is a bounded factor in [1, 1+boost], which means it can only
+    # reorder cards already within 15% of each other on relevance; anything
+    # further apart keeps its order whatever the dates say. Counting how far
+    # cards move in the list would measure the bucketing instead, which quantises
+    # to ten tiers and shifts positions for reasons that have nothing to do with
+    # dates.
+    newest = index.newest_year
+    factors = [recency_factor(y, newest) for y in range(1995, newest + 1)]
+    factors.append(recency_factor(0, newest))          # undated cards
+    check(f"multiplier stays in 1.00-{1+RECENCY_BOOST:.2f} "
+          f"(measured {min(factors):.3f}-{max(factors):.3f})",
+          min(factors) >= 1.0 and max(factors) <= 1 + RECENCY_BOOST + 1e-9)
+
+    advantage = recency_factor(newest, newest) / recency_factor(2002, newest) - 1
+    check(f"a {newest} card beats an equally relevant 2002 card by "
+          f"{100*advantage:.0f}%, not more", advantage <= RECENCY_BOOST + 1e-9)
+
+    check("an undated card is neither helped nor punished",
+          recency_factor(0, newest) == 1.0)
+
+    # And the tone facet must still dominate: "funny" cannot become "recent".
+    warm = search(index, "funny", limit=10, recency_boost=RECENCY_BOOST)["results"]
+    still_funny = sum(1 for c in warm if c.doc in humour)
+    check(f"'funny' still {still_funny}/10 tagged humour with the boost on",
+          still_funny >= 8)
 
     print("\n-- stability: nothing may crash, hang, or dump the catalogue --")
     payloads = ["", "   ", "a", "'", "' OR '1'='1", "<script>alert(1)</script>",

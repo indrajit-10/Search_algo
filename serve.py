@@ -66,9 +66,9 @@ def card_payload(card, why, index):
     }
 
 
-def do_search(query, limit):
+def do_search(query, limit, boost):
     started = time.perf_counter()
-    out = se.search(INDEX, query, limit=limit)
+    out = se.search(INDEX, query, limit=limit, recency_boost=boost)
     elapsed = (time.perf_counter() - started) * 1000
 
     new_results = [card_payload(c, out["explain"].get(c.doc, ""), INDEX)
@@ -110,6 +110,7 @@ def do_search(query, limit):
             "ms": round(old_elapsed, 1),
             "capped": old_total >= se.OLD_CAP,
         },
+        "boost": boost,
         "defaults": {"image": IMAGE_TEMPLATE, "page": PAGE_TEMPLATE},
     }
 
@@ -134,7 +135,13 @@ class Handler(BaseHTTPRequestHandler):
             params = urllib.parse.parse_qs(parsed.query)
             query = (params.get("q") or [""])[0]
             limit = min(int((params.get("limit") or ["24"])[0]), 60)
-            self._send(json.dumps(do_search(query, limit)), "application/json")
+            try:
+                boost = max(0.0, min(float((params.get("boost")
+                                            or [se.RECENCY_BOOST])[0]), 1.0))
+            except ValueError:
+                boost = se.RECENCY_BOOST
+            self._send(json.dumps(do_search(query, limit, boost)),
+                       "application/json")
             return
 
         if route in ("/", "/index.html"):
@@ -209,6 +216,12 @@ code{font:12px ui-monospace,monospace;background:var(--chip);padding:1px 5px;bor
     <button id="mNew" class="on">New</button>
     <button id="mBoth">Compare</button>
     <button id="mCfg">Image URLs</button>
+    <select id="boost" title="How much newer cards are favoured">
+      <option value="0">Freshness: off</option>
+      <option value="0.15" selected>Freshness: subtle (15%)</option>
+      <option value="0.30">Freshness: strong (30%)</option>
+      <option value="0.60">Freshness: heavy (60%)</option>
+    </select>
   </div>
   <div class="cfg" id="cfg">
     <input id="tImg" spellcheck="false">
@@ -275,6 +288,9 @@ function render(){
       Object.entries(n.corrections).map(([a,b])=>`${a} &rarr; ${b}`).join(", ")}</span>`);
   bits.push(`<span class="pill">strategy: ${n.strategy}</span>`);
   bits.push(`<span class="pill">${n.results.length} shown &middot; ${n.ms} ms</span>`);
+  const meanYear = n.results.length
+    ? Math.round(n.results.reduce((a, c) => a + (c.year || 0), 0) / n.results.length) : 0;
+  if (meanYear) bits.push(`<span class="pill">mean year ${meanYear}</span>`);
   if(mode === "both"){
     bits.push(o.results.length
       ? `<span class="pill">old: ${o.total}${o.capped ? "+ (capped)" : ""} matches</span>`
@@ -298,7 +314,8 @@ let timer = null;
 async function run(){
   const q = $("#q").value.trim();
   if(!q){ $("#status").innerHTML=""; $("#panes").innerHTML=""; last=null; return; }
-  const r = await fetch("/api/search?q=" + encodeURIComponent(q) + "&limit=24");
+  const r = await fetch("/api/search?q=" + encodeURIComponent(q)
+    + "&limit=24&boost=" + encodeURIComponent($("#boost").value));
   last = await r.json();
   defaults = last.defaults;
   if(!$("#tImg").value)  $("#tImg").value  = T.img  || defaults.image;
@@ -311,6 +328,7 @@ $("#mNew").onclick  = () => { mode="new";  $("#mNew").classList.add("on");
 $("#mBoth").onclick = () => { mode="both"; $("#mBoth").classList.add("on");
                               $("#mNew").classList.remove("on"); render(); };
 $("#mCfg").onclick  = () => $("#cfg").classList.toggle("show");
+$("#boost").onchange = run;
 $("#tSave").onclick = () => {
   T.img = $("#tImg").value.trim(); T.page = $("#tPage").value.trim();
   localStorage.setItem("tImg", T.img); localStorage.setItem("tPage", T.page);
