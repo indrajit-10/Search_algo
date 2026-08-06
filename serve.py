@@ -62,6 +62,7 @@ PAGE_TEMPLATE = ""
 PORT = 8000
 INDEX = None
 LIVE_ROWS = None
+SUGGESTER = None
 
 
 def card_payload(card, why, index):
@@ -150,6 +151,17 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         route = posixpath.normpath(parsed.path)
 
+        if route == "/api/suggest":
+            params = urllib.parse.parse_qs(parsed.query)
+            typed = (params.get("q") or [""])[0]
+            started = time.perf_counter()
+            hits = SUGGESTER.suggest(typed, limit=8) if SUGGESTER else []
+            self._send(json.dumps({
+                "q": typed, "suggestions": hits,
+                "ms": round((time.perf_counter() - started) * 1000, 2),
+            }), "application/json")
+            return
+
         if route == "/api/search":
             params = urllib.parse.parse_qs(parsed.query)
             query = (params.get("q") or [""])[0]
@@ -192,6 +204,17 @@ header{position:sticky;top:0;z-index:10;background:var(--panel);
 #q{flex:1;min-width:260px;padding:11px 14px;font-size:16px;border:1px solid var(--line);
   border-radius:9px;background:var(--bg);color:var(--ink)}
 #q:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.qwrap{position:relative;flex:1;min-width:260px;display:flex}
+.qwrap #q{flex:1}
+#sug{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:40;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.14);overflow:hidden;display:none}
+#sug.show{display:block}
+.sug{padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:9px;
+  font-size:14.5px}
+.sug:hover,.sug.sel{background:var(--chip)}
+.sug .ic{opacity:.4;flex:none}
+.sug b{font-weight:600}
 button,select{padding:9px 13px;border:1px solid var(--line);border-radius:8px;
   background:var(--bg);color:var(--ink);cursor:pointer;font-size:14px}
 button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -231,7 +254,12 @@ code{font:12px ui-monospace,monospace;background:var(--chip);padding:1px 5px;bor
 </style></head><body>
 <header>
   <div class="row">
-    <input id="q" placeholder="Try: funny birthday for mom &nbsp;/&nbsp; birthdya &nbsp;/&nbsp; flash card &nbsp;/&nbsp; aniversary" autofocus>
+    <div class="qwrap">
+      <input id="q" autocomplete="off" spellcheck="false"
+             placeholder="Try: funny birthday for mom &nbsp;/&nbsp; birthdya &nbsp;/&nbsp; flash card"
+             autofocus>
+      <div id="sug"></div>
+    </div>
     <button id="mNew" class="on">New</button>
     <button id="mBoth">Compare</button>
     <button id="mCfg">Image URLs</button>
@@ -348,6 +376,63 @@ function render(){
   }
 }
 
+// ------------------------------------------------------------- autocomplete
+let sugItems = [], sugSel = -1, sugTimer = null, sugSeq = 0;
+
+function closeSug(){ $("#sug").classList.remove("show"); sugSel = -1; }
+
+function renderSug(){
+  const box = $("#sug");
+  if(!sugItems.length){ closeSug(); return; }
+  const typed = $("#q").value.trim().toLowerCase();
+  box.innerHTML = sugItems.map((sg, i) => {
+    // Bold only the part the user has NOT typed, the way a search box does,
+    // so the eye lands on what each suggestion adds.
+    const rest = sg.toLowerCase().startsWith(typed)
+      ? `${sg.slice(0, typed.length)}<b>${sg.slice(typed.length)}</b>` : `<b>${sg}</b>`;
+    return `<div class="sug${i === sugSel ? " sel" : ""}" data-i="${i}">`
+         + `<span class="ic">&#9906;</span><span>${rest}</span></div>`;
+  }).join("");
+  box.classList.add("show");
+  box.querySelectorAll(".sug").forEach(el => {
+    el.onmousedown = e => { e.preventDefault(); pick(+el.dataset.i); };
+  });
+}
+
+function pick(i){
+  if(i < 0 || i >= sugItems.length) return;
+  $("#q").value = sugItems[i];
+  closeSug();
+  run();
+}
+
+async function fetchSug(){
+  const q = $("#q").value.trim();
+  if(q.length < 2){ sugItems = []; closeSug(); return; }
+  const seq = ++sugSeq;
+  const r = await fetch("/api/suggest?q=" + encodeURIComponent(q));
+  const d = await r.json();
+  if(seq !== sugSeq) return;          // a later keystroke already won
+  sugItems = d.suggestions || [];
+  sugSel = -1;
+  renderSug();
+}
+
+$("#q").addEventListener("keydown", e => {
+  const open = $("#sug").classList.contains("show");
+  if(e.key === "ArrowDown" && open){
+    e.preventDefault(); sugSel = (sugSel + 1) % sugItems.length; renderSug();
+  } else if(e.key === "ArrowUp" && open){
+    e.preventDefault(); sugSel = (sugSel - 1 + sugItems.length) % sugItems.length; renderSug();
+  } else if(e.key === "Enter"){
+    if(open && sugSel >= 0){ e.preventDefault(); pick(sugSel); }
+    else { closeSug(); run(); }
+  } else if(e.key === "Escape"){
+    closeSug();
+  }
+});
+$("#q").addEventListener("blur", () => setTimeout(closeSug, 120));
+
 let timer = null;
 async function run(){
   const q = $("#q").value.trim();
@@ -360,7 +445,10 @@ async function run(){
   if(!$("#tPage").value) $("#tPage").value = T.page || defaults.page;
   render();
 }
-$("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 160); });
+$("#q").addEventListener("input", () => {
+  clearTimeout(timer);  timer = setTimeout(run, 160);
+  clearTimeout(sugTimer); sugTimer = setTimeout(fetchSug, 90);
+});
 $("#mNew").onclick  = () => { mode="new";  $("#mNew").classList.add("on");
                               $("#mBoth").classList.remove("on"); render(); };
 $("#mBoth").onclick = () => { mode="both"; $("#mBoth").classList.add("on");
@@ -400,8 +488,11 @@ def main():
         INDEX.big_extn[doc] = row["card_bigimage_extn"]
     LIVE_ROWS = live
 
+    global SUGGESTER
+    SUGGESTER = se.Suggester(INDEX, se.load_query_log())
     print(f"Indexed {INDEX.total:,} live cards in "
           f"{(time.perf_counter()-started)*1000:.0f} ms")
+    print(f"  autocomplete: {len(SUGGESTER.phrases):,} suggestion phrases")
     print(f"\n  http://localhost:{port}\n")
     print("  Thumbnails load directly from your live site. If they do not appear,")
     print("  click 'Image URLs' and paste the real pattern - the failed URL is")

@@ -589,6 +589,10 @@ class SearchIndex:
                     if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"
                     and r["card_label_type"] not in EXCLUDE_LABEL_TYPES]
         self.occasions = derive_occasion_lexicon(rows)
+        # phrase -> how many cards carry it. Tags are already written as search
+        # phrases rather than single words, which makes them the second-best
+        # source of completions after the query log itself.
+        self.tag_phrases = collections.Counter()
         self.cards = []
         self.postings = collections.defaultdict(dict)
         self.document_frequency = collections.Counter()
@@ -605,6 +609,10 @@ class SearchIndex:
             }
             self._index_fields(doc, fields)
             self._build_facets(card, row, fields)
+            for phrase in (row.get("card_tags") or "").split(","):
+                phrase = normalise(phrase)
+                if phrase:
+                    self.tag_phrases[phrase] += 1
             self.cards.append(card)
 
         self.total = len(self.cards)
@@ -1146,6 +1154,202 @@ def _nearest_occasion(index, terms):
     return best
 
 
+
+# ---------------------------------------------------------------------------
+# AUTOCOMPLETE
+# ---------------------------------------------------------------------------
+
+# Query-log entries that must never be offered back to a user. The log is raw
+# input, so it contains an XSS probe someone ran 25 times, path traversal
+# attempts, URL-encoded plus signs, bare years, and the "s's x" forms produced
+# by the broken upstream rewriter. Suggesting any of that would be handing
+# people someone else's attack, or nonsense that cannot match.
+_SUGGEST_REJECT = re.compile(
+    r"""[<>"'`;\\|${}()\[\]/]      # quoting, shell, path, markup
+      | script | alert | passwd     # obvious probes
+      | \bs's\b                     # the rewriter's output
+      | \+                          # URL-encoded spaces
+    """, re.X | re.I)
+_SUGGEST_ALLOWED = re.compile(r"[a-z0-9 &.,'-]+")
+
+MIN_SUGGEST_CHARS = 2       # do not open a dropdown on a single letter
+SUGGEST_LIMIT = 8
+
+
+def _suggestable(phrase):
+    """Is this phrase safe and sensible to offer as a completion?"""
+    if not (3 <= len(phrase) <= 40):
+        return False
+    if _SUGGEST_REJECT.search(phrase):
+        return False
+    if not _SUGGEST_ALLOWED.fullmatch(phrase):
+        return False
+    if phrase.replace(" ", "").isdigit():       # bare years and counts
+        return False
+    return True
+
+
+class Suggester:
+    """
+    Google-style completions, ranked by how often people actually search them.
+
+    Sources, in descending trust:
+
+      1. The production query log. What real users typed, weighted by volume.
+         Nothing else comes close for relevance - "birthday cards free" is not a
+         phrase any catalogue field contains, but 158 people a period type it.
+      2. Card tags. Already phrases rather than single words ("funny birthday
+         cards", "birthday wishes for dad"), weighted by how many cards carry
+         them, and heavily discounted against the log.
+
+    Every candidate is then checked against the index and dropped unless it
+    actually returns cards. A suggestion that leads to an empty page is worse
+    than no suggestion: it is the search box promising something it cannot
+    deliver, in its own voice.
+    """
+
+    LOG_WEIGHT = 1.0
+    TAG_WEIGHT = 0.05           # a tag on 20 cards ~= a query searched once
+
+    def _canonical(self, index, phrase):
+        """
+        Fold a phrase onto the wording the catalogue itself uses.
+
+        "birthday's" normalises to "birthdays", which the log records 735 times
+        purely because the apostrophe bug sent people back to try again. Left
+        alone it outranks "birthday", searched 344 times and actually answered.
+        Folding each word to whichever form the catalogue uses more often merges
+        the two and ranks the canonical spelling.
+        """
+        out = []
+        for word in phrase.split():
+            best, best_df = word, index.document_frequency.get(word, 0)
+            for base in word_variants(word):
+                df = index.document_frequency.get(base, 0)
+                if df > best_df:
+                    best, best_df = base, df
+            out.append(best)
+        return " ".join(out)
+
+    def _in_vocabulary(self, index, phrase):
+        """
+        Every word must be one the catalogue actually uses.
+
+        This is what removes the upstream rewriter's output. "motherings" was
+        logged 58 times, "brothered" 65, "sistering" 41, "lovings" 38, "1cards"
+        535 - all high enough to rank well, none of them typed by a human, and
+        none of them words any card contains. Suggesting them would put machine
+        noise in front of users in the search box's own voice.
+        """
+        return all(index.document_frequency.get(w, 0) >= MIN_DICTIONARY_FREQUENCY
+                   for w in phrase.split())
+
+    def __init__(self, index, query_log=None, verify=True):
+        # Merge on the canonical form, but DISPLAY the wording people actually
+        # use. Folding is only there to stop "birthdays" and "birthday" being
+        # ranked as rivals; shown literally it turns "mothers day" into "mother
+        # day", which no one writes. So each canonical key keeps the
+        # highest-weighted spelling that produced it, and that is what is
+        # offered back.
+        weights = collections.Counter()
+        surface = {}
+
+        def add(raw, weight):
+            phrase = normalise(raw)
+            if not (_suggestable(phrase) and self._in_vocabulary(index, phrase)):
+                return
+            key = self._canonical(index, phrase)
+            weights[key] += weight
+            best, best_w = surface.get(key, (None, -1))
+            if weight > best_w:
+                surface[key] = (phrase, weight)
+
+        for phrase, times in (query_log or []):
+            add(phrase, times * self.LOG_WEIGHT)
+        # Tag phrases come off the cards themselves, so they always match and
+        # need no verification pass.
+        for phrase, cards in index.tag_phrases.items():
+            add(phrase, cards * self.TAG_WEIGHT)
+
+        # Only log-derived phrases need checking, and only those no tag backs.
+        # Verifying all ~10,000 candidates cost 19 seconds of startup for
+        # nothing.
+        if verify:
+            for key in [k for k in list(weights) if k not in index.tag_phrases]:
+                out = search(index, surface[key][0], limit=1)
+                if not out["results"] or out.get("fallback"):
+                    del weights[key]
+                    surface.pop(key, None)
+
+        # Re-key everything on the spelling that will actually be shown.
+        self.weights = collections.Counter()
+        for key, weight in weights.items():
+            self.weights[surface[key][0]] += weight
+        self.phrases = sorted(self.weights)
+        # Word -> phrases, so "birthday" can still suggest "funny birthday
+        # cards" even though the phrase does not start with it.
+        self.by_word = collections.defaultdict(list)
+        for phrase in self.phrases:
+            for word in set(phrase.split()):
+                self.by_word[word].append(phrase)
+
+    def suggest(self, typed, limit=SUGGEST_LIMIT):
+        typed = normalise(typed)
+        if len(typed) < MIN_SUGGEST_CHARS:
+            return []
+
+        import bisect
+        seen, out = set(), []
+
+        def take(phrase, rank):
+            if phrase in seen or phrase == typed:
+                return
+            seen.add(phrase)
+            out.append((rank, -self.weights[phrase], len(phrase), phrase))
+
+        # 1. The phrase starts with exactly what was typed. Strongest.
+        start = bisect.bisect_left(self.phrases, typed)
+        for phrase in self.phrases[start:start + 400]:
+            if not phrase.startswith(typed):
+                break
+            take(phrase, 0)
+
+        # 2. Some word inside the phrase starts with the last word typed, and
+        #    every earlier word typed appears somewhere in it. This is what lets
+        #    "birthday f" reach "funny birthday cards".
+        words = typed.split()
+        head, last = words[:-1], words[-1]
+        for word, phrases in self.by_word.items():
+            if not word.startswith(last):
+                continue
+            for phrase in phrases:
+                if all(h in phrase for h in head):
+                    take(phrase, 1)
+
+        out.sort()
+        return [phrase for _, _, _, phrase in out[:limit]]
+
+
+def load_query_log(path=None):
+    """Read fixtures/real_queries.tsv if it is there. Autocomplete is better
+    with it and still works without it, so a missing file is not an error."""
+    if path is None:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "fixtures", "real_queries.tsv")
+    if not os.path.exists(path):
+        return []
+    rows = []
+    with open(path, encoding="utf-8", newline="") as handle:
+        lines = (l for l in handle if not l.startswith("#"))
+        # QUOTE_NONE: the log contains an unbalanced double quote from an XSS
+        # probe, which otherwise swallows several hundred rows into one field.
+        for row in csv.DictReader(lines, delimiter="\t", quoting=csv.QUOTE_NONE):
+            try:
+                rows.append((row["query"], int(row["times"])))
+            except (TypeError, ValueError, KeyError):
+                continue
+    return rows
+
 # ---------------------------------------------------------------------------
 # THE OLD ALGORITHM, for side-by-side comparison
 # ---------------------------------------------------------------------------
@@ -1329,6 +1533,32 @@ def run_tests(index):
     still_funny = sum(1 for c in warm if c.doc in humour)
     check(f"'funny' still {still_funny}/10 tagged humour with the boost on",
           still_funny >= 8)
+
+    print("\n-- autocomplete --")
+    sugg = Suggester(index, load_query_log())
+    check(f"built {len(sugg.phrases):,} suggestion phrases", len(sugg.phrases) > 1000)
+    for typed, expect in [("bir", "birthday"), ("anniv", "anniversary"),
+                          ("mother", "mothers day"), ("get w", "get well"),
+                          ("60th", "60th birthday"), ("funny bir", "funny birthday")]:
+        hits = sugg.suggest(typed)
+        check(f"{typed!r} suggests {expect!r} (got {hits[:3]})",
+              any(h.startswith(expect) for h in hits))
+
+    # Never hand a user back someone else's attack, or the rewriter's noise.
+    for junk in ["motherings", "brothered", "sistering", "lovings", "1cards",
+                 "thankgiving", "s's x"]:
+        check(f"{junk!r} is never suggested", junk not in sugg.weights)
+    everything = " ".join(sugg.phrases)
+    check("no markup or quoting survives into suggestions",
+          not set("<>\"'`;\\|${}()[]/").intersection(everything))
+
+    # A suggestion that leads to an empty page is the search box breaking its
+    # own promise, so every one of them has to return cards.
+    import random as _r
+    sample = sorted(sugg.weights, key=lambda p: -sugg.weights[p])[:60]
+    dead = [p for p in sample if not search(index, p, limit=1)["results"]]
+    check(f"top 60 suggestions all return cards ({len(dead)} dead)", not dead)
+    check("a single letter opens nothing", sugg.suggest("b") == [])
 
     print("\n-- YouTube cards must never appear --")
     # They embed a video and carry no artwork of their own, so they would render

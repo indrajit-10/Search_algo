@@ -186,6 +186,9 @@ attempt someone ran 25 times. Expect `513 passed, 0 failed`.
 
 Open **http://localhost:8000**. Type and results appear as you go.
 
+- **Autocomplete** — suggestions appear from two characters in. Arrow keys to
+  move, Enter to pick, Escape to dismiss. Ranked by how often your users
+  actually searched each phrase.
 - **New / Compare** — Compare shows old and new side by side with thumbnails.
 - **Freshness** — off / subtle / strong / heavy. The status bar shows the mean
   result year, so you can pick the setting by looking rather than guessing.
@@ -273,6 +276,13 @@ cards**. The last rung is unconditional, so zero results cannot happen.
 
 **4. Rank.** Relevance in ten buckets, freshness as a capped multiplier
 (max +15%), then popularity or recency inside a bucket.
+
+**Autocomplete** is separate, at `GET /api/suggest?q=`. Phrases come from the
+query log weighted by search volume, plus card tags at a heavy discount, and
+every one is verified to return cards before it can be offered. Sub-millisecond.
+The log is raw user input, so it also holds an XSS probe, path traversal, and the
+upstream rewriter's output (`motherings`, `brothered`, `1cards`) — all filtered
+out, since a suggestion is the search box speaking in its own voice.
 
 ---
 
