@@ -271,6 +271,22 @@ FORMAT = {
 # Month-coded q1_value prefixes. Everything else is derived from the data by
 # derive_occasion_lexicon(); these cannot be, because "edec" shares no letters
 # with "christmas".
+#
+# TREATED AS A PROPOSAL, NOT A FACT. Every entry is checked against the cards at
+# index time and dropped unless that prefix really is where the phrase lives -
+# see _validate_hints(). Twelve of the entries below were wrong or ambiguous the
+# first time this ran, because they were written from Western assumptions about
+# which holiday falls in which month, and this catalogue is global:
+#
+#   "independence day" was pinned to July. It spans four occasions here -
+#     ejul (US), eaug (India, 15 Aug), esep (Mexico, 16 Sep), edec (UAE).
+#   "new year" was pinned to January, but esep carries 124 of them: Rosh
+#     Hashanah, which the query log shows searched 879 times.
+#   "thanksgiving" was pinned to November, but October holds more - Canada.
+#   "easter" was pinned to March, and lives in April.
+#
+# Leaving a wrong hint in place is worse than having none: it invents a
+# confident occasion facet that then outranks the words the user actually typed.
 MONTH_PREFIX_HINTS = {
     "ejan": {"new year", "january", "chinese new year", "republic day"},
     "efeb": {"valentine", "valentines", "february", "rose day", "hug day"},
@@ -278,7 +294,7 @@ MONTH_PREFIX_HINTS = {
     "eapr": {"easter", "april", "earth day", "baisakhi"},
     "emay": {"mother", "mothers day", "may", "memorial day", "nurses"},
     "ejun": {"father", "fathers day", "june", "summer"},
-    "ejul": {"july", "independence day", "friendship"},
+    "ejul": {"july", "fourth of july", "july 4th"},
     "eaug": {"friendship", "august", "raksha bandhan", "rakhi"},
     "esep": {"september", "autumn", "labor day", "grandparents"},
     "eoct": {"halloween", "diwali", "october", "dussehra", "boss day"},
@@ -517,7 +533,51 @@ class SpellCorrector:
 # INDEX
 # ---------------------------------------------------------------------------
 
-def derive_occasion_lexicon(rows):
+def _validate_hints(rows, hints=None):
+    """
+    Keep only the hardcoded month hints the catalogue actually supports.
+
+    A hint claims "this phrase means this month". That is a claim about the
+    world, and the world varies by country: Thanksgiving is November in the US
+    and October in Canada, New Year is January unless it is Rosh Hashanah in
+    September, and Independence Day belongs to at least four different months
+    depending on whose it is. A global card catalogue contains all of them.
+
+    So each phrase is counted across the prefixes where it really occurs, on
+    word boundaries so "holi" does not match "holiday", and the hint survives
+    only if the claimed prefix holds a clear plurality. A wrong hint is worse
+    than a missing one - it manufactures a confident occasion facet that then
+    outranks the words the user actually typed.
+    """
+    hints = MONTH_PREFIX_HINTS if hints is None else hints
+    blobs = collections.defaultdict(list)
+    for row in rows:
+        prefix = row["q1_value"].split("_")[0]
+        blobs[prefix].append(normalise(row["card_title"] + " " +
+                                       row["card_description"]))
+
+    kept, dropped = {}, []
+    for prefix, phrases in hints.items():
+        survivors = set()
+        for phrase in phrases:
+            pattern = re.compile(r"\b" + re.escape(normalise(phrase)) + r"\b")
+            counts = {p: sum(1 for b in bl if pattern.search(b))
+                      for p, bl in blobs.items()}
+            total = sum(counts.values())
+            if total < 3:                       # too rare to judge either way
+                continue
+            if counts.get(prefix, 0) / total >= 0.5:
+                survivors.add(phrase)
+            else:
+                best = max(counts, key=counts.get)
+                dropped.append((phrase, prefix, best, counts.get(prefix, 0),
+                                counts[best]))
+        if survivors:
+            kept[prefix] = survivors
+    return kept, dropped
+
+
+def derive_occasion_lexicon(rows, validated_hints=None):
     """
     Build q1_value-prefix -> {human search terms} from the catalogue itself.
 
@@ -527,6 +587,8 @@ def derive_occasion_lexicon(rows):
     titles and tags. Month prefixes get a hint table because "edec" cannot be
     derived from anything.
     """
+    if validated_hints is None:
+        validated_hints, _ = _validate_hints(rows)
     per_prefix = collections.defaultdict(collections.Counter)
     global_counts = collections.Counter()
     for row in rows:
@@ -549,7 +611,7 @@ def derive_occasion_lexicon(rows):
                 scored.append((lift * math.log(1 + count), word))
         scored.sort(reverse=True)
         terms = {w for _, w in scored[:12]}
-        terms.update(MONTH_PREFIX_HINTS.get(prefix, set()))
+        terms.update(validated_hints.get(prefix, set()))
         # the prefix itself is often a real word: birth, love, wed, thank
         if len(prefix) >= 3 and not prefix.startswith("e"):
             terms.add(prefix)
@@ -588,7 +650,8 @@ class SearchIndex:
             rows = [r for r in rows
                     if r["status_id"] == LIVE_STATUS and r["invalid_card"] == "0"
                     and r["card_label_type"] not in EXCLUDE_LABEL_TYPES]
-        self.occasions = derive_occasion_lexicon(rows)
+        self.validated_hints, self.dropped_hints = _validate_hints(rows)
+        self.occasions = derive_occasion_lexicon(rows, self.validated_hints)
         # phrase -> how many cards carry it. Tags are already written as search
         # phrases rather than single words, which makes them the second-best
         # source of completions after the query log itself.
@@ -1072,6 +1135,15 @@ def search(index, raw_query, limit=MAX_RESULTS, popularity=None,
             ladder.append((f"dropped {drop} weak term(s)", ranked_facets,
                            [group_of(t) for t in kept]))
     if ranked_facets:
+        # Keep the single most informative word alongside the facets BEFORE
+        # giving up on text entirely. "indian independence day" is the case:
+        # "independence" names an occasion, and dropping straight to facets-only
+        # discarded "indian" - the one word that separates 15 August from
+        # 4 July - while keeping a facet that was only ever a guess. The most
+        # discriminating term the user typed should outlive an inferred facet.
+        if text_terms:
+            ladder.append(("facets + best term", ranked_facets,
+                           [group_of(text_terms[0])]))
         ladder.append(("facets only", ranked_facets, []))
         # Then relax the facets themselves, vaguest first.
         for keep in range(len(ranked_facets) - 1, 0, -1):
@@ -1533,6 +1605,28 @@ def run_tests(index):
     still_funny = sum(1 for c in warm if c.doc in humour)
     check(f"'funny' still {still_funny}/10 tagged humour with the boost on",
           still_funny >= 8)
+
+    print("\n-- the country that owns the holiday must win --")
+    # A global catalogue holds several Independence Days, several New Years and
+    # two Thanksgivings. The word naming the holiday cannot decide the occasion
+    # on its own; the word naming the country has to survive to do it.
+    for query, expect in [("indian independence day", "eaug_indindependenceday"),
+                          ("mexican independence day", "esep_mexicanindependence"),
+                          ("4th of july", "ejul_fourthjuly"),
+                          ("rosh hashanah", "esep_roshhashanah"),
+                          ("easter", "eapr_easter")]:
+        out = search(index, query, limit=5)
+        top = out["results"][0].category if out["results"] else ""
+        check(f"{query!r} -> {top!r} starts with {expect!r}", top.startswith(expect))
+
+    # Hardcoded month hints are proposals, not facts. Any the catalogue
+    # contradicts must be dropped before they can invent a wrong facet.
+    dropped = index.dropped_hints
+    check(f"{len(dropped)} unsupported month hints were dropped", dropped)
+    for phrase, claimed, actual, _, _ in dropped:
+        if phrase == "easter":
+            check(f"'easter' hint ({claimed}) dropped in favour of {actual}",
+                  actual == "eapr")
 
     print("\n-- autocomplete --")
     sugg = Suggester(index, load_query_log())
