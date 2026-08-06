@@ -19,3 +19,6 @@ data/*
 *.csv.gz
 *.7z
 !fixtures/*.tsv
+
+# the environment run.sh builds
+.venv/

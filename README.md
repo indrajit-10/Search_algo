@@ -11,28 +11,69 @@ that size needs a search engine, so there isn't one.
 
 ## Testing it, step by step
 
-### Step 1 — drop your export in `data/`
-
-You need Python 3.8+ and your card export. Nothing else — no pip install, no
-virtualenv, no config file.
+### Step 1 — clone, drop the export in `data/`, run
 
 ```bash
-git clone <this repo>
+git clone https://github.com/indrajit-10/Search_algo
 cd Search_algo
 cp /wherever/card_database.csv data/
+
+./run.sh                 # macOS / Linux    →  http://localhost:8000
+run.bat                  # Windows
 ```
 
-That is the whole setup. Every script looks in `data/` on its own, so none of
-them need a path argument. If the file is missing you get a message saying
-exactly where to put it, not a stack trace.
+That is the entire setup. `run.sh` finds a suitable Python, builds an isolated
+`.venv` on first run, and uses it from then on.
 
-The file must be the `cards` table with its normal columns — the same export you
-already have. `data/` is gitignored, so production data can never be committed.
+**There is nothing to install.** Every import is standard library — verified by
+walking the AST of every file, not by reading them. Check it yourself:
+
+```bash
+./run.sh doctor
+```
+```
+python      /path/to/Search_algo/.venv/bin/python
+version     Python 3.13.12
+environment .venv (isolated)
+third-party none - pure standard library
+export      card_database.csv
+```
+
+So the virtualenv is not there to hold packages. It guards against a broken
+host: `python` pointing at Python 2, a `PYTHONPATH` from another project
+shadowing a stdlib module, user site-packages overriding something. If
+`python3-venv` is missing (Debian and Ubuntu split it out), it falls back to the
+interpreter directly and says so — with no dependencies that is perfectly safe.
+
+Needs Python 3.7 or newer. No walrus, no `match`, no builtin generics anywhere,
+so anything from 3.7 up runs it.
+
+**CSV, not xlsx.** Excel reformats `card_created_date`, strips leading zeros
+from `card_number`, and mangles the `%92` apostrophe sequences the whole
+normalisation path depends on. Drop a spreadsheet in `data/` and it tells you
+this rather than failing three frames deep.
+
+`data/` and `.venv/` are both gitignored — production data cannot be committed.
+
+### Every command
+
+```bash
+./run.sh                 the browser interface
+./run.sh test            all three suites in order
+./run.sh search          interactive prompt
+./run.sh compare         old Sphinx pipeline vs new
+./run.sh evaluate        replay the query log
+./run.sh audit           measure the old system from your export
+./run.sh doctor          check the environment, run nothing
+```
+
+The rest of this file explains what each one shows. If you only run two, make
+them `./run.sh compare` and `./run.sh`.
 
 ### Step 2 — run the engine's own tests
 
 ```bash
-python3 search_engine.py
+./run.sh search
 ```
 
 71 tests, one per reported complaint. You should see `71 passed, 0 failed`, then
@@ -50,7 +91,7 @@ Press Enter on a blank line to quit.
 ### Step 3 — see old versus new, side by side
 
 ```bash
-python3 search_engine.py --compare
+./run.sh compare
 ```
 
 Runs the same query through a faithful simulation of the current Sphinx pipeline
@@ -66,7 +107,7 @@ QUERY: 'flash card'
 ### Step 4 — replay your real query log
 
 ```bash
-python3 evaluate.py
+./run.sh evaluate
 ```
 
 Replays every query in `fixtures/real_queries.tsv` through both engines, weighted
@@ -94,7 +135,7 @@ SELECT * FROM cards WHERE status_id = 1 AND invalid_card = 0;   -- 13,042 rows, 
 ### Step 5 — hostile input
 
 ```bash
-python3 test_edge_cases.py
+./run.sh edge
 ```
 
 513 assertions across nine sections: crash resistance, the no-empty-page
@@ -105,7 +146,7 @@ attempt someone ran 25 times. Expect `513 passed, 0 failed`.
 ### Step 6 — the browser test bench
 
 ```bash
-python3 serve.py
+./run.sh
 ```
 
 Open **http://localhost:8000**. Type and results appear as you go.
@@ -131,7 +172,7 @@ and it becomes the default for everyone.
 ### Step 7 — check the claims for yourself
 
 ```bash
-python3 audit_catalogue.py
+./run.sh audit
 ```
 
 Every number in the design was measured, not assumed. This prints them from your
@@ -151,6 +192,7 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `data/` | Where your export goes. Gitignored. |
+| `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
 
 ---
 
