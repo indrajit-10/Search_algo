@@ -310,10 +310,14 @@ def tokenise(text):
 # ---------------------------------------------------------------------------
 # SPELL CORRECTION  --  SymSpell deletion index
 #
-# spell_correct.py proved the principle (compute the distance, do not list the
-# typos) and benchmark.py proved brute force gives the same answers as SymSpell,
-# only slower. This is the fast version: precompute deletes of every dictionary
-# term once, then a lookup is a set intersection instead of a scan.
+# The principle: compute the distance, never maintain a list of typos. The old
+# system's synonym table held 11 spellings of "raksha" and none of "anniversary",
+# which cannot be fixed by adding more rows - "anniversary" alone has 595
+# misspellings within a single edit.
+#
+# Brute-force Levenshtein over the vocabulary gives identical answers to this and
+# is far simpler, but scans every term per query. This precomputes the deletes of
+# each dictionary term once, so a lookup becomes a set intersection.
 # ---------------------------------------------------------------------------
 
 def deletes(word, max_distance):

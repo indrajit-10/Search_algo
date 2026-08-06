@@ -10,3 +10,9 @@ env/
 # editors
 .idea/
 .vscode/
+
+# the card export - your data, 34 MB, never committed
+card_database.csv
+card_database.7z
+*.csv
+!fixtures/*.tsv
