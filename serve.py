@@ -84,13 +84,51 @@ def card_payload(card, why, index):
     }
 
 
-def do_search(query, limit, boost):
+def _number(params, name, default, low, high, cast):
+    """
+    Read a query-string number, and never trust it.
+
+    Both halves matter once this is reachable from another machine. Parsing
+    without a guard meant "?limit=abc" threw ValueError out of the handler and
+    dropped the connection mid-response. Clamping with min() alone let
+    "?limit=-5" straight through, because -5 is under the ceiling - and a
+    negative limit slices results the other way round, so a 4 KB response became
+    383 KB of the whole result set. Anyone who can reach the page can send
+    either one.
+    """
+    try:
+        value = cast((params.get(name) or [default])[0])
+    except (TypeError, ValueError):
+        return default
+    if value != value:                      # NaN survives every comparison
+        return default
+    return max(low, min(value, high))
+
+
+def do_search(query, limit, boost, compare=True):
     started = time.perf_counter()
     out = se.search(INDEX, query, limit=limit, recency_boost=boost)
     elapsed = (time.perf_counter() - started) * 1000
 
     new_results = [card_payload(c, out["explain"].get(c.doc, ""), INDEX)
                    for c in out["results"]]
+
+    # The old pipeline rescans every live row, which costs ~30x the new engine
+    # and is invisible unless the page is actually showing the comparison. On a
+    # laptop that is a rounding error; with several people typing at once it is
+    # the whole bottleneck, so it is only run when asked for.
+    if not compare:
+        return {
+            "query": query,
+            "new": {"results": new_results, "strategy": out["strategy"],
+                    "message": out["message"], "corrections": out["corrections"],
+                    "fallback": out.get("fallback", False),
+                    "ms": round(elapsed, 1)},
+            "old": None,
+            "boost": boost,
+            "defaults": {"image": IMAGE_TEMPLATE, "fallback": IMAGE_FALLBACK,
+                         "page": PAGE_TEMPLATE},
+        }
 
     started = time.perf_counter()
     old_rows, old_total = se.old_search(LIVE_ROWS, query, limit=limit)
@@ -136,6 +174,11 @@ def do_search(query, limit, boost):
 
 
 class Handler(BaseHTTPRequestHandler):
+    # A connection that opens and then says nothing otherwise holds its thread
+    # for ever. Harmless on a laptop; on anything reachable by other people it
+    # is how you run out of threads without any traffic.
+    timeout = 30
+
     def log_message(self, *args):          # keep the console readable
         pass
 
@@ -165,13 +208,10 @@ class Handler(BaseHTTPRequestHandler):
         if route == "/api/search":
             params = urllib.parse.parse_qs(parsed.query)
             query = (params.get("q") or [""])[0]
-            limit = min(int((params.get("limit") or ["24"])[0]), 60)
-            try:
-                boost = max(0.0, min(float((params.get("boost")
-                                            or [se.RECENCY_BOOST])[0]), 1.0))
-            except ValueError:
-                boost = se.RECENCY_BOOST
-            self._send(json.dumps(do_search(query, limit, boost)),
+            limit = _number(params, "limit", 24, 1, 60, int)
+            boost = _number(params, "boost", se.RECENCY_BOOST, 0.0, 1.0, float)
+            compare = (params.get("mode") or ["new"])[0] == "both"
+            self._send(json.dumps(do_search(query, limit, boost, compare)),
                        "application/json")
             return
 
@@ -343,7 +383,9 @@ function paneHTML(title, list, note){
 
 function render(){
   if(!last) return;
-  const n = last.new, o = last.old;
+  // o is null when the search was fetched in New-only mode, so every use of it
+  // below has to be gated on the comparison actually having been run.
+  const n = last.new, o = last.old, both = mode === "both" && o;
   const bits = [];
   if(n.corrections && Object.keys(n.corrections).length)
     bits.push(`<span class="pill good">corrected: ${
@@ -355,7 +397,7 @@ function render(){
   const meanYear = n.results.length
     ? Math.round(n.results.reduce((a, c) => a + (c.year || 0), 0) / n.results.length) : 0;
   if (meanYear) bits.push(`<span class="pill">mean year ${meanYear}</span>`);
-  if(mode === "both"){
+  if(both){
     bits.push(o.results.length
       ? `<span class="pill">old: ${o.total}${o.capped ? "+ (capped)" : ""} matches</span>`
       : `<span class="pill bad">old: ZERO &rarr; carousel</span>`);
@@ -363,7 +405,7 @@ function render(){
   $("#status").innerHTML = bits.join("");
 
   const panes = $("#panes");
-  if(mode === "both"){
+  if(both){
     panes.className = "panes split";
     panes.innerHTML = paneHTML("New engine", n.results)
       + paneHTML("Old (Sphinx pipeline)", o.results,
@@ -438,7 +480,8 @@ async function run(){
   const q = $("#q").value.trim();
   if(!q){ $("#status").innerHTML=""; $("#panes").innerHTML=""; last=null; return; }
   const r = await fetch("/api/search?q=" + encodeURIComponent(q)
-    + "&limit=24&boost=" + encodeURIComponent($("#boost").value));
+    + "&limit=24&mode=" + mode
+    + "&boost=" + encodeURIComponent($("#boost").value));
   last = await r.json();
   defaults = last.defaults;
   if(!$("#tImg").value)  $("#tImg").value  = T.img  || defaults.image;
@@ -449,10 +492,13 @@ $("#q").addEventListener("input", () => {
   clearTimeout(timer);  timer = setTimeout(run, 160);
   clearTimeout(sugTimer); sugTimer = setTimeout(fetchSug, 90);
 });
+// Switching to Compare has to re-fetch: the old pipeline is only run when the
+// page says it is going to show it.
 $("#mNew").onclick  = () => { mode="new";  $("#mNew").classList.add("on");
                               $("#mBoth").classList.remove("on"); render(); };
 $("#mBoth").onclick = () => { mode="both"; $("#mBoth").classList.add("on");
-                              $("#mNew").classList.remove("on"); render(); };
+                              $("#mNew").classList.remove("on");
+                              last && last.old ? render() : run(); };
 $("#mCfg").onclick  = () => $("#cfg").classList.toggle("show");
 $("#boost").onchange = run;
 $("#tSave").onclick = () => {
@@ -464,14 +510,40 @@ $("#tSave").onclick = () => {
 """
 
 
+def lan_address(port):
+    """
+    The address someone else on this network should type.
+
+    Found by asking the OS which of our interfaces it would use to reach the
+    outside world - no packet is actually sent, a connected UDP socket just
+    resolves the route. Reading hostname resolution instead tends to answer
+    127.0.1.1 on Linux, which is useless to hand to anyone.
+    """
+    import socket
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        probe.connect(("192.0.2.1", 9))     # TEST-NET-1: reserved, never routed
+        return f"http://{probe.getsockname()[0]}:{port}"
+    except OSError:
+        return None
+    finally:
+        probe.close()
+
+
 def main():
     global INDEX, LIVE_ROWS
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     path = args[0] if args else None
     port = PORT
+    # Listening on every interface is what lets someone else open the page, and
+    # it is also the whole security model: there is no login, so anyone who can
+    # reach the port can search. --host=127.0.0.1 keeps it to this machine.
+    host = "0.0.0.0"
     for arg in sys.argv[1:]:
         if arg.startswith("--port="):
             port = int(arg.split("=", 1)[1])
+        elif arg.startswith("--host="):
+            host = arg.split("=", 1)[1]
 
     rows = se.load_rows(se.find_export(path))
 
@@ -493,11 +565,17 @@ def main():
     print(f"Indexed {INDEX.total:,} live cards in "
           f"{(time.perf_counter()-started)*1000:.0f} ms")
     print(f"  autocomplete: {len(SUGGESTER.phrases):,} suggestion phrases")
-    print(f"\n  http://localhost:{port}\n")
-    print("  Thumbnails load directly from your live site. If they do not appear,")
+    print(f"\n  this machine     http://localhost:{port}")
+    lan = lan_address(port) if host == "0.0.0.0" else None
+    if lan:
+        print(f"  same network     {lan}")
+        print("                   (anyone who can reach it can search - there is no login)")
+    elif host != "0.0.0.0":
+        print(f"  bound to {host} only")
+    print("\n  Thumbnails load directly from your live site. If they do not appear,")
     print("  click 'Image URLs' and paste the real pattern - the failed URL is")
     print("  printed in each empty tile so the template is easy to correct.\n")
-    ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
+    ThreadingHTTPServer((host, port), Handler).serve_forever()
 
 
 if __name__ == "__main__":

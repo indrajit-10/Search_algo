@@ -231,6 +231,75 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 
 ---
 
+## Letting someone else try it
+
+The server already listens on every interface and handles requests in parallel,
+so nothing needs changing to put it in front of someone. On start it prints both
+addresses:
+
+```
+  this machine     http://localhost:8000
+  same network     http://192.168.1.24:8000
+                   (anyone who can reach it can search - there is no login)
+```
+
+### Same office or same wifi
+
+Send them the **same network** line. That is the whole procedure. If it does not
+open, the port is being blocked — allow 8000 through the firewall on the machine
+running it, or use `--port=` to pick one that is already open.
+
+### Anywhere else
+
+Two ways, depending on whether this is a demo or something that has to stay up.
+
+**A tunnel** is right for a demo and needs no server at all. `cloudflared tunnel
+--url http://localhost:8000`, or ngrok, or Tailscale — each gives you an HTTPS
+address that reaches the laptop you are already running it on. Start it, send the
+link, close it when you are done.
+
+**A small VM** is right if it has to outlive your laptop. Any $5 box will do.
+Copy the repo and the CSV up — remember `data/` is gitignored, so the export
+will not come with a `git clone` and has to be copied separately. Run it under
+systemd or tmux so it survives you logging out, and put Caddy or nginx in front
+if you want HTTPS and a hostname.
+
+### Before you expose it, four things are true
+
+**There is no login.** Anyone with the address can search. That is the entire
+access model. It is your own public card catalogue so nothing secret is on show,
+but the decision should be deliberate rather than a surprise.
+
+**Ship only the live rows.** A full export is 107,160 rows, including archived
+and invalid cards that are not served anywhere. The engine ignores them, so
+there is no reason to put them on a box you do not control:
+
+```sql
+SELECT * FROM cards WHERE status_id = 1 AND invalid_card = 0;   -- 13,042 rows, 3.6 MB
+```
+
+**This is a test bench, not production.** Python's built-in HTTP server is
+explicitly not meant to face the open internet — no rate limiting, no request
+size limits, no protection against a client that connects and then goes quiet
+beyond a 30-second timeout. Behind a tunnel, shown to a client, it is fine. As
+the search endpoint for the live site, it is not; that is a job for the engine
+plus whatever already serves 123greetings.
+
+**Budget 512 MB and about 5 seconds.** The process settles around 320 MB with
+the catalogue indexed, and the index builds once at startup. A 512 MB instance
+is tight but works; 1 GB is comfortable. It must stay running — restarting per
+request would mean a 5-second index build every time.
+
+### How many people at once
+
+Eight testers searching simultaneously answer in about 19 ms each. That is with
+**Compare** off. Compare re-runs the old Sphinx pipeline, which rescans every
+live row and costs roughly thirty times the new engine, so it is only run when
+the page is actually showing it. Leave everyone on **New** unless they want the
+side-by-side and it will stay quick.
+
+---
+
 ## What each file is
 
 | File | What it does |
