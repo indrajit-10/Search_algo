@@ -90,3 +90,106 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-01	Thank you	inspirational	thank_inspirational	1	1
 2026-08-01	World languages	spanish_birthday	w_spanish_birthday	1	1
 2026-08-01	World languages	russian_birthday	w_russian_birthday	1	1
+2026-08-02	Anniversary	anniversaryetc	anniv_anniversaryetc	15	10
+2026-08-02	Anniversary	wedanniv_couple	anniv_wedanniv_couple	10	8
+2026-08-02	Anniversary	belated	anniv_belated	3	2
+2026-08-02	Anniversary	wedanniv_family	anniv_wedanniv_family	3	3
+2026-08-02	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	2	2
+2026-08-02	Anniversary	ouranniversary_forher	anniv_ouranniversary_forher	2	1
+2026-08-02	Birthday	happybirthday	birth_happybirthday	432	54
+2026-08-02	Birthday	belated	birth_belated	17	9
+2026-08-02	Birthday	sonanddaughter	birth_sonanddaughter	12	5
+2026-08-02	Birthday	fun	birth_fun	12	8
+2026-08-02	Birthday	songs	birth_songs	12	6
+2026-08-02	Birthday	flowers	birth_flowers	8	4
+2026-08-02	Birthday	milestone	birth_milestone	8	6
+2026-08-02	Birthday	wishes	birth_wishes	8	5
+2026-08-02	Birthday	extfamily	birth_extfamily	7	4
+2026-08-02	Birthday	friends	birth_friends	6	4
+2026-08-02	Birthday	bronsis	birth_bronsis	5	4
+2026-08-02	Birthday	momndad	birth_momndad	4	4
+2026-08-02	Birthday	blessings	birth_blessings	3	3
+2026-08-02	Birthday	forher	birth_forher	3	3
+2026-08-02	Birthday	hubbywife	birth_hubbywife	2	2
+2026-08-02	Birthday	forhim	birth_forhim	2	2
+2026-08-02	Birthday	kids	birth_kids	1	1
+2026-08-02	Birthday	missyou	birth_missyou	1	1
+2026-08-02	Birthday	balloons	birth_balloons	1	1
+2026-08-02	Congratulations	foreveryone	congrats_foreveryone	3	2
+2026-08-02	Congratulations	retirement	congrats_retirement	3	2
+2026-08-02	Congratulations	onotheroccasions	congrats_onotheroccasions	3	2
+2026-08-02	Congratulations	newcarandlicense	congrats_newcarandlicense	1	1
+2026-08-02	Congratulations	newjob	congrats_newjob	1	1
+2026-08-02	Cute	kiss	cute_kiss	1	1
+2026-08-02	Events cards	eaug_friendshipday_happy	eaug_friendshipday_happy	69	14
+2026-08-02	Events cards	eaug_hugmonth	eaug_hugmonth	23	4
+2026-08-02	Events cards	eaug_cardssister	eaug_cardssister	12	4
+2026-08-02	Events cards	eaug_friendshipday_thanku	eaug_friendshipday_thanku	10	3
+2026-08-02	Events cards	eaug_girlfriendsday	eaug_girlfriendsday	10	3
+2026-08-02	Events cards	eaug_friendshipday_heart	eaug_friendshipday_heart	6	4
+2026-08-02	Events cards	eaug_friendshipweek	eaug_friendshipweek	5	2
+2026-08-02	Events cards	eaug_friendshipday_more	eaug_friendshipday_more	4	1
+2026-08-02	Events cards	eaug_flwrmonthaug	eaug_flwrmonthaug	3	3
+2026-08-02	Events cards	eaug_friendshipday_flowers	eaug_friendshipday_flowers	3	1
+2026-08-02	Events cards	wed_wed_congrats	wed_wed_congrats	3	1
+2026-08-02	Events cards	eaug_nationalwatermelon_day	eaug_nationalwatermelon_day	3	1
+2026-08-02	Events cards	eaug_icecream_sandwich_day	eaug_icecream_sandwich_day	2	2
+2026-08-02	Events cards	edec_christworldday_english	edec_christworldday_english	2	1
+2026-08-02	Events cards	esep_nathoneymonth	esep_nathoneymonth	2	1
+2026-08-02	Events cards	eaug_friendshipday_soulmates	eaug_friendshipday_soulmates	2	1
+2026-08-02	Events cards	ejan_thankyoucards	ejan_thankyoucards	2	2
+2026-08-02	Events cards	eaug_friendshipday_makesmile	eaug_friendshipday_makesmile	1	1
+2026-08-02	Events cards	eaug_justbecauseday	eaug_justbecauseday	1	1
+2026-08-02	Events cards	eaug_thankyouday	eaug_thankyouday	1	1
+2026-08-02	Events cards	eaug_romanceday	eaug_romanceday	1	1
+2026-08-02	Events cards	eaug_nationalraspberry_cream_pie_day	eaug_nationalraspberry_cream_pie_day	1	1
+2026-08-02	Events cards	efeb_friendweek	efeb_friendweek	1	1
+2026-08-02	Everyday greetings	morning	gen_morning	17	5
+2026-08-02	Everyday greetings	getwell	gen_getwell	10	8
+2026-08-02	Everyday greetings	thinkingofyou	gen_thinkingofyou	7	6
+2026-08-02	Everyday greetings	luck	gen_luck	2	1
+2026-08-02	Everyday greetings	weekend	gen_weekend	1	1
+2026-08-02	Everyday greetings	goodnight	gen_goodnight	1	1
+2026-08-02	Everyday greetings	sorry	gen_sorry	1	1
+2026-08-02	Everyday greetings	voyage	gen_voyage	1	1
+2026-08-02	Family & loved ones	lovedones	fkt_lovedones	1	1
+2026-08-02	Family & loved ones	loveyoudad	fkt_loveyoudad	1	1
+2026-08-02	Family & loved ones	sisters	fkt_sisters	1	1
+2026-08-02	Flowers	flrwishes	flwr_flrwishes	6	3
+2026-08-02	Flowers	friend	flwr_friend	1	1
+2026-08-02	Flowers	roses	flwr_roses	1	1
+2026-08-02	Friendship	bestfriends	friend_bestfriends	23	9
+2026-08-02	Friendship	friendsforever	friend_friendsforever	7	3
+2026-08-02	Friendship	specialfriend	friend_specialfriend	3	2
+2026-08-02	Friendship	missingyou	friend_missingyou	2	1
+2026-08-02	Friendship	hello	friend_hello	2	2
+2026-08-02	Friendship	friendshipetc	friend_friendshipetc	2	1
+2026-08-02	Friendship	smiles	friend_smiles	1	1
+2026-08-02	Friendship	hugsncaring	friend_hugsncaring	1	1
+2026-08-02	Inspirational & sympathy	sympathy	insp_sympathy	12	7
+2026-08-02	Inspirational & sympathy	health	insp_health	4	1
+2026-08-02	Inspirational & sympathy	poetry	insp_poetry	1	1
+2026-08-02	Inspirational & sympathy	recovery	insp_recovery	1	1
+2026-08-02	Inspirational & sympathy	encour	insp_encour	1	1
+2026-08-02	Keeping in touch	thinkingofyou	intouch_thinkingofyou	1	1
+2026-08-02	Keeping in touch	acrossthemiles	intouch_acrossthemiles	1	1
+2026-08-02	Love & romance	iloveyou_crazy	love_iloveyou_crazy	8	6
+2026-08-02	Love & romance	iloveyou_general	love_iloveyou_general	5	4
+2026-08-02	Love & romance	lovepoems	love_lovepoems	3	3
+2026-08-02	Love & romance	iloveyou_couples	love_iloveyou_couples	2	1
+2026-08-02	Love & romance	dating	love_dating	2	2
+2026-08-02	Love & romance	iloveyou_kisses	love_iloveyou_kisses	2	1
+2026-08-02	Love & romance	youarespecial	love_youarespecial	1	1
+2026-08-02	Love & romance	newlove	love_newlove	1	1
+2026-08-02	Pets	hihello	pet_hihello	1	1
+2026-08-02	Thank you	birthday	thank_birthday	19	5
+2026-08-02	Thank you	inspirational	thank_inspirational	12	1
+2026-08-02	Thank you	everyday	thank_everyday	10	3
+2026-08-02	Thank you	friendship	thank_friendship	6	2
+2026-08-02	Thank you	flower	thank_flower	2	1
+2026-08-02	Thank you	love	thank_love	1	1
+2026-08-02	Thank you	wedding	thank_wedding	1	1
+2026-08-02	Thank you	congratulations	thank_congratulations	1	1
+2026-08-02	World languages	hindi_indian	w_hindi_indian	7	2
+2026-08-02	World languages	german_birthday	w_german_birthday	2	1
+2026-08-02	World languages	spanish_secretariesday	w_spanish_secretariesday	1	1
