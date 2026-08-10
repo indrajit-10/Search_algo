@@ -237,6 +237,19 @@ Which categories are people actually sharing? The social-sends log knows which
 card went out but not what it was about; `q1_value` in the card list is the only
 column that does. Join the two and the day sorts itself into occasions.
 
+A `q1_value` is written `category_subcategory`, and the split is on the **first**
+underscore only — everything before it is the category, everything after it is the
+sub-category, however many underscores the sub-category carries of its own:
+
+| `q1_value` | Category | Sub-category |
+|---|---|---|
+| `birth_happybirthday` | Birthday | `happybirthday` |
+| `eaug_friendshipday_happy` | August occasions | `friendshipday_happy` |
+| `anniv_ouranniversary_forher` | Anniversary | `ouranniversary_forher` |
+
+Splitting on every underscore instead would invent categories that do not exist,
+so that rule is asserted in the tests rather than left to read correctly.
+
 ```bash
 python3 social_sends_report.py
 ```
@@ -266,12 +279,30 @@ the most-shared cards, and where they went. Two things are called out rather
 than absorbed: sends whose card id is not in the card list, and sends that did
 not report success.
 
+`--detail` adds a block per category — every category, every one of its
+sub-categories, nothing truncated:
+
+```
+BIRTHDAY                                     birth_*       373 sends     63.1%
+  95 cards, 254 senders
+  Channels   Text 190 (50.9%), More 112 (30.0%), Whatsapp 69 (18.5%),
+             SMS 2 (0.5%)
+  Sub-category                             Sends  Of cat  Of day Cards Senders
+  happybirthday                              308   82.6%   52.1%    51     213
+  fun                                         13    3.5%    2.2%     6       9
+```
+
 | Option | What it does |
 |---|---|
-| `--csv report/` | writes the four tables as CSV for a spreadsheet |
+| `--detail` | adds the per-category blocks, with sub-categories underneath |
+| `--csv report/` | writes the five tables as CSV for a spreadsheet |
 | `--out report.txt` | saves the text report as well as printing it |
 | `--top 30` | lengthens the top-N tables (default 15) |
 | `--cards FILE` | name the card list explicitly |
+
+`--csv` writes `by_category.csv`, `by_subcategory.csv`, `category_detail.csv`
+(one row per sub-category, carrying its category's totals so it pivots either
+way), `by_card.csv` and `category_by_channel.csv`.
 
 ---
 
@@ -354,7 +385,7 @@ side-by-side and it will stay quick.
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `social_sends_report.py` | Daily social-sends log, counted by card category. |
-| `test_social_sends_report.py` | 25 assertions on the three shapes a send log arrives in. |
+| `test_social_sends_report.py` | 41 assertions on the three shapes a send log arrives in, and on the category split. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `fixtures/social_sends_paste.txt` | A send log copied out of the database browser, for the parser. |
 | `data/` | Where your export goes. Gitignored. |

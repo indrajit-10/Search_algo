@@ -243,6 +243,59 @@ def main():
         except SystemExit as error:
             s.check("does not look like a card list" in str(error),
                     "a card list with no q1_value raises", str(error)[:60])
+
+        # ------------------------------------ the split the whole report rests on
+        s.rule("6. CATEGORY AND SUB-CATEGORY")
+        s.check(report.split_q1("birth_happybirthday") == ("birth", "happybirthday"),
+                "a two-part q1 splits into category and sub-category",
+                report.split_q1("birth_happybirthday"))
+        # The one that would quietly invent a category if the split were greedy:
+        # eaug_friendshipday_happy is August / friendshipday_happy, and never
+        # August / friendshipday with a stray "happy" beside it.
+        s.check(report.split_q1("eaug_friendshipday_happy")
+                == ("eaug", "friendshipday_happy"),
+                "a sub-category keeps its own underscores",
+                report.split_q1("eaug_friendshipday_happy"))
+        s.check(report.split_q1("anniv_ouranniversary_forher")[0] == "anniv",
+                "a three-part q1 still has one category",
+                report.split_q1("anniv_ouranniversary_forher")[0])
+        s.check(report.label_of("eaug_friendshipday_happy") == "August occasions",
+                "a month code is spelled out",
+                report.label_of("eaug_friendshipday_happy"))
+        s.check(report.label_of("zzz_newthing") == "zzz",
+                "an unknown category prints as itself, not as a guess",
+                report.label_of("zzz_newthing"))
+
+        detail = report.render_detail(built)
+        s.check("BIRTHDAY" in detail and "AUGUST OCCASIONS" in detail
+                and "ANNIVERSARY" in detail,
+                "every category that was sent gets a block")
+        s.check("happybirthday" in detail and "friendshipday_happy" in detail,
+                "sub-categories are listed under their category")
+        s.check("birth_happybirthday" not in detail,
+                "a sub-category row drops the category it is already under")
+        for prefix, tally in built["occasions"].items():
+            s.check(sum(tally.subcategories.values()) == tally.sends,
+                    f"{prefix}: sub-categories add up to the category",
+                    f"{sum(tally.subcategories.values())} vs {tally.sends}")
+        s.check(sum(len(t.subcategories) for t in built["occasions"].values())
+                == len(built["subcategories"]),
+                "no sub-category is dropped between the two tables")
+        s.check(max(len(line) for line in detail.splitlines()) <= 78,
+                "the detail block fits an 80-column terminal",
+                max(len(line) for line in detail.splitlines()))
+        s.check(report.plural(1, "card") == "1 card"
+                and report.plural(2, "card") == "2 cards",
+                "one card is not 1 cards")
+
+        folded = []
+        report.wrap(folded.append, "  Channels   ",
+                    [f"Channel{i} {i} ({i}.0%)" for i in range(9)], 78)
+        s.check(len(folded) > 1 and max(len(line) for line in folded) <= 78,
+                "a long channel list folds instead of running off the line",
+                max(len(line) for line in folded))
+        s.check(all("(" not in line or ")" in line for line in folded),
+                "folding never splits one channel across two lines")
     finally:
         shutil.rmtree(work, ignore_errors=True)
 

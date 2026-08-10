@@ -12,11 +12,17 @@ the whole report is that one join:
 
     social send  --card_id-->  card_number  --q1_value-->  category
 
-A q1_value reads `occasion_subcategory`: `birth_happybirthday`,
-`eaug_friendshipday_happy`, `anniv_ouranniversary_forher`. Both halves are
-worth counting and they answer different questions, so both get a table. The
-prefix is the occasion - "we sent 373 birthday cards". The full slug is the
-sub-category - "and 217 of them were the plain happy-birthday kind".
+A q1_value is written `category_subcategory` - everything before the first
+underscore is the category, everything after it is the sub-category, however
+many underscores the sub-category itself carries: `birth_happybirthday` is
+Birthday / happybirthday, `eaug_friendshipday_happy` is August / friendshipday
+_happy, `anniv_ouranniversary_forher` is Anniversary / ouranniversary_forher.
+
+Both halves are worth counting and they answer different questions, so both
+get a table. The category answers "we sent 373 birthday cards". The
+sub-category answers "and 308 of them were the plain happy-birthday kind".
+--detail puts the two together: every category in full, with its own
+sub-categories, channels and countries underneath it.
 
 Either file can be .xlsx, .csv, .tsv, .csv.gz or .zip. Excel is read directly
 rather than asking for a CSV save first: this report joins two numeric columns
@@ -41,10 +47,10 @@ import zipfile
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-# The 29 q1_value prefixes in the catalogue, in plain English. Only the twelve
-# month codes genuinely need translating - "eaug" shares no letters with
+# The 29 q1_value categories in the catalogue, in plain English. Only the
+# twelve month codes genuinely need translating - "eaug" shares no letters with
 # "August" - but a report is read by people who do not have the slug list in
-# their head, so the rest are spelled out too. An unlisted prefix is printed
+# their head, so the rest are spelled out too. An unlisted category is printed
 # as-is rather than guessed at: a new occasion should look new, not wrong.
 PREFIX_LABEL = {
     "birth":   "Birthday",
@@ -407,6 +413,23 @@ def load_categories(path):
 # The report
 # --------------------------------------------------------------------------
 
+def split_q1(q1):
+    """`category_subcategory` -> ("category", "subcategory").
+
+    On the first underscore only. A sub-category is allowed to carry more of
+    them - `eaug_friendshipday_happy` is one August sub-category, not two - so
+    splitting on every underscore would invent categories that do not exist.
+    """
+    category, _, subcategory = (q1 or "").partition("_")
+    return category, subcategory
+
+
+def label_of(q1):
+    """The plain-English category a q1_value belongs to."""
+    category = split_q1(q1)[0]
+    return PREFIX_LABEL.get(category, category)
+
+
 class Tally:
     """Counts for one category: sends, which cards, which senders, by channel."""
 
@@ -426,6 +449,7 @@ def build(sends, categories):
         "occasions": collections.defaultdict(Tally),
         "subcategories": collections.Counter(),
         "subcategory_cards": collections.defaultdict(set),
+        "subcategory_senders": collections.defaultdict(set),
         "card_category": {},
         "card_senders": collections.defaultdict(set),
         "channels": collections.Counter(),
@@ -465,7 +489,7 @@ def build(sends, categories):
             report["unmatched"][card] += 1
             continue
 
-        prefix = category.split("_")[0]
+        prefix = split_q1(category)[0]
         tally = report["occasions"][prefix]
         tally.sends += 1
         tally.cards.add(card)
@@ -475,11 +499,37 @@ def build(sends, categories):
         tally.subcategories[category] += 1
         report["subcategories"][category] += 1
         report["subcategory_cards"][category].add(card)
+        report["subcategory_senders"][category].add(sender)
     return report
 
 
 def percent(part, whole):
     return f"{(100.0 * part / whole):5.1f}%" if whole else "    -"
+
+
+def plural(count, noun):
+    return f"{count:,} {noun}" if count == 1 else f"{count:,} {noun}s"
+
+
+def wrap(add, label, items, width):
+    """Emit `label: item, item, ...`, folding under the label when it is long.
+
+    Breaks between items, never inside one - "SMS 6 (6.4%)" split across two
+    lines reads as two different numbers.
+    """
+    room = width - len(label) - 1          # -1 leaves space for the line's comma
+    lines, current = [], ""
+    for item in items:
+        candidate = f"{current}, {item}" if current else str(item)
+        if current and len(candidate) > room:
+            lines.append(current)
+            current = str(item)
+        else:
+            current = candidate
+    lines.append(current)
+    for i, line in enumerate(lines):
+        indent = label if i == 0 else " " * len(label)
+        add(indent + line + ("," if i < len(lines) - 1 else ""))
 
 
 def render(report, top=15, width=78):
@@ -610,6 +660,60 @@ def render(report, top=15, width=78):
     return "\n".join(out)
 
 
+def render_detail(report, width=78):
+    """One block per category: its sub-categories, channels and countries.
+
+    Nothing is truncated here. The top-N tables above answer "what was big
+    today"; this section answers "what happened inside Birthday", and a
+    category read in full with three of its sub-categories hidden would be
+    answering neither.
+    """
+    out = []
+    add = out.append
+    matched = len(report["sends"]) - sum(report["unmatched"].values())
+    order = sorted(report["occasions"].items(), key=lambda kv: (-kv[1].sends, kv[0]))
+
+    add("=" * width)
+    add("EVERY CATEGORY IN FULL".center(width))
+    add("=" * width)
+    add("Each category is the q1_value up to the first underscore; the rows")
+    add("under it are the rest of the slug. Share of day is out of all")
+    add(f"{matched:,} categorised sends.")
+    add("")
+
+    for prefix, tally in order:
+        label = PREFIX_LABEL.get(prefix, prefix)
+        add("-" * width)
+        add(f"{label.upper():<34}{prefix + '_*':>18}"
+            f"{tally.sends:>10,} sends{percent(tally.sends, matched):>10}")
+        add("-" * width)
+        add(f"  {plural(len(tally.cards), 'card')}, "
+            f"{plural(len(tally.senders), 'sender')}")
+        wrap(add, "  Channels   ",
+             [f"{name} {count} ({percent(count, tally.sends).strip()})"
+              for name, count in tally.channels.most_common()], width)
+        countries = tally.countries.most_common(8)
+        items = [f"{name} {count}" for name, count in countries]
+        rest = len(tally.countries) - len(countries)
+        if rest:
+            items.append(f"and {rest} more")
+        wrap(add, "  Countries  ", items, width)
+        add("")
+        add(f"  {'Sub-category':<40}{'Sends':>6}{'Of cat':>8}{'Of day':>8}"
+            f"{'Cards':>6}{'Senders':>8}")
+        for q1, count in tally.subcategories.most_common():
+            # Not truncated. Four slugs in the catalogue run past the column
+            # and push their own row out by a character or two; a sub-category
+            # you cannot tell apart from its neighbour is the worse outcome.
+            subcategory = split_q1(q1)[1] or "(no sub-category)"
+            add(f"  {subcategory:<40}{count:>6,}"
+                f"{percent(count, tally.sends):>8}{percent(count, matched):>8}"
+                f"{len(report['subcategory_cards'][q1]):>6}"
+                f"{len(report['subcategory_senders'][q1]):>8}")
+        add("")
+    return "\n".join(out)
+
+
 def write_csv(report, directory, categories):
     """The same tables as CSV, for anyone who wants them in a spreadsheet."""
     os.makedirs(directory, exist_ok=True)
@@ -631,24 +735,42 @@ def write_csv(report, directory, categories):
     path = os.path.join(directory, "by_subcategory.csv")
     with open(path, "w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["q1_value", "category", "sends", "share_of_sends"])
-        for category, count in report["subcategories"].most_common():
-            writer.writerow([category, PREFIX_LABEL.get(category.split("_")[0],
-                                                        category.split("_")[0]),
-                             count,
+        writer.writerow(["q1_value", "category", "subcategory", "sends",
+                         "share_of_sends"])
+        for q1, count in report["subcategories"].most_common():
+            writer.writerow([q1, label_of(q1), split_q1(q1)[1], count,
                              round(100.0 * count / matched, 2) if matched else ""])
+    written.append(path)
+
+    # The detail section as a table: one row per sub-category, carrying its
+    # category's totals so the file can be pivoted on either half of the slug.
+    path = os.path.join(directory, "category_detail.csv")
+    with open(path, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["category", "q1_prefix", "subcategory", "q1_value",
+                         "sends", "share_of_category", "share_of_day",
+                         "distinct_cards", "distinct_senders", "category_sends"])
+        for prefix, tally in sorted(report["occasions"].items(),
+                                    key=lambda kv: (-kv[1].sends, kv[0])):
+            for q1, count in tally.subcategories.most_common():
+                writer.writerow([
+                    PREFIX_LABEL.get(prefix, prefix), prefix, split_q1(q1)[1], q1,
+                    count,
+                    round(100.0 * count / tally.sends, 2) if tally.sends else "",
+                    round(100.0 * count / matched, 2) if matched else "",
+                    len(report["subcategory_cards"][q1]),
+                    len(report["subcategory_senders"][q1]),
+                    tally.sends])
     written.append(path)
 
     path = os.path.join(directory, "by_card.csv")
     with open(path, "w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["card_id", "q1_value", "category", "sends"])
+        writer.writerow(["card_id", "q1_value", "category", "subcategory", "sends"])
         for card, count in report["cards"].most_common():
-            category = categories.get(card, "")
-            writer.writerow([card, category,
-                             PREFIX_LABEL.get(category.split("_")[0],
-                                              category.split("_")[0]) if category else "",
-                             count])
+            q1 = categories.get(card, "")
+            writer.writerow([card, q1, label_of(q1) if q1 else "",
+                             split_q1(q1)[1] if q1 else "", count])
     written.append(path)
 
     path = os.path.join(directory, "category_by_channel.csv")
@@ -678,6 +800,8 @@ def main(argv=None):
                         help="also write the tables as CSV into DIR")
     parser.add_argument("--top", type=int, default=15,
                         help="how many rows in the top-N tables (default 15)")
+    parser.add_argument("--detail", action="store_true",
+                        help="add a block per category, with its sub-categories")
     parser.add_argument("--out", metavar="FILE", help="write the report to FILE too")
     args = parser.parse_args(argv)
 
@@ -694,6 +818,8 @@ def main(argv=None):
 
     report = build(sends, categories)
     text = render(report, top=args.top)
+    if args.detail:
+        text += "\n" + render_detail(report)
     print(text)
     print(f"{len(sends):,} sends read from {os.path.relpath(sends_path)}, "
           f"categorised against {len(categories):,} cards "
