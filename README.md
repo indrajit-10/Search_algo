@@ -286,6 +286,22 @@ line, header and all. All three read to the same report, which is asserted in
 `test_social_sends_report.py` rather than hoped for, because a log parsed into the
 wrong columns still prints a tidy and completely wrong set of tables.
 
+**Name more than one file and the report is cumulative** across them. The app's
+own share sheet and the website's are two surfaces of the same product; they do
+not overlap, so they add:
+
+```bash
+python3 social_sends_report.py app.tsv web.tsv \
+        --label App --label "Web & mobile web" --detail
+```
+
+Every total is then broken back down by surface — a `BY SURFACE` table, a
+`CATEGORY BY SURFACE` table, a surface line in each category block, and a
+`by_surface.csv`. A total that cannot be broken back down is a total nobody
+trusts. Columns the files disagree about are handled rather than averaged: if
+only one file carries IP addresses, the sender and country counts say which
+sends they were counted from instead of quietly describing a subset.
+
 A **card × channel pivot** reads too — one row per card, one column per channel,
 counts in the cells, and a `Total`:
 
@@ -331,6 +347,7 @@ BIRTHDAY                                     birth_*       373 sends     63.1%
 | Option | What it does |
 |---|---|
 | `--detail` | adds the per-category blocks, with sub-categories and a total underneath |
+| `--label App` | names each file in the report; give one per file, in order |
 | `--split-events` | reports all 29 prefixes separately instead of bucketing them |
 | `--csv report/` | writes the five tables as CSV for a spreadsheet |
 | `--out report.txt` | saves the text report as well as printing it |
@@ -422,7 +439,7 @@ side-by-side and it will stay quick.
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `social_sends_report.py` | Daily social-sends log, counted by card category. |
-| `test_social_sends_report.py` | 72 assertions on the shapes a send file arrives in, the category split, and the Events bucket. |
+| `test_social_sends_report.py` | 90 assertions on the shapes a send file arrives in, the category split, the Events bucket and the cumulative total. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `fixtures/social_sends_paste.txt` | A send log copied out of the database browser, for the parser. |
 | `data/` | Where your export goes. Gitignored. |

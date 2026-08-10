@@ -423,6 +423,72 @@ def main():
             s.check("adds up to 4" in str(error) and "says 9" in str(error),
                     "a row that disagrees with its own Total raises, and says how",
                     str(error).splitlines()[0])
+
+        # ------------------------------------------ two surfaces, one total
+        s.rule("10. CUMULATIVE ACROSS SURFACES")
+        app = [dict(r, _surface="App") for r in rows]
+        web = [dict(r, _surface="Web") for r in expanded]
+        both = report.build(app + web, CATEGORIES)
+        s.check(len(both["sends"]) == len(SENDS) + 8,
+                "every send from both files is read", len(both["sends"]))
+        s.check(dict(both["surfaces"]) == {"App": len(SENDS), "Web": 8},
+                "and counted back to the file it came from",
+                dict(both["surfaces"]))
+        s.check(sum(t.sends for t in both["occasions"].values())
+                + sum(both["unmatched"].values()) == len(both["sends"]),
+                "the cumulative total loses nothing")
+        for prefix, tally in both["occasions"].items():
+            s.check(sum(tally.surfaces.values()) == tally.sends,
+                    f"{prefix}: its surfaces add up to its total",
+                    f"{sum(tally.surfaces.values())} vs {tally.sends}")
+        s.check(both["occasions"]["birth"].sends
+                == built["occasions"]["birth"].sends
+                + built_pivot["occasions"]["birth"].sends,
+                "a category is the sum of the same category in each file",
+                both["occasions"]["birth"].sends)
+
+        # The pivot has no IPs. Counting its blank as a sender would add a
+        # phantom one to every category it touches.
+        s.check(len(both["senders"]) == len(built["senders"]),
+                "a file with no addresses adds no senders",
+                f"{len(both['senders'])} vs {len(built['senders'])}")
+        s.check(both["sender_surfaces"] == {"App"},
+                "and the report knows which surface the senders came from",
+                both["sender_surfaces"])
+        cum = report.render(both)
+        s.check("CUMULATIVE" in cum and "BY SURFACE" in cum
+                and "CATEGORY BY SURFACE" in cum,
+                "the cumulative report says so and breaks the total back down")
+        s.check("addresses and countries come from" in cum
+                and "carries neither" in " ".join(cum.split()),
+                "and warns that the sender count covers only part of it",
+                [l for l in cum.splitlines() if "addresses and countries" in l])
+
+        folded = []
+        report.note(folded.append, " " * 16,
+                    "a sentence long enough that it has to be folded onto more "
+                    "than one line before it runs off the right-hand edge", 78)
+        s.check(len(folded) > 1 and max(len(line) for line in folded) <= 78,
+                "a note folds instead of running off the page",
+                max(len(line) for line in folded))
+        s.check(all(line.startswith(" " * 16) for line in folded),
+                "and every folded line stays under the label")
+        s.check("Surfaces" in report.render_detail(both),
+                "each category block shows its own surface split")
+
+        cum_dir = os.path.join(work, "csv2")
+        names = [os.path.basename(p) for p in report.write_csv(both, cum_dir, CATEGORIES)]
+        s.check("by_surface.csv" in names, "a cumulative run writes by_surface.csv", names)
+        with open(os.path.join(cum_dir, "by_surface.csv"), encoding="utf-8") as handle:
+            surf = list(csv_module.reader(handle))
+        s.check(surf[-1][0] == "TOTAL read" and int(surf[-1][-2]) == len(both["sends"]),
+                "which ends on the total that was read", surf[-1])
+        s.check(int(surf[-3][-2]) + int(surf[-2][-2]) == int(surf[-1][-2]),
+                "categorised plus uncategorised equals it",
+                [surf[-3][-2], surf[-2][-2], surf[-1][-2]])
+        s.check("by_surface.csv" not in
+                [os.path.basename(p) for p in report.write_csv(built, csv_dir, CATEGORIES)],
+                "and a single-file run does not")
     finally:
         shutil.rmtree(work, ignore_errors=True)
 

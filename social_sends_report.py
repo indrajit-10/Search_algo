@@ -567,6 +567,9 @@ class Tally:
         # Which real q1 prefixes fed this bucket. Only interesting for Events,
         # where the answer is the whole point of the bucket.
         self.sources = collections.Counter()
+        # Which file - which sharing surface - each send came from. One entry
+        # when a single file was read, which is the ordinary case.
+        self.surfaces = collections.Counter()
 
 
 def build(sends, categories, split_events=False):
@@ -594,26 +597,47 @@ def build(sends, categories, split_events=False):
         "failures": [],
         "unmatched": collections.Counter(),
         "senders": set(),
+        # A cumulative run reads more than one file: the app's own share sheet
+        # and the website's are the same product counted on different surfaces,
+        # and they add up. Kept separately as well as summed, because a total
+        # that cannot be broken back down is a total nobody trusts.
+        "surfaces": collections.Counter(),
+        "surface_channels": collections.defaultdict(collections.Counter),
+        "surface_cards": collections.defaultdict(set),
+        "surface_unmatched": collections.Counter(),
+        "sender_surfaces": set(),
     }
     for row in sends:
         card = row.get("card_id", "")
         channel = (row.get("share_type") or "unknown").strip()
         result = (row.get("share_result") or "").strip().lower()
-        country = (row.get("country") or "??").strip().upper()
+        country = (row.get("country") or "").strip().upper()
         sender = row.get("ip", "")
 
+        surface = row.get("_surface") or "all shares"
+        report["surfaces"][surface] += 1
+        report["surface_channels"][surface][channel] += 1
+        report["surface_cards"][surface].add(card)
         report["channels"][channel] += 1
-        report["countries"][country] += 1
+        # A file without a country column has no unknown country in it - it has
+        # no country question. Counting a blank would put "??" in the table as
+        # though it were a place.
+        if country:
+            report["countries"][country] += 1
         report["devices"][(row.get("ua") or "unknown").replace("-User-Agent", "")] += 1
         report["api_keys"][row.get("api_key") or "unknown"] += 1
         report["cards"][card] += 1
         report["dates"][(row.get("date") or "")[:10]] += 1
+        # An absent IP is not a sender. Counting the empty string would add a
+        # phantom sender to every category a pivot touches, and in a cumulative
+        # run it would sit right beside 254 real ones.
         if sender:
             report["has_senders"] = True
-        if country and country != "??":
+            report["sender_surfaces"].add(surface)
+            report["senders"].add(sender)
+            report["card_senders"][card].add(sender)
+        if country:
             report["has_countries"] = True
-        report["senders"].add(sender)
-        report["card_senders"][card].add(sender)
         if result and result != "success":
             report["failures"].append(row)
 
@@ -624,20 +648,25 @@ def build(sends, categories, split_events=False):
             # means a retired or mistyped card is still being shared. Counted
             # and printed, never folded into an "other" bucket.
             report["unmatched"][card] += 1
+            report["surface_unmatched"][surface] += 1
             continue
 
         prefix = bucket_of(category, split_events)
         tally = report["occasions"][prefix]
         tally.sends += 1
         tally.cards.add(card)
-        tally.senders.add(sender)
+        if sender:
+            tally.senders.add(sender)
         tally.channels[channel] += 1
-        tally.countries[country] += 1
+        if country:
+            tally.countries[country] += 1
         tally.subcategories[category] += 1
         tally.sources[split_q1(category)[0]] += 1
+        tally.surfaces[surface] += 1
         report["subcategories"][category] += 1
         report["subcategory_cards"][category].add(card)
-        report["subcategory_senders"][category].add(sender)
+        if sender:
+            report["subcategory_senders"][category].add(sender)
     return report
 
 
@@ -647,6 +676,20 @@ def percent(part, whole):
 
 def plural(count, noun):
     return f"{count:,} {noun}" if count == 1 else f"{count:,} {noun}s"
+
+
+def note(add, label, text, width):
+    """Emit a sentence under a label, folded on spaces."""
+    room = max(20, width - len(label))
+    indent, line = label, ""
+    for word in text.split():
+        if line and len(line) + 1 + len(word) > room:
+            add(indent + line)
+            indent, line = " " * len(label), word
+        else:
+            line = f"{line} {word}".strip()
+    if line:
+        add(indent + line)
 
 
 def wrap(add, label, items, width):
@@ -681,14 +724,26 @@ def render(report, top=15, width=78):
     span = dates[0] if len(dates) == 1 else f"{dates[0]} to {dates[-1]}" if dates else "unknown"
     channels = report["channels"]
 
+    surfaces = [name for name, _ in report["surfaces"].most_common()]
+    cumulative = len(surfaces) > 1
+
     add("=" * width)
-    add("SOCIAL SENDS - CATEGORY REPORT".center(width))
+    add(("SOCIAL SENDS - CUMULATIVE CATEGORY REPORT" if cumulative
+         else "SOCIAL SENDS - CATEGORY REPORT").center(width))
     add("=" * width)
     add(f"Date            {span}")
     add(f"Cards sent      {total:,} sends of {len(report['cards']):,} different cards")
     if report["has_senders"]:
         add(f"Senders         {len(report['senders']):,} distinct IPs "
             f"in {len(report['countries'])} countries")
+        missing = [n for n in surfaces if n not in report["sender_surfaces"]]
+        if missing:
+            # Otherwise the sender and country counts silently describe a
+            # subset of the sends and read as though they described all of them.
+            covered = sum(report["surfaces"][n] for n in report["sender_surfaces"])
+            note(add, " " * 16,
+                 f"addresses and countries come from {plural(covered, 'send')} "
+                 f"only - {', '.join(missing)} carries neither", width)
     else:
         add("Senders         not in this file - it carries counts, not sends")
     add(f"Channels        " + ", ".join(f"{name} {count}"
@@ -701,6 +756,20 @@ def render(report, top=15, width=78):
         add(f"Uncategorised   {sum(report['unmatched'].values()):,} sends of "
             f"{len(report['unmatched']):,} cards not in the card list")
     add("")
+
+    if cumulative:
+        add("-" * width)
+        add("BY SURFACE")
+        add("-" * width)
+        add(f"{'Surface':<26}{'Sends':>7}{'Share':>8}{'Cards':>7}  {'Top channel':<18}")
+        for name in surfaces:
+            count = report["surfaces"][name]
+            channel, n = report["surface_channels"][name].most_common(1)[0]
+            add(f"{name:<26}{count:>7,}{percent(count, total):>8}"
+                f"{len(report['surface_cards'][name]):>7}"
+                f"  {channel} {percent(n, count).strip()}")
+        add(f"{'TOTAL':<26}{total:>7,}{'100.0%':>8}{len(report['cards']):>7}")
+        add("")
 
     # The table the report exists for.
     add("-" * width)
@@ -722,6 +791,37 @@ def render(report, top=15, width=78):
         f"{len(set().union(*(t.cards for _, t in order)) if order else set()):>7}"
         f"{all_senders:>9}")
     add("")
+
+    # The cumulative total, broken back down the way it was added up.
+    if cumulative:
+        add("-" * width)
+        add("CATEGORY BY SURFACE")
+        add("-" * width)
+        column = max(10, (width - 34) // (len(surfaces) + 1))
+        # Truncation is marked, not silent: BY SURFACE above carries the full
+        # names, so ".." says "look up there" rather than "this is the name".
+        heads = [n if len(n) < column else n[:column - 3] + ".." for n in surfaces]
+        add(f"{'Category':<26}"
+            + "".join(f"{name:>{column}}" for name in heads)
+            + f"{'Total':>{column}}{'Share':>8}")
+        for prefix, tally in order:
+            label = PREFIX_LABEL.get(prefix, prefix)
+            add(f"{label:<26}"
+                + "".join(f"{tally.surfaces.get(name, 0):>{column},}" for name in surfaces)
+                + f"{tally.sends:>{column},}{percent(tally.sends, matched):>8}")
+        add(f"{'TOTAL categorised':<26}"
+            + "".join(f"{sum(t.surfaces.get(name, 0) for _, t in order):>{column},}"
+                      for name in surfaces)
+            + f"{matched:>{column},}{'100.0%':>8}")
+        if report["unmatched"]:
+            add(f"{'Not in the card list':<26}"
+                + "".join(f"{report['surface_unmatched'].get(name, 0):>{column},}"
+                          for name in surfaces)
+                + f"{sum(report['unmatched'].values()):>{column},}{'':>8}")
+        add(f"{'TOTAL read':<26}"
+            + "".join(f"{report['surfaces'][name]:>{column},}" for name in surfaces)
+            + f"{total:>{column},}{'':>8}")
+        add("")
 
     # Same join, one level down.
     add("-" * width)
@@ -834,6 +934,10 @@ def render_detail(report, width=78):
         add(f"  {plural(len(tally.cards), 'card')}"
             + (f", {plural(len(tally.senders), 'sender')}"
                if report["has_senders"] else ""))
+        if len(report["surfaces"]) > 1:
+            wrap(add, "  Surfaces   ",
+                 [f"{name} {count} ({percent(count, tally.sends).strip()})"
+                  for name, count in tally.surfaces.most_common()], width)
         if prefix == EVENTS:
             # Which real prefixes ended up here. Without this the bucket is a
             # number nobody can act on.
@@ -896,6 +1000,35 @@ def write_csv(report, directory, categories):
         writer.writerow(["TOTAL", "", matched, 100.0 if matched else "",
                          len(report["cards"]), len(report["senders"])])
     written.append(path)
+
+    # Only worth a file when there is more than one surface to compare.
+    if len(report["surfaces"]) > 1:
+        surfaces = [name for name, _ in report["surfaces"].most_common()]
+        path = os.path.join(directory, "by_surface.csv")
+        with open(path, "w", newline="", encoding="utf-8") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["category", "q1_prefix"] + surfaces
+                            + ["total", "share_of_categorised"])
+            for prefix, tally in sorted(report["occasions"].items(),
+                                        key=lambda kv: (-kv[1].sends, kv[0])):
+                writer.writerow(
+                    [PREFIX_LABEL.get(prefix, prefix), prefix]
+                    + [tally.surfaces.get(name, 0) for name in surfaces]
+                    + [tally.sends,
+                       round(100.0 * tally.sends / matched, 2) if matched else ""])
+            writer.writerow(
+                ["TOTAL categorised", ""]
+                + [sum(t.surfaces.get(name, 0) for t in report["occasions"].values())
+                   for name in surfaces]
+                + [matched, 100.0 if matched else ""])
+            writer.writerow(["Not in the card list", ""]
+                            + [report["surface_unmatched"].get(name, 0)
+                               for name in surfaces]
+                            + [sum(report["unmatched"].values()), ""])
+            writer.writerow(["TOTAL read", ""]
+                            + [report["surfaces"][name] for name in surfaces]
+                            + [len(report["sends"]), ""])
+        written.append(path)
 
     path = os.path.join(directory, "by_subcategory.csv")
     with open(path, "w", newline="", encoding="utf-8") as handle:
@@ -964,8 +1097,13 @@ def main(argv=None):
         description="Category-wise report of the cards sent through social sharing.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Both files are looked for in data/ when not named.")
-    parser.add_argument("sends", nargs="?",
-                        help="the send log (.tsv, .csv, .xlsx, or a paste)")
+    parser.add_argument("sends", nargs="*",
+                        help="the send file(s) - .tsv, .csv, .xlsx, a paste, or a "
+                             "card x channel pivot. Name more than one and the "
+                             "report is cumulative across them.")
+    parser.add_argument("--label", action="append", metavar="NAME",
+                        help="what to call each file in the report, in the same "
+                             "order: --label App --label Web")
     parser.add_argument("--cards", "--catalogue", dest="cards",
                         help="the card list with q1_value in it")
     parser.add_argument("--csv", dest="csv_dir", metavar="DIR",
@@ -981,23 +1119,44 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     cards_path = find_catalogue(args.cards)
-    sends_path = find_sends(args.sends)
-    categories = load_categories(cards_path)
-    raw = read_any(sends_path)
-    sends = expand_pivot(raw) if looks_like_pivot(raw) else normalise(raw)
-    if not sends:
-        raise SystemExit(f"{sends_path} has no rows in it.")
-    if "card_id" not in sends[0]:
+    paths = [find_sends(p) for p in args.sends] or [find_sends(None)]
+    labels = args.label or []
+    if labels and len(labels) != len(paths):
         raise SystemExit(
-            f"{sends_path} has no card id column, so nothing can be categorised.\n"
-            f"  Columns found: {', '.join(sends[0]) or '(none recognised)'}")
+            f"{len(labels)} --label given for {len(paths)} file(s).\n"
+            "  Give one label per file, in the same order, or none at all.")
+    categories = load_categories(cards_path)
+
+    sends = []
+    for i, sends_path in enumerate(paths):
+        raw = read_any(sends_path)
+        rows = expand_pivot(raw) if looks_like_pivot(raw) else normalise(raw)
+        if not rows:
+            raise SystemExit(f"{sends_path} has no rows in it.")
+        if "card_id" not in rows[0]:
+            raise SystemExit(
+                f"{sends_path} has no card id column, so nothing can be "
+                f"categorised.\n"
+                f"  Columns found: {', '.join(rows[0]) or '(none recognised)'}")
+        # Unlabelled and alone, the surface is not worth naming. Unlabelled and
+        # one of several, the file name is the only handle there is.
+        if labels:
+            surface = labels[i]
+        elif len(paths) > 1:
+            surface = os.path.splitext(os.path.basename(sends_path))[0]
+        else:
+            surface = "all shares"
+        for row in rows:
+            row["_surface"] = surface
+        sends.extend(rows)
 
     report = build(sends, categories, split_events=args.split_events)
     text = render(report, top=args.top)
     if args.detail:
         text += "\n" + render_detail(report)
     print(text)
-    print(f"{len(sends):,} sends read from {os.path.relpath(sends_path)}, "
+    print(f"{len(sends):,} sends read from "
+          f"{', '.join(os.path.relpath(p) for p in paths)}, "
           f"categorised against {len(categories):,} cards "
           f"in {os.path.relpath(cards_path)}.")
 
