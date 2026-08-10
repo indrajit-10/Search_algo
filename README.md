@@ -360,6 +360,63 @@ way), `by_card.csv` and `category_by_channel.csv`.
 
 ---
 
+## Tracking it day by day
+
+`social_sends_report.py` reports one day. `track_daily.py` keeps the history:
+give it the day's two files and it adds them to a workbook covering every day
+recorded so far.
+
+```bash
+python3 track_daily.py app.tsv web.tsv
+```
+
+```
+2026-08-01: 1,059 sends recorded.
+  App                     591 sends, 591 categorised, 211 cards
+  Web & mobile web        468 sends, 427 categorised, 171 cards
+reports/daily_tracking.xlsx now covers 1 day(s): 2026-08-01 to 2026-08-01.
+```
+
+The date comes from the app log. If neither file carries one — or they span
+more than a day — it stops and asks for `--date 2026-08-02` rather than
+guessing. **Running the same date twice replaces it**, so a corrected export is
+just run again; `--once` refuses instead, if you would rather be told.
+
+`reports/daily_tracking.xlsx` has six sheets:
+
+| Sheet | What it holds |
+|---|---|
+| About | what the file is, the category rule, how to add a day |
+| By date | one row per day: sends, app, web, categorised, uncategorised, cards, senders |
+| Categories by date | the tracking view — a column per category, a row per day |
+| Category detail | per day and category: app, web, total, share of day, cards |
+| Sub-categories | every sub-category, every day |
+| Platforms | Whatsapp, Text, More, SMS, Telegram, Facebook, Skype by day |
+
+Alongside it are four `reports/daily_*.tsv` ledgers, and **those are the
+record** — the workbook is generated from them. An `.xlsx` is a zip of XML, so
+git can store it but cannot show you what changed inside it; a tab-separated
+ledger makes a day's numbers one readable diff. Delete the workbook and
+`python3 track_daily.py --rebuild` puts it back byte for byte.
+
+Both live in `reports/`, which **is** committed — unlike `data/`, these are
+counts by category and carry no card text and no addresses.
+
+| Option | What it does |
+|---|---|
+| `--date 2026-08-02` | the day these files cover, when the files do not say |
+| `--rebuild` | regenerate the workbook from the ledgers and stop |
+| `--once` | refuse to overwrite a day already recorded |
+| `--label` | rename the surfaces (default `App`, `Web & mobile web`) |
+
+The workbook is written by `xlsx_writer.py` — about a hundred lines of zip and
+XML, because adding openpyxl to a project whose whole promise is "no pip
+installs" is a dependency every machine that ever runs this would have to
+install. Its output is byte-identical for identical data, so a day that changes
+nothing shows no diff.
+
+---
+
 ## Letting someone else try it
 
 The server already listens on every interface and handles requests in parallel,
@@ -440,6 +497,9 @@ side-by-side and it will stay quick.
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `social_sends_report.py` | Daily social-sends log, counted by card category. |
 | `test_social_sends_report.py` | 90 assertions on the shapes a send file arrives in, the category split, the Events bucket and the cumulative total. |
+| `track_daily.py` | Adds a day to `reports/daily_tracking.xlsx` and its ledgers. |
+| `xlsx_writer.py` | Multi-sheet .xlsx from the standard library. |
+| `test_track_daily.py` | 29 assertions on accumulating days without double-counting or losing one. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `fixtures/social_sends_paste.txt` | A send log copied out of the database browser, for the parser. |
 | `data/` | Where your export goes. Gitignored. |

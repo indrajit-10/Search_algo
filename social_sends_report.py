@@ -345,7 +345,10 @@ def looks_like_pivot(rows):
     all the way down - a send log has dates, IPs and result words in it, so it
     cannot pass this test by accident.
     """
-    if len(rows) < 2:
+    # One data row is still a pivot. Requiring two would send a quiet day's
+    # single-card export down the send-log path, where its channel columns
+    # mean nothing and every send comes out on channel "unknown".
+    if not rows:
         return False
     fields = [(f or "").strip() for f in rows[0]]
     lowered = [f.lower() for f in fields]

@@ -1,0 +1,92 @@
+date	category	subcategory	q1_value	sends	cards
+2026-08-01	Anniversary	anniversaryetc	anniv_anniversaryetc	39	19
+2026-08-01	Anniversary	wedanniv_couple	anniv_wedanniv_couple	8	6
+2026-08-01	Anniversary	ouranniversary_forher	anniv_ouranniversary_forher	5	1
+2026-08-01	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	3	3
+2026-08-01	Anniversary	wedanniv_family	anniv_wedanniv_family	1	1
+2026-08-01	Anniversary	belated	anniv_belated	1	1
+2026-08-01	Birthday	happybirthday	birth_happybirthday	447	57
+2026-08-01	Birthday	fun	birth_fun	24	9
+2026-08-01	Birthday	bronsis	birth_bronsis	15	8
+2026-08-01	Birthday	sonanddaughter	birth_sonanddaughter	14	9
+2026-08-01	Birthday	songs	birth_songs	11	6
+2026-08-01	Birthday	blessings	birth_blessings	10	6
+2026-08-01	Birthday	milestone	birth_milestone	8	4
+2026-08-01	Birthday	flowers	birth_flowers	8	4
+2026-08-01	Birthday	extfamily	birth_extfamily	7	4
+2026-08-01	Birthday	friends	birth_friends	7	7
+2026-08-01	Birthday	belated	birth_belated	5	4
+2026-08-01	Birthday	kids	birth_kids	5	3
+2026-08-01	Birthday	momndad	birth_momndad	4	3
+2026-08-01	Birthday	hubbywife	birth_hubbywife	3	2
+2026-08-01	Birthday	wishes	birth_wishes	3	2
+2026-08-01	Birthday	balloons	birth_balloons	1	1
+2026-08-01	Business & work	customers	bus_customers	1	1
+2026-08-01	Business & work	retirement	bus_retirement	1	1
+2026-08-01	Congratulations	newbaby	congrats_newbaby	3	3
+2026-08-01	Congratulations	pregnancy	congrats_pregnancy	3	2
+2026-08-01	Congratulations	foreveryone	congrats_foreveryone	2	2
+2026-08-01	Congratulations	studentsandnewgrads	congrats_studentsandnewgrads	2	2
+2026-08-01	Congratulations	retirement	congrats_retirement	2	2
+2026-08-01	Cute	angels	cute_angels	3	1
+2026-08-01	Cute	hugs	cute_hugs	1	1
+2026-08-01	Events cards	eaug_girlfriendsday	eaug_girlfriendsday	58	7
+2026-08-01	Events cards	eaug_friendshipday_happy	eaug_friendshipday_happy	57	13
+2026-08-01	Events cards	eaug_friendshipday_more	eaug_friendshipday_more	23	4
+2026-08-01	Events cards	eaug_friendshipday_heart	eaug_friendshipday_heart	14	5
+2026-08-01	Events cards	eaug_friendshipday_soulmates	eaug_friendshipday_soulmates	14	3
+2026-08-01	Events cards	eaug_flwrmonthaug	eaug_flwrmonthaug	11	2
+2026-08-01	Events cards	eaug_smilemonth	eaug_smilemonth	8	4
+2026-08-01	Events cards	eaug_friendshipday_thanku	eaug_friendshipday_thanku	7	4
+2026-08-01	Events cards	eaug_friendshipday_flowers	eaug_friendshipday_flowers	6	1
+2026-08-01	Events cards	eaug_hugmonth	eaug_hugmonth	5	5
+2026-08-01	Events cards	wed_wed_congrats	wed_wed_congrats	5	2
+2026-08-01	Events cards	eaug_icecream_sandwich_day	eaug_icecream_sandwich_day	5	2
+2026-08-01	Events cards	eaug_nationalraspberry_cream_pie_day	eaug_nationalraspberry_cream_pie_day	4	2
+2026-08-01	Events cards	eaug_nationalwatermelon_day	eaug_nationalwatermelon_day	3	1
+2026-08-01	Events cards	edec_c_newjingle	edec_c_newjingle	2	1
+2026-08-01	Events cards	eaug_romawaremonth	eaug_romawaremonth	2	1
+2026-08-01	Events cards	wed_belatedwishes	wed_belatedwishes	2	1
+2026-08-01	Events cards	eaug_cardssister	eaug_cardssister	2	2
+2026-08-01	Events cards	eaug_nationalwhite_wine_day	eaug_nationalwhite_wine_day	2	1
+2026-08-01	Events cards	ejan_sendahugday_friends	ejan_sendahugday_friends	1	1
+2026-08-01	Events cards	ejun_summer_happy	ejun_summer_happy	1	1
+2026-08-01	Events cards	eaug_friendshipday_makesmile	eaug_friendshipday_makesmile	1	1
+2026-08-01	Events cards	ejun_bestfriendsday_happy	ejun_bestfriendsday_happy	1	1
+2026-08-01	Events cards	eaug_rakshabandhan_interactive	eaug_rakshabandhan_interactive	1	1
+2026-08-01	Events cards	wed_weddingetc	wed_weddingetc	1	1
+2026-08-01	Events cards	ejan_thankyoucards	ejan_thankyoucards	1	1
+2026-08-01	Events cards	eaug_coastguard_day	eaug_coastguard_day	1	1
+2026-08-01	Events cards	ejan_sendahugday_love	ejan_sendahugday_love	1	1
+2026-08-01	Events cards	eaug_nationalsunflower_day	eaug_nationalsunflower_day	1	1
+2026-08-01	Events cards	ejul_friendfestmissouri	ejul_friendfestmissouri	1	1
+2026-08-01	Everyday greetings	getwell	gen_getwell	9	6
+2026-08-01	Everyday greetings	thinkingofyou	gen_thinkingofyou	7	5
+2026-08-01	Everyday greetings	morning	gen_morning	4	3
+2026-08-01	Everyday greetings	missyou	gen_missyou	3	3
+2026-08-01	Everyday greetings	goodnight	gen_goodnight	3	3
+2026-08-01	Everyday greetings	quotesmessages_images_getwell_quotes	gen_quotesmessages_images_getwell_quotes	1	1
+2026-08-01	Everyday greetings	voyage	gen_voyage	1	1
+2026-08-01	Family & loved ones	brothers	fkt_brothers	1	1
+2026-08-01	Family & loved ones	sonsdaughter	fkt_sonsdaughter	1	1
+2026-08-01	Family & loved ones	sisters	fkt_sisters	1	1
+2026-08-01	Flowers	flrwishes	flwr_flrwishes	1	1
+2026-08-01	Friendship	bestfriends	friend_bestfriends	16	8
+2026-08-01	Friendship	specialfriend	friend_specialfriend	10	5
+2026-08-01	Friendship	hello	friend_hello	1	1
+2026-08-01	Friendship	friendsforever	friend_friendsforever	1	1
+2026-08-01	Inspirational & sympathy	sympathy	insp_sympathy	7	7
+2026-08-01	Inspirational & sympathy	recovery	insp_recovery	3	1
+2026-08-01	Keeping in touch	hi	intouch_hi	6	1
+2026-08-01	Love & romance	iloveyou_general	love_iloveyou_general	9	6
+2026-08-01	Love & romance	iloveyou_couples	love_iloveyou_couples	7	5
+2026-08-01	Love & romance	iloveyou_kisses	love_iloveyou_kisses	2	1
+2026-08-01	Love & romance	foreverlove	love_foreverlove	1	1
+2026-08-01	Pets	lossofpet	pet_lossofpet	2	1
+2026-08-01	Pets	frnd	pet_frnd	1	1
+2026-08-01	Thank you	birthday	thank_birthday	14	3
+2026-08-01	Thank you	friendship	thank_friendship	11	3
+2026-08-01	Thank you	everyday	thank_everyday	4	3
+2026-08-01	Thank you	inspirational	thank_inspirational	1	1
+2026-08-01	World languages	spanish_birthday	w_spanish_birthday	1	1
+2026-08-01	World languages	russian_birthday	w_russian_birthday	1	1
