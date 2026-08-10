@@ -24,6 +24,11 @@ sub-category answers "and 308 of them were the plain happy-birthday kind".
 --detail puts the two together: every category in full, with its own
 sub-categories, channels and countries underneath it.
 
+Sixteen categories are reported under their own name (CORE_PREFIXES below).
+Every other prefix - the twelve month codes, `wed`, and anything added to the
+catalogue later - is counted as Events cards, a single bucket. --split-events
+turns that off and reports all 29 prefixes separately.
+
 Either file can be .xlsx, .csv, .tsv, .csv.gz or .zip. Excel is read directly
 rather than asking for a CSV save first: this report joins two numeric columns
 and a slug, none of which Excel can damage, and a conversion step that exists
@@ -46,6 +51,10 @@ import xml.etree.ElementTree as ElementTree
 import zipfile
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+# The bucket every non-core category is counted under. Not a q1_value prefix -
+# no card carries it - so it cannot collide with a real one.
+EVENTS = "events"
 
 # The 29 q1_value categories in the catalogue, in plain English. Only the
 # twelve month codes genuinely need translating - "eaug" shares no letters with
@@ -82,7 +91,18 @@ PREFIX_LABEL = {
     "eoct":    "October occasions",
     "enov":    "November occasions",
     "edec":    "December occasions",
+    EVENTS:    "Events cards",
 }
+
+# The sixteen categories that are reported under their own name. Everything
+# else - the twelve month codes, `wed`, and any category added to the
+# catalogue after this list was written - is counted as Events cards. The list
+# is an allow-list on purpose: a new occasion prefix lands in Events rather
+# than appearing as a category nobody asked for, and moving it out is one line.
+CORE_PREFIXES = frozenset({
+    "birth", "thank", "gen", "love", "anniv", "insp", "cute", "congrats",
+    "fkt", "bus", "pet", "w", "flwr", "friend", "intouch", "invp",
+})
 
 # Column names differ between exports - phpMyAdmin, a BI tool and a hand-saved
 # spreadsheet all spell the same field differently. Match on meaning, not on
@@ -314,6 +334,80 @@ def read_any(path):
     return read_delimited(text)
 
 
+TOTAL_COLUMN = ("total", "grand total", "sum", "all")
+
+
+def looks_like_pivot(rows):
+    """True for a card x channel matrix rather than one row per send.
+
+    The shape is a card number, a column per channel holding a count, and a
+    Total. Recognised by that Total plus two or more columns that are numeric
+    all the way down - a send log has dates, IPs and result words in it, so it
+    cannot pass this test by accident.
+    """
+    if len(rows) < 2:
+        return False
+    fields = [(f or "").strip() for f in rows[0]]
+    lowered = [f.lower() for f in fields]
+    if not any(f in TOTAL_COLUMN for f in lowered):
+        return False
+    if not any(f.replace(" ", "").replace("_", "") in
+               ("cardnumber", "cardid", "card", "cardno") for f in lowered):
+        return False
+    numeric = 0
+    for field in fields:
+        if field.lower() in TOTAL_COLUMN:
+            continue
+        values = [str(row.get(field, "")).strip() for row in rows]
+        if values and all(v.lstrip("-").isdigit() for v in values if v):
+            numeric += 1
+    return numeric >= 2
+
+
+def expand_pivot(rows):
+    """A card x channel matrix -> one row per send, which is what build() eats.
+
+    A cell of 4 becomes four sends of that card on that channel. The counts
+    are all the file has: no timestamp, no IP, no country. Those stay empty
+    rather than being invented, and the report leaves out the lines it cannot
+    answer.
+    """
+    fields = [(f or "").strip() for f in rows[0]]
+    lowered = {f: f.lower() for f in fields}
+    card_field = next(f for f in fields if lowered[f].replace(" ", "").replace("_", "")
+                      in ("cardnumber", "cardid", "card", "cardno"))
+    channels = [f for f in fields
+                if f != card_field and lowered[f] not in TOTAL_COLUMN
+                and not lowered[f].startswith(("sl", "s.no", "#"))]
+    total_field = next((f for f in fields if lowered[f] in TOTAL_COLUMN), None)
+
+    out = []
+    for row in rows:
+        card = str(row.get(card_field, "")).strip()
+        if not card:
+            continue
+        counted = 0
+        for channel in channels:
+            value = str(row.get(channel, "")).strip()
+            if not value.isdigit():
+                continue
+            counted += int(value)
+            for _ in range(int(value)):
+                out.append({"card_id": card, "share_type": channel,
+                            "share_result": "success"})
+        # The Total column is the file's own arithmetic. Disagreeing with it is
+        # a transcription error, not a rounding one, so it stops here.
+        if total_field:
+            stated = str(row.get(total_field, "")).strip()
+            if stated.isdigit() and int(stated) != counted:
+                raise SystemExit(
+                    f"Card {card} adds up to {counted} across its channels but "
+                    f"its Total column says {stated}.\n"
+                    "  The file is inconsistent with itself - fix it or drop "
+                    "the Total column.")
+    return out
+
+
 def normalise(rows):
     """
     Rename columns to the names the rest of this file uses, and drop the
@@ -367,8 +461,13 @@ def find_catalogue(explicit=None):
 
 def find_sends(explicit=None):
     """
-    The send log. Today's file is whichever one in data/ looks like a send log
-    and sorts last, so a folder of daily exports needs no argument.
+    The send log. Today's file is whichever dated one in data/ sorts last, so
+    a folder of daily exports needs no argument.
+
+    A dated name wins over an undated one whatever the alphabet says. Once a
+    second kind of export lands in data/ - a card x channel pivot, a one-off
+    extract - "the newest name" would quietly change which file the bare
+    command reports on, and a report on the wrong file is worse than an error.
     """
     if explicit:
         if not os.path.exists(explicit):
@@ -381,8 +480,9 @@ def find_sends(explicit=None):
                        and re.search(r"send|share|social", f, re.I)
                        and f.lower().endswith((".tsv", ".csv", ".txt", ".xlsx",
                                                ".csv.gz", ".zip")))
-        if found:
-            return os.path.join(DATA_DIR, found[-1])
+        dated = [f for f in found if re.search(r"\d{4}-\d{2}-\d{2}", f)]
+        if dated or found:
+            return os.path.join(DATA_DIR, (dated or found)[-1])
     raise SystemExit(
         "No send log found.\n\n"
         f"  Put it here:  {os.path.join('data', 'social_sends_YYYY-MM-DD.tsv')}\n"
@@ -424,10 +524,34 @@ def split_q1(q1):
     return category, subcategory
 
 
-def label_of(q1):
-    """The plain-English category a q1_value belongs to."""
-    category = split_q1(q1)[0]
-    return PREFIX_LABEL.get(category, category)
+def bucket_of(q1, split_events=False):
+    """The category a q1_value is reported under.
+
+    Its own prefix when that prefix is one of the sixteen core categories,
+    EVENTS otherwise. --split-events turns the bucketing off and reports every
+    prefix under its own name, which is how the catalogue is actually keyed.
+    """
+    prefix = split_q1(q1)[0]
+    if split_events or prefix in CORE_PREFIXES:
+        return prefix
+    return EVENTS
+
+
+def label_of(q1, split_events=False):
+    """The plain-English category a q1_value is reported under."""
+    bucket = bucket_of(q1, split_events)
+    return PREFIX_LABEL.get(bucket, bucket)
+
+
+def sub_label(bucket, q1):
+    """How a sub-category is written under its category.
+
+    Under a real category the prefix is redundant - it is the heading - so
+    `birth_happybirthday` reads `happybirthday`. Under Events cards the prefix
+    is the only thing separating an August card from a December one, so the
+    whole slug stays.
+    """
+    return q1 if bucket == EVENTS else split_q1(q1)[1]
 
 
 class Tally:
@@ -440,12 +564,21 @@ class Tally:
         self.channels = collections.Counter()
         self.countries = collections.Counter()
         self.subcategories = collections.Counter()
+        # Which real q1 prefixes fed this bucket. Only interesting for Events,
+        # where the answer is the whole point of the bucket.
+        self.sources = collections.Counter()
 
 
-def build(sends, categories):
+def build(sends, categories, split_events=False):
     """Join every send to its category and count. Nothing is dropped silently."""
     report = {
         "sends": sends,
+        "split_events": split_events,
+        # A card x channel pivot carries counts and nothing else. Whether the
+        # file had senders and countries in it decides which lines the report
+        # prints, so that an absent column never reads as "1 sender".
+        "has_senders": False,
+        "has_countries": False,
         "occasions": collections.defaultdict(Tally),
         "subcategories": collections.Counter(),
         "subcategory_cards": collections.defaultdict(set),
@@ -475,6 +608,10 @@ def build(sends, categories):
         report["api_keys"][row.get("api_key") or "unknown"] += 1
         report["cards"][card] += 1
         report["dates"][(row.get("date") or "")[:10]] += 1
+        if sender:
+            report["has_senders"] = True
+        if country and country != "??":
+            report["has_countries"] = True
         report["senders"].add(sender)
         report["card_senders"][card].add(sender)
         if result and result != "success":
@@ -489,7 +626,7 @@ def build(sends, categories):
             report["unmatched"][card] += 1
             continue
 
-        prefix = split_q1(category)[0]
+        prefix = bucket_of(category, split_events)
         tally = report["occasions"][prefix]
         tally.sends += 1
         tally.cards.add(card)
@@ -497,6 +634,7 @@ def build(sends, categories):
         tally.channels[channel] += 1
         tally.countries[country] += 1
         tally.subcategories[category] += 1
+        tally.sources[split_q1(category)[0]] += 1
         report["subcategories"][category] += 1
         report["subcategory_cards"][category].add(card)
         report["subcategory_senders"][category].add(sender)
@@ -548,8 +686,11 @@ def render(report, top=15, width=78):
     add("=" * width)
     add(f"Date            {span}")
     add(f"Cards sent      {total:,} sends of {len(report['cards']):,} different cards")
-    add(f"Senders         {len(report['senders']):,} distinct IPs "
-        f"in {len(report['countries'])} countries")
+    if report["has_senders"]:
+        add(f"Senders         {len(report['senders']):,} distinct IPs "
+            f"in {len(report['countries'])} countries")
+    else:
+        add("Senders         not in this file - it carries counts, not sends")
     add(f"Channels        " + ", ".join(f"{name} {count}"
                                         for name, count in channels.most_common()))
     if report["failures"]:
@@ -572,12 +713,14 @@ def render(report, top=15, width=78):
     for prefix, tally in order:
         label = PREFIX_LABEL.get(prefix, prefix)
         channel, count = tally.channels.most_common(1)[0]
+        senders = f"{len(tally.senders):,}" if report["has_senders"] else "-"
         add(f"{label:<26}{tally.sends:>7,}{percent(tally.sends, matched):>8}"
-            f"{len(tally.cards):>7}{len(tally.senders):>9}"
+            f"{len(tally.cards):>7}{senders:>9}"
             f"  {channel} {percent(count, tally.sends).strip()}")
+    all_senders = f"{len(report['senders']):,}" if report["has_senders"] else "-"
     add(f"{'TOTAL':<26}{matched:>7,}{'100.0%':>8}"
         f"{len(set().union(*(t.cards for _, t in order)) if order else set()):>7}"
-        f"{len(report['senders']):>9}")
+        f"{all_senders:>9}")
     add("")
 
     # Same join, one level down.
@@ -683,21 +826,30 @@ def render_detail(report, width=78):
 
     for prefix, tally in order:
         label = PREFIX_LABEL.get(prefix, prefix)
+        slug = "any other prefix" if prefix == EVENTS else prefix + "_*"
         add("-" * width)
-        add(f"{label.upper():<34}{prefix + '_*':>18}"
+        add(f"{label.upper():<34}{slug:>18}"
             f"{tally.sends:>10,} sends{percent(tally.sends, matched):>10}")
         add("-" * width)
-        add(f"  {plural(len(tally.cards), 'card')}, "
-            f"{plural(len(tally.senders), 'sender')}")
+        add(f"  {plural(len(tally.cards), 'card')}"
+            + (f", {plural(len(tally.senders), 'sender')}"
+               if report["has_senders"] else ""))
+        if prefix == EVENTS:
+            # Which real prefixes ended up here. Without this the bucket is a
+            # number nobody can act on.
+            wrap(add, "  Made up of ",
+                 [f"{PREFIX_LABEL.get(name, name)} {count}"
+                  for name, count in tally.sources.most_common()], width)
         wrap(add, "  Channels   ",
              [f"{name} {count} ({percent(count, tally.sends).strip()})"
               for name, count in tally.channels.most_common()], width)
-        countries = tally.countries.most_common(8)
-        items = [f"{name} {count}" for name, count in countries]
-        rest = len(tally.countries) - len(countries)
-        if rest:
-            items.append(f"and {rest} more")
-        wrap(add, "  Countries  ", items, width)
+        if report["has_countries"]:
+            countries = tally.countries.most_common(8)
+            items = [f"{name} {count}" for name, count in countries]
+            rest = len(tally.countries) - len(countries)
+            if rest:
+                items.append(f"and {rest} more")
+            wrap(add, "  Countries  ", items, width)
         add("")
         add(f"  {'Sub-category':<40}{'Sends':>6}{'Of cat':>8}{'Of day':>8}"
             f"{'Cards':>6}{'Senders':>8}")
@@ -705,12 +857,23 @@ def render_detail(report, width=78):
             # Not truncated. Four slugs in the catalogue run past the column
             # and push their own row out by a character or two; a sub-category
             # you cannot tell apart from its neighbour is the worse outcome.
-            subcategory = split_q1(q1)[1] or "(no sub-category)"
+            subcategory = sub_label(prefix, q1) or "(no sub-category)"
             add(f"  {subcategory:<40}{count:>6,}"
                 f"{percent(count, tally.sends):>8}{percent(count, matched):>8}"
                 f"{len(report['subcategory_cards'][q1]):>6}"
                 f"{len(report['subcategory_senders'][q1]):>8}")
+        add(f"  {'TOTAL ' + label:<40}{tally.sends:>6,}"
+            f"{'100.0%':>8}{percent(tally.sends, matched):>8}"
+            f"{len(tally.cards):>6}{len(tally.senders):>8}")
         add("")
+
+    add("-" * width)
+    add(f"  {'TOTAL - every category':<40}{matched:>6,}"
+        f"{'':>8}{'100.0%':>8}"
+        f"{len(set().union(*(t.cards for _, t in order)) if order else set()):>6}"
+        f"{len(report['senders']):>8}")
+    add("-" * width)
+    add("")
     return "\n".join(out)
 
 
@@ -730,6 +893,8 @@ def write_csv(report, directory, categories):
             writer.writerow([PREFIX_LABEL.get(prefix, prefix), prefix, tally.sends,
                              round(100.0 * tally.sends / matched, 2) if matched else "",
                              len(tally.cards), len(tally.senders)])
+        writer.writerow(["TOTAL", "", matched, 100.0 if matched else "",
+                         len(report["cards"]), len(report["senders"])])
     written.append(path)
 
     path = os.path.join(directory, "by_subcategory.csv")
@@ -738,8 +903,11 @@ def write_csv(report, directory, categories):
         writer.writerow(["q1_value", "category", "subcategory", "sends",
                          "share_of_sends"])
         for q1, count in report["subcategories"].most_common():
-            writer.writerow([q1, label_of(q1), split_q1(q1)[1], count,
+            bucket = bucket_of(q1, report["split_events"])
+            writer.writerow([q1, PREFIX_LABEL.get(bucket, bucket),
+                             sub_label(bucket, q1), count,
                              round(100.0 * count / matched, 2) if matched else ""])
+        writer.writerow(["TOTAL", "", "", matched, 100.0 if matched else ""])
     written.append(path)
 
     # The detail section as a table: one row per sub-category, carrying its
@@ -754,7 +922,8 @@ def write_csv(report, directory, categories):
                                     key=lambda kv: (-kv[1].sends, kv[0])):
             for q1, count in tally.subcategories.most_common():
                 writer.writerow([
-                    PREFIX_LABEL.get(prefix, prefix), prefix, split_q1(q1)[1], q1,
+                    PREFIX_LABEL.get(prefix, prefix), prefix,
+                    sub_label(prefix, q1), q1,
                     count,
                     round(100.0 * count / tally.sends, 2) if tally.sends else "",
                     round(100.0 * count / matched, 2) if matched else "",
@@ -769,8 +938,9 @@ def write_csv(report, directory, categories):
         writer.writerow(["card_id", "q1_value", "category", "subcategory", "sends"])
         for card, count in report["cards"].most_common():
             q1 = categories.get(card, "")
-            writer.writerow([card, q1, label_of(q1) if q1 else "",
-                             split_q1(q1)[1] if q1 else "", count])
+            bucket = bucket_of(q1, report["split_events"]) if q1 else ""
+            writer.writerow([card, q1, PREFIX_LABEL.get(bucket, bucket) if q1 else "",
+                             sub_label(bucket, q1) if q1 else "", count])
     written.append(path)
 
     path = os.path.join(directory, "category_by_channel.csv")
@@ -783,6 +953,8 @@ def write_csv(report, directory, categories):
             writer.writerow([PREFIX_LABEL.get(prefix, prefix)]
                             + [tally.channels.get(name, 0) for name in names]
                             + [tally.sends])
+        writer.writerow(["TOTAL"] + [report["channels"][name] for name in names]
+                        + [len(report["sends"])])
     written.append(path)
     return written
 
@@ -802,13 +974,17 @@ def main(argv=None):
                         help="how many rows in the top-N tables (default 15)")
     parser.add_argument("--detail", action="store_true",
                         help="add a block per category, with its sub-categories")
+    parser.add_argument("--split-events", action="store_true",
+                        help="report every q1 prefix under its own name instead "
+                             "of bucketing the non-core ones as Events cards")
     parser.add_argument("--out", metavar="FILE", help="write the report to FILE too")
     args = parser.parse_args(argv)
 
     cards_path = find_catalogue(args.cards)
     sends_path = find_sends(args.sends)
     categories = load_categories(cards_path)
-    sends = normalise(read_any(sends_path))
+    raw = read_any(sends_path)
+    sends = expand_pivot(raw) if looks_like_pivot(raw) else normalise(raw)
     if not sends:
         raise SystemExit(f"{sends_path} has no rows in it.")
     if "card_id" not in sends[0]:
@@ -816,7 +992,7 @@ def main(argv=None):
             f"{sends_path} has no card id column, so nothing can be categorised.\n"
             f"  Columns found: {', '.join(sends[0]) or '(none recognised)'}")
 
-    report = build(sends, categories)
+    report = build(sends, categories, split_events=args.split_events)
     text = render(report, top=args.top)
     if args.detail:
         text += "\n" + render_detail(report)

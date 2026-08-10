@@ -259,15 +259,16 @@ def main():
         s.check(report.split_q1("anniv_ouranniversary_forher")[0] == "anniv",
                 "a three-part q1 still has one category",
                 report.split_q1("anniv_ouranniversary_forher")[0])
-        s.check(report.label_of("eaug_friendshipday_happy") == "August occasions",
+        s.check(report.label_of("eaug_friendshipday_happy", split_events=True)
+                == "August occasions",
                 "a month code is spelled out",
-                report.label_of("eaug_friendshipday_happy"))
-        s.check(report.label_of("zzz_newthing") == "zzz",
+                report.label_of("eaug_friendshipday_happy", split_events=True))
+        s.check(report.label_of("zzz_newthing", split_events=True) == "zzz",
                 "an unknown category prints as itself, not as a guess",
-                report.label_of("zzz_newthing"))
+                report.label_of("zzz_newthing", split_events=True))
 
         detail = report.render_detail(built)
-        s.check("BIRTHDAY" in detail and "AUGUST OCCASIONS" in detail
+        s.check("BIRTHDAY" in detail and "EVENTS CARDS" in detail
                 and "ANNIVERSARY" in detail,
                 "every category that was sent gets a block")
         s.check("happybirthday" in detail and "friendshipday_happy" in detail,
@@ -296,6 +297,132 @@ def main():
                 max(len(line) for line in folded))
         s.check(all("(" not in line or ")" in line for line in folded),
                 "folding never splits one channel across two lines")
+
+        # ------------------------------------- the sixteen, and everything else
+        s.rule("7. EVENTS CARDS")
+        s.check(report.bucket_of("birth_happybirthday") == "birth",
+                "a core category is reported under its own name",
+                report.bucket_of("birth_happybirthday"))
+        s.check(report.bucket_of("eaug_friendshipday_happy") == report.EVENTS,
+                "a month code becomes Events cards",
+                report.bucket_of("eaug_friendshipday_happy"))
+        # wed is deliberately absent from CORE_PREFIXES - a wedding is an event.
+        s.check(report.bucket_of("wed_congrats") == report.EVENTS,
+                "wed is not one of the sixteen, so it is Events cards",
+                report.bucket_of("wed_congrats"))
+        s.check(report.bucket_of("zzz_brandnewoccasion") == report.EVENTS,
+                "a prefix nobody has seen before lands in Events, not in its own row",
+                report.bucket_of("zzz_brandnewoccasion"))
+        s.check(len(report.CORE_PREFIXES) == 16,
+                "sixteen categories keep their own name", len(report.CORE_PREFIXES))
+        s.check(all(p in report.PREFIX_LABEL for p in report.CORE_PREFIXES),
+                "every core category has a plain-English name")
+        s.check(report.EVENTS not in report.CORE_PREFIXES
+                and all("_" not in p for p in report.CORE_PREFIXES),
+                "the bucket key cannot collide with a real prefix")
+
+        s.check(report.sub_label("birth", "birth_happybirthday") == "happybirthday",
+                "under a real category the prefix is dropped",
+                report.sub_label("birth", "birth_happybirthday"))
+        s.check(report.sub_label(report.EVENTS, "eaug_friendshipday_happy")
+                == "eaug_friendshipday_happy",
+                "under Events the prefix stays, or August and December merge",
+                report.sub_label(report.EVENTS, "eaug_friendshipday_happy"))
+
+        s.check(built["occasions"][report.EVENTS].sends == 1,
+                "the eaug send is counted as Events cards",
+                built["occasions"][report.EVENTS].sends)
+        s.check("eaug" not in built["occasions"],
+                "and is not also counted under its own prefix")
+        s.check(dict(built["occasions"][report.EVENTS].sources) == {"eaug": 1},
+                "Events records which prefixes fed it",
+                dict(built["occasions"][report.EVENTS].sources))
+        s.check("Made up of" in report.render_detail(built),
+                "the Events block says what is in it")
+
+        split = report.build(rows, CATEGORIES, split_events=True)
+        s.check(split["occasions"]["eaug"].sends == 1
+                and report.EVENTS not in split["occasions"],
+                "--split-events reports the prefix under its own name instead")
+        s.check(sum(t.sends for t in built["occasions"].values())
+                == sum(t.sends for t in split["occasions"].values()),
+                "bucketing moves sends between rows, it never adds or loses one")
+
+        # ------------------------------------------------------ the totals line
+        s.rule("8. THE TOTALS ADD UP")
+        matched = len(SENDS) - sum(built["unmatched"].values())
+        tail = report.render_detail(built).splitlines()[-5:]
+        s.check(any("TOTAL - every category" in line and f"{matched:,}" in line
+                    for line in tail),
+                "the detail section ends on a grand total", " / ".join(tail).strip())
+        csv_dir = os.path.join(work, "csv")
+        written = report.write_csv(built, csv_dir, CATEGORIES)
+        s.check(len(written) == 5, "five tables are written", len(written))
+        import csv as csv_module
+        with open(os.path.join(csv_dir, "by_category.csv"), encoding="utf-8") as handle:
+            table = list(csv_module.reader(handle))
+        s.check(table[-1][0] == "TOTAL" and int(table[-1][2]) == matched,
+                "by_category.csv ends on a TOTAL row that matches the report",
+                table[-1][:3])
+        s.check(sum(int(r[2]) for r in table[1:-1]) == matched,
+                "and the category rows above it sum to the same number",
+                sum(int(r[2]) for r in table[1:-1]))
+        with open(os.path.join(csv_dir, "category_by_channel.csv"),
+                  encoding="utf-8") as handle:
+            channels = list(csv_module.reader(handle))
+        s.check(channels[-1][0] == "TOTAL"
+                and int(channels[-1][-1]) == len(SENDS),
+                "category_by_channel.csv totals every send, categorised or not",
+                channels[-1])
+
+        # ------------------------------------ the other shape a send file takes
+        s.rule("9. A CARD x CHANNEL PIVOT")
+        pivot = os.path.join(work, "pivot.tsv")
+        with open(pivot, "w", encoding="utf-8") as handle:
+            handle.write("\t".join(["Cardnumber", "Whatsapp (Mobile Web)",
+                                    "SMS (App)", "Total"]) + "\n")
+            for card, wa, sms in (("359583", 3, 0), ("359904", 0, 2),
+                                  ("113366", 1, 1), ("999999999", 1, 0)):
+                handle.write(f"{card}\t{wa}\t{sms}\t{wa + sms}\n")
+        raw = report.read_any(pivot)
+        s.check(report.looks_like_pivot(raw), "a pivot is recognised as one")
+        s.check(not report.looks_like_pivot(report.read_any(tsv)),
+                "and a send log is not mistaken for one")
+        expanded = report.expand_pivot(raw)
+        s.check(len(expanded) == 8, "a cell of 3 becomes three sends",
+                len(expanded))
+        s.check(sum(1 for r in expanded if r["card_id"] == "359583") == 3,
+                "each send keeps its card")
+        s.check(sum(1 for r in expanded if r["share_type"] == "SMS (App)") == 3,
+                "and its channel, spaces and brackets intact")
+
+        built_pivot = report.build(expanded, CATEGORIES)
+        s.check(built_pivot["occasions"]["birth"].sends == 5,
+                "the pivot categorises the same way a log does",
+                built_pivot["occasions"]["birth"].sends)
+        s.check(built_pivot["unmatched"] == {"999999999": 1},
+                "an unknown card is still called out", dict(built_pivot["unmatched"]))
+        s.check(not built_pivot["has_senders"] and not built_pivot["has_countries"],
+                "a pivot knows it has no senders and no countries")
+        text = report.render(built_pivot)
+        s.check("distinct IPs" not in text,
+                "so the report does not claim it has any")
+        s.check("carries counts, not sends" in text,
+                "and says why the line is missing instead of printing 1")
+
+        # The Total column is the file's own arithmetic; disagreeing is an error.
+        broken_pivot = os.path.join(work, "broken_pivot.tsv")
+        with open(broken_pivot, "w", encoding="utf-8") as handle:
+            handle.write("Cardnumber\tWhatsapp (Mobile Web)\tSMS (App)\tTotal\n")
+            handle.write("359583\t3\t1\t9\n")
+        try:
+            report.expand_pivot(report.read_any(broken_pivot))
+            s.check(False, "a row that disagrees with its own Total raises",
+                    "it returned rows")
+        except SystemExit as error:
+            s.check("adds up to 4" in str(error) and "says 9" in str(error),
+                    "a row that disagrees with its own Total raises, and says how",
+                    str(error).splitlines()[0])
     finally:
         shutil.rmtree(work, ignore_errors=True)
 

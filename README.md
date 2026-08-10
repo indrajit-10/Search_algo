@@ -250,6 +250,25 @@ sub-category, however many underscores the sub-category carries of its own:
 Splitting on every underscore instead would invent categories that do not exist,
 so that rule is asserted in the tests rather than left to read correctly.
 
+Sixteen categories are reported under their own name:
+
+```
+birth_  thank_  gen_   love_  anniv_  insp_  cute_  congrats_
+fkt_    bus_    pet_   w_     flwr_   friend_  intouch_  invp_
+```
+
+Every other prefix — the twelve month codes, `wed_`, and anything added to the
+catalogue after that list was written — is counted as **Events cards**, one
+bucket. It is an allow-list on purpose: a new occasion lands in Events rather
+than appearing as a category nobody asked for, and moving it out is one line in
+`CORE_PREFIXES`. `--split-events` turns the bucketing off and reports all 29
+prefixes separately.
+
+Under a named category the sub-category drops the prefix the heading already
+carries (`birth_happybirthday` → `happybirthday`). Under Events cards it keeps
+it, because the prefix is the only thing separating an August card from a
+December one.
+
 ```bash
 python3 social_sends_report.py
 ```
@@ -259,7 +278,7 @@ Put two files in `data/` and there is nothing to configure:
 | File | What it is |
 |---|---|
 | `data/ACTIVE_CARDS.xlsx` | card number and `q1_value`. A full `card_database.csv` works too. |
-| `data/social_sends_2026-08-01.tsv` | the day's sends. Newest matching file wins. |
+| `data/social_sends_2026-08-01.tsv` | the day's sends. Newest **dated** file wins, so a second kind of export in `data/` cannot quietly become the default. |
 
 The send log can be `.tsv`, `.csv`, `.xlsx`, `.csv.gz`, or the block of text you
 get from selecting the rows in a database browser and hitting copy — one cell per
@@ -267,11 +286,28 @@ line, header and all. All three read to the same report, which is asserted in
 `test_social_sends_report.py` rather than hoped for, because a log parsed into the
 wrong columns still prints a tidy and completely wrong set of tables.
 
+A **card × channel pivot** reads too — one row per card, one column per channel,
+counts in the cells, and a `Total`:
+
+```
+Cardnumber   Whatsapp (Mobile Web)   SMS (App)   Total
+359583       3                       0           3
+```
+
+It is recognised by its shape and expanded, a cell of 4 becoming four sends of
+that card on that channel, so everything downstream is unchanged. Each row is
+checked against its own `Total` column and a disagreement stops the run. A pivot
+carries no timestamp, address or country, so the report leaves out the lines it
+cannot answer rather than printing `1 sender` for a column that was never there.
+Name it explicitly — `python3 social_sends_report.py data/pivot.tsv`.
+
 ```
 Category                    Sends   Share  Cards  Senders  Top channel
 Birthday                      373   63.1%     95      254  Text 50.9%
-August occasions               94   15.9%     34       37  More 40.4%
+Events cards                  102   17.3%     39       39  More 41.2%
 Anniversary                    38    6.4%     22       27  Text 60.5%
+...
+TOTAL                         591  100.0%    211      359
 ```
 
 Then the same sends by sub-category (`birth_happybirthday`, 308), by channel,
@@ -294,7 +330,8 @@ BIRTHDAY                                     birth_*       373 sends     63.1%
 
 | Option | What it does |
 |---|---|
-| `--detail` | adds the per-category blocks, with sub-categories underneath |
+| `--detail` | adds the per-category blocks, with sub-categories and a total underneath |
+| `--split-events` | reports all 29 prefixes separately instead of bucketing them |
 | `--csv report/` | writes the five tables as CSV for a spreadsheet |
 | `--out report.txt` | saves the text report as well as printing it |
 | `--top 30` | lengthens the top-N tables (default 15) |
@@ -385,7 +422,7 @@ side-by-side and it will stay quick.
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `social_sends_report.py` | Daily social-sends log, counted by card category. |
-| `test_social_sends_report.py` | 41 assertions on the three shapes a send log arrives in, and on the category split. |
+| `test_social_sends_report.py` | 72 assertions on the shapes a send file arrives in, the category split, and the Events bucket. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `fixtures/social_sends_paste.txt` | A send log copied out of the database browser, for the parser. |
 | `data/` | Where your export goes. Gitignored. |
