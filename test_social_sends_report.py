@@ -1,0 +1,253 @@
+"""
+test_social_sends_report.py  --  the report is only as good as the parse.
+
+    python test_social_sends_report.py
+
+A category report cannot look broken. If the columns come out misaligned it
+still prints a full set of tidy tables, and every number in them is wrong. So
+the tests here are almost entirely about reading the file, and the one that
+matters most is this: the same day's sends, in all three shapes it arrives in
+- tab-separated, Excel, and copied straight out of the database browser -
+must produce byte-identical reports.
+
+No fixture file is needed. The rows are built here, written to a temporary
+directory, and read back through the real entry points.
+"""
+
+import os
+import shutil
+import sys
+import tempfile
+import zipfile
+
+import social_sends_report as report
+
+COLUMNS = ["id", "card_id", "share_type", "share_result", "error_description",
+           "ip", "country", "ua", "date", "date_added", "api_key", "status"]
+
+# Six sends that between them cover every awkward case in a real day: two
+# channels, the SMS path that capitalises its result, a failure carrying an
+# error description, a repeat send from one IP, and a card id the catalogue
+# has never heard of.
+SENDS = [
+    ["1", "359583", "More", "success", "", "185.223.152.119", "US",
+     "iPhone-User-Agent", "2026-08-01 00:01:56", "2026-08-01 00:02:35",
+     "123TestAKey1_v2", "1"],
+    ["2", "359904", "Whatsapp", "success", "", "212.123.185.227", "NL",
+     "Android-User-Agent", "2026-08-01 00:32:42", "2026-08-01 00:33:31",
+     "AndroidGreetings_v2", "1"],
+    ["3", "359904", "Whatsapp", "success", "", "212.123.185.227", "NL",
+     "Android-User-Agent", "2026-08-01 00:34:02", "2026-08-01 00:34:44",
+     "AndroidGreetings_v2", "1"],
+    ["4", "113366", "SMS", "Success", "", "172.56.98.89", "US",
+     "Android-User-Agent", "2026-08-01 04:52:21", "2026-08-01 04:52:33",
+     "AndroidGreetings", "1"],
+    ["5", "117465", "Whatsapp", "failure", "recipient rejected the message",
+     "86.127.230.45", "ES", "iPhone-User-Agent", "2026-08-01 00:38:14",
+     "2026-08-01 00:39:47", "123TestAKey1_v2", "1"],
+    ["6", "999999999", "Text", "success", "", "72.72.201.15", "US",
+     "iPhone-User-Agent", "2026-08-01 03:08:58", "2026-08-01 03:09:01",
+     "123TestAKey1_v2", "1"],
+]
+
+CATEGORIES = {
+    "359583": "birth_happybirthday",
+    "359904": "birth_happybirthday",
+    "113366": "eaug_friendshipday_happy",
+    "117465": "anniv_anniversaryetc",
+}
+
+
+def write_tsv(path):
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("\t".join(COLUMNS) + "\n")
+        for row in SENDS:
+            handle.write("\t".join(row) + "\n")
+
+
+def write_paste(path, header=True, row_number=True, blank_errors=True):
+    """The database-browser copy: one cell per line, header row on top."""
+    lines = ["\t".join(COLUMNS)] if header else []
+    for row in SENDS:
+        if row_number:
+            lines.append(row[0] + "\t")     # the row counter, tab and all
+        for index, value in enumerate(row):
+            if value == "" and not blank_errors:
+                continue
+            lines.append(value)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines) + "\n")
+
+
+def write_xlsx(path, rows, columns):
+    """
+    A minimal .xlsx, written by hand for the same reason read_xlsx() reads one
+    by hand: no third-party library in this repo, in tests either.
+    """
+    def cell(column, index, value):
+        letter = chr(ord("A") + column)
+        return (f'<c r="{letter}{index}" t="inlineStr"><is><t>'
+                f'{value}</t></is></c>')
+
+    body = []
+    for index, row in enumerate([columns] + rows, start=1):
+        cells = "".join(cell(c, index, v) for c, v in enumerate(row))
+        body.append(f'<row r="{index}">{cells}</row>')
+    sheet = ('<?xml version="1.0"?><worksheet xmlns="http://schemas.'
+             'openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
+             + "".join(body) + "</sheetData></worksheet>")
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("[Content_Types].xml",
+                         '<?xml version="1.0"?><Types xmlns="http://schemas.'
+                         'openxmlformats.org/package/2006/content-types"/>')
+        archive.writestr("xl/worksheets/sheet1.xml", sheet)
+
+
+class Suite:
+    def __init__(self):
+        self.passed = 0
+        self.failed = 0
+        self.notes = []
+
+    def check(self, ok, label, detail=""):
+        if ok:
+            self.passed += 1
+        else:
+            self.failed += 1
+            self.notes.append(f"{label} -- {detail}")
+        print(f"  {'ok  ' if ok else 'FAIL'}  {label}")
+        return ok
+
+    def rule(self, title):
+        print("\n" + "=" * 78)
+        print(title)
+        print("=" * 78)
+
+    def report(self):
+        print("\n" + "=" * 78)
+        print(f"{self.passed} passed, {self.failed} failed")
+        if self.notes:
+            print("\nFailures:")
+            for note in self.notes:
+                print(f"  - {note}")
+        print("=" * 78)
+        return self.failed == 0
+
+
+def main():
+    work = tempfile.mkdtemp(prefix="sends-report-")
+    s = Suite()
+    try:
+        tsv = os.path.join(work, "sends.tsv")
+        paste = os.path.join(work, "paste.txt")
+        excel = os.path.join(work, "sends.xlsx")
+        write_tsv(tsv)
+        write_paste(paste)
+        write_xlsx(excel, SENDS, COLUMNS)
+
+        # ------------------------------------------------ every shape reads
+        s.rule("1. THE SAME DAY, IN EVERY SHAPE IT ARRIVES IN")
+        texts = {}
+        for name, path in (("tsv", tsv), ("paste", paste), ("xlsx", excel)):
+            rows = report.normalise(report.read_any(path))
+            s.check(len(rows) == len(SENDS), f"{name}: reads {len(SENDS)} sends",
+                    f"got {len(rows)}")
+            texts[name] = report.render(report.build(rows, CATEGORIES))
+        s.check(texts["tsv"] == texts["paste"],
+                "paste and tsv give identical reports")
+        s.check(texts["tsv"] == texts["xlsx"],
+                "xlsx and tsv give identical reports")
+
+        # A paste without the header, or without the row-number column, is
+        # the same data and has to come out the same way.
+        for label, kwargs in (("no header row", {"header": False}),
+                              ("no row counter", {"row_number": False}),
+                              ("empty cells omitted", {"blank_errors": False})):
+            variant = os.path.join(work, "variant.txt")
+            write_paste(variant, **kwargs)
+            rows = report.normalise(report.read_any(variant))
+            s.check(report.render(report.build(rows, CATEGORIES)) == texts["tsv"],
+                    f"paste with {label} still reads the same")
+
+        # ---------------------------------------------- the fields are right
+        s.rule("2. THE COLUMNS LAND WHERE THEY BELONG")
+        rows = report.normalise(report.read_any(paste))
+        first, failed = rows[0], rows[4]
+        s.check(first["card_id"] == "359583", "card_id parsed", first["card_id"])
+        s.check(first["share_type"] == "More", "share_type parsed",
+                first["share_type"])
+        s.check(first["country"] == "US", "country parsed", first["country"])
+        s.check(first["date"] == "2026-08-01 00:01:56", "date parsed",
+                first["date"])
+        s.check(first["api_key"] == "123TestAKey1_v2", "api_key parsed",
+                first["api_key"])
+        s.check(failed["error_description"] == "recipient rejected the message",
+                "a multi-word error stays in one field",
+                failed["error_description"])
+
+        # ------------------------------------------------------ the counting
+        s.rule("3. THE NUMBERS")
+        built = report.build(rows, CATEGORIES)
+        s.check(built["occasions"]["birth"].sends == 3,
+                "birthday sends counted", built["occasions"]["birth"].sends)
+        s.check(len(built["occasions"]["birth"].cards) == 2,
+                "two different birthday cards",
+                len(built["occasions"]["birth"].cards))
+        s.check(len(built["occasions"]["birth"].senders) == 2,
+                "a repeat send is one sender, not two",
+                len(built["occasions"]["birth"].senders))
+        s.check(built["unmatched"] == {"999999999": 1},
+                "an unknown card is reported, not dropped into an other bucket",
+                dict(built["unmatched"]))
+        s.check(len(built["failures"]) == 1,
+                "the failed send is found", len(built["failures"]))
+        s.check(built["channels"]["SMS"] == 1,
+                "SMS counted despite its capitalised result",
+                built["channels"]["SMS"])
+        s.check(sum(t.sends for t in built["occasions"].values())
+                + sum(built["unmatched"].values()) == len(SENDS),
+                "categorised plus uncategorised equals every send read")
+
+        # ------------------------------------------- refuses to guess badly
+        s.rule("4. A FILE IT CANNOT READ STOPS, RATHER THAN GUESSING")
+        broken = os.path.join(work, "broken.txt")
+        with open(broken, "w", encoding="utf-8") as handle:
+            handle.write("\n".join(["More", "success", "1.2.3.4", "US", "ua",
+                                    "2026-08-01 00:01:56", "2026-08-01 00:02:35",
+                                    "key", "1"]) + "\n")
+        try:
+            report.read_any(broken)
+            s.check(False, "a record with no id raises", "it returned rows")
+        except SystemExit as error:
+            s.check("Export it as CSV" in str(error),
+                    "a record with no id raises, and says what to do instead",
+                    str(error)[:60])
+
+        empty = os.path.join(work, "empty.txt")
+        open(empty, "w").close()
+        s.check(report.read_any(empty) == [], "an empty file reads as no rows")
+
+        s.rule("5. THE CARD LIST")
+        cards = os.path.join(work, "ACTIVE_CARDS.xlsx")
+        write_xlsx(cards, [[k, v] for k, v in CATEGORIES.items()],
+                   ["card_number", "q1_value"])
+        s.check(report.load_categories(cards) == CATEGORIES,
+                "the card list round-trips through the xlsx reader")
+
+        wrong = os.path.join(work, "wrong.csv")
+        with open(wrong, "w", encoding="utf-8") as handle:
+            handle.write("a,b,c\n1,2,3\n4,5,6\n")
+        try:
+            report.load_categories(wrong)
+            s.check(False, "a card list with no q1_value raises", "it returned")
+        except SystemExit as error:
+            s.check("does not look like a card list" in str(error),
+                    "a card list with no q1_value raises", str(error)[:60])
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+    return 0 if s.report() else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -231,6 +231,50 @@ against catalogue age, tag coverage, encoding corruption, index cost.
 
 ---
 
+## The daily sends report
+
+Which categories are people actually sharing? The social-sends log knows which
+card went out but not what it was about; `q1_value` in the card list is the only
+column that does. Join the two and the day sorts itself into occasions.
+
+```bash
+python3 social_sends_report.py
+```
+
+Put two files in `data/` and there is nothing to configure:
+
+| File | What it is |
+|---|---|
+| `data/ACTIVE_CARDS.xlsx` | card number and `q1_value`. A full `card_database.csv` works too. |
+| `data/social_sends_2026-08-01.tsv` | the day's sends. Newest matching file wins. |
+
+The send log can be `.tsv`, `.csv`, `.xlsx`, `.csv.gz`, or the block of text you
+get from selecting the rows in a database browser and hitting copy — one cell per
+line, header and all. All three read to the same report, which is asserted in
+`test_social_sends_report.py` rather than hoped for, because a log parsed into the
+wrong columns still prints a tidy and completely wrong set of tables.
+
+```
+Category                    Sends   Share  Cards  Senders  Top channel
+Birthday                      373   63.1%     95      254  Text 50.9%
+August occasions               94   15.9%     34       37  More 40.4%
+Anniversary                    38    6.4%     22       27  Text 60.5%
+```
+
+Then the same sends by sub-category (`birth_happybirthday`, 308), by channel,
+the most-shared cards, and where they went. Two things are called out rather
+than absorbed: sends whose card id is not in the card list, and sends that did
+not report success.
+
+| Option | What it does |
+|---|---|
+| `--csv report/` | writes the four tables as CSV for a spreadsheet |
+| `--out report.txt` | saves the text report as well as printing it |
+| `--top 30` | lengthens the top-N tables (default 15) |
+| `--cards FILE` | name the card list explicitly |
+
+---
+
 ## Letting someone else try it
 
 The server already listens on every interface and handles requests in parallel,
@@ -309,7 +353,10 @@ side-by-side and it will stay quick.
 | `evaluate.py` | Replays the production query log through both engines. |
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
+| `social_sends_report.py` | Daily social-sends log, counted by card category. |
+| `test_social_sends_report.py` | 25 assertions on the three shapes a send log arrives in. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
+| `fixtures/social_sends_paste.txt` | A send log copied out of the database browser, for the parser. |
 | `data/` | Where your export goes. Gitignored. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
 | `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |

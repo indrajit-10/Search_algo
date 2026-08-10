@@ -1,0 +1,66 @@
+Sl. no.	id	card_id	share_type	share_result	error_description	ip	country	ua	date	date_added	api_key	status
+1
+1
+359583
+More
+success
+
+185.223.152.119
+US
+iPhone-User-Agent
+2026-08-01 00:01:56
+2026-08-01 00:02:35
+123TestAKey1_v2
+1
+2
+2
+815426
+More
+success
+
+80.4.181.238
+GB
+iPhone-User-Agent
+2026-08-01 00:29:34
+2026-08-01 00:29:44
+123TestAKey1_v2
+1
+3
+3
+359904
+Whatsapp
+success
+
+212.123.185.227
+NL
+Android-User-Agent
+2026-08-01 00:32:42
+2026-08-01 00:33:31
+AndroidGreetings_v2
+1
+4
+4
+117465
+Whatsapp
+failure
+recipient rejected the message
+86.127.230.45
+ES
+iPhone-User-Agent
+2026-08-01 00:38:14
+2026-08-01 00:39:47
+123TestAKey1_v2
+1
+5
+5
+359901
+Whatsapp
+success
+
+83.225.121.85
+IT
+iPhone-User-Agent
+2026-08-01 00:47:43
+2026-08-01 00:48:50
+123TestAKey1_v2
+1
