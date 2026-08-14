@@ -313,6 +313,7 @@ side-by-side and it will stay quick.
 | `data/` | Where your export goes. Gitignored. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
 | `OLD_VS_NEW.md` | Point-by-point against the Sphinx spec (Algorithm v3.2). |
+| `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
 | `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
 
@@ -325,7 +326,8 @@ side-by-side and it will stay quick.
 > **Replacing something?** [OLD_VS_NEW.md](OLD_VS_NEW.md) goes through the
 > Sphinx spec version by version — what each rule was for, which ones caused the
 > reported complaints, and the three things the old system does that this one
-> does not.
+> does not. Also as [OLD_VS_NEW.docx](OLD_VS_NEW.docx) if you need to send it
+> round.
 >
 > **Want it on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
 > as a diagram — the query pipeline, the relaxation ladder, and a what-changed
