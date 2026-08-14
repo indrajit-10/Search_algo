@@ -852,6 +852,10 @@ class SearchIndex:
         }
         self.corrector = SpellCorrector(self.document_frequency)
         self.sorted_terms = sorted(self.postings)
+        # Pasting a card number is a lookup, not a search. Version 1 of the old
+        # algorithm offered it ("view the card page by entering the sent card
+        # id") and people arrive with a number from a card they were sent.
+        self.by_number = {c.number: c.doc for c in self.cards if c.number}
         self.variants, self.dropped_variants = _validate_variants(self)
 
         # A facet's boost scales with how much it narrows the catalogue, for the
@@ -1294,6 +1298,17 @@ def latest_cards(index, raw_query, limit, corrections=None, strategy="latest"):
 
 def search(index, raw_query, limit=MAX_RESULTS, popularity=None,
            recency_boost=RECENCY_BOOST):
+    # A bare card number is a lookup. Checked before anything else, because as
+    # a text query it is a token no card contains: "123057" fell all the way
+    # through the ladder to the newest cards, which is the one answer that is
+    # certainly wrong when the exact card is sitting right there.
+    bare = (raw_query or "").strip()
+    if bare.isdigit() and bare in index.by_number:
+        card = index.cards[index.by_number[bare]]
+        return {"query": raw_query, "strategy": "card number", "fallback": False,
+                "message": f"Card {bare}.", "corrections": {},
+                "results": [card], "explain": {card.doc: f"card number {bare}"}}
+
     query = understand(raw_query, index)
     terms, facets = query.terms, query.facets
 
@@ -1725,6 +1740,22 @@ def run_tests(index):
         got = index.corrector.correct(word)[0]
         check(f"{word!r} is not rewritten to {must_not!r} (got {got!r})",
               got != must_not)
+
+    print("\n-- a pasted card number is a lookup, not a search --")
+    # Version 1 of the old algorithm offered this and people arrive with a
+    # number off a card they were sent. As a text query it is a token no card
+    # contains, so it fell all the way through to the newest cards.
+    sample = [index.cards[0], index.cards[index.total // 2], index.cards[-1]]
+    for card in sample:
+        out = search(index, card.number, limit=5)
+        check(f"card {card.number} returns itself",
+              out["results"] and out["results"][0].number == card.number
+              and not out["fallback"])
+    check("a number no card has still falls back rather than erroring",
+          search(index, "99999999999", limit=3)["fallback"])
+    check("a number inside a real query is still a text search",
+          search(index, f"birthday {sample[0].number}",
+                 limit=3)["strategy"] != "card number")
 
     print("\n-- two words typed as one --")
     for typed, expect in [("merrychristmas", "merry christmas"),

@@ -30,7 +30,7 @@ measurable causes — and we found a sixth that was bigger than any of them.
 | The complaint | What was actually happening |
 |---|---|
 | "Missing results" | The word list that removes filler words contained **"flash"** and **"animated"**. So *"flash card"* had both its words deleted and searched for nothing. |
-| "Spelling errors find nothing" | There was no spell correction. There never had been, in any version. *"birthdya"* found 0 of 819 birthday cards. |
+| "Spelling errors find nothing" | Correction was a hand-written list of about 200 words. Perfect on the 200; nothing at all on the 201st. *"birthdya"* is not on it, and found 0 of 819 birthday cards. |
 | "Funny gives wrong results" | 1,105 cards say *"a fun ecard"* in their blurb without being funny. Only 150 are genuinely tagged as humour. The blurb was winning. |
 | "Misspellings give wrong output" | With no correction, a typo returned nothing, and a fallback quietly showed unrelated popular cards instead. |
 | "Old cards always first" | Ranking used **lifetime send count**. On a catalogue running since 2002, a card uploaded last month cannot ever catch up. New work was mathematically unrankable. |

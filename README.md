@@ -312,6 +312,7 @@ side-by-side and it will stay quick.
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `data/` | Where your export goes. Gitignored. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
+| `OLD_VS_NEW.md` | Point-by-point against the Sphinx spec (Algorithm v3.2). |
 | `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
 
@@ -320,6 +321,11 @@ side-by-side and it will stay quick.
 > **Want the reasoning rather than the commands?** [LOGIC.md](LOGIC.md) explains
 > the whole thing in plain English — what happens between someone typing and
 > cards appearing, and why each decision was made. No code, no jargon.
+>
+> **Replacing something?** [OLD_VS_NEW.md](OLD_VS_NEW.md) goes through the
+> Sphinx spec version by version — what each rule was for, which ones caused the
+> reported complaints, and the three things the old system does that this one
+> does not.
 >
 > **Want it on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
 > as a diagram — the query pipeline, the relaxation ladder, and a what-changed
