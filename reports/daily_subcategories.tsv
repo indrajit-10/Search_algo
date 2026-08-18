@@ -1002,3 +1002,80 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-12	Thank you	congratulations	thank_congratulations	1	1
 2026-08-12	Thank you	family	thank_family	1	1
 2026-08-12	World languages	russian_birthday	w_russian_birthday	3	1
+2026-08-13	Anniversary	wedanniv_couple	anniv_wedanniv_couple	32	17
+2026-08-13	Anniversary	anniversaryetc	anniv_anniversaryetc	12	7
+2026-08-13	Anniversary	ouranniversary_forher	anniv_ouranniversary_forher	6	5
+2026-08-13	Anniversary	milestone	anniv_milestone	2	2
+2026-08-13	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	2	2
+2026-08-13	Anniversary	wedanniv_family	anniv_wedanniv_family	1	1
+2026-08-13	Birthday	happybirthday	birth_happybirthday	363	49
+2026-08-13	Birthday	fun	birth_fun	16	7
+2026-08-13	Birthday	flowers	birth_flowers	12	5
+2026-08-13	Birthday	wishes	birth_wishes	11	5
+2026-08-13	Birthday	bronsis	birth_bronsis	11	8
+2026-08-13	Birthday	sonanddaughter	birth_sonanddaughter	10	6
+2026-08-13	Birthday	belated	birth_belated	9	5
+2026-08-13	Birthday	extfamily	birth_extfamily	9	6
+2026-08-13	Birthday	kids	birth_kids	8	6
+2026-08-13	Birthday	blessings	birth_blessings	7	4
+2026-08-13	Birthday	milestone	birth_milestone	7	6
+2026-08-13	Birthday	songs	birth_songs	6	5
+2026-08-13	Birthday	friends	birth_friends	3	3
+2026-08-13	Birthday	hubbywife	birth_hubbywife	3	3
+2026-08-13	Birthday	momndad	birth_momndad	2	2
+2026-08-13	Birthday	forher	birth_forher	2	2
+2026-08-13	Birthday	forhim	birth_forhim	1	1
+2026-08-13	Birthday	pets	birth_pets	1	1
+2026-08-13	Business & work	farewell	bus_farewell	1	1
+2026-08-13	Business & work	accolades	bus_accolades	1	1
+2026-08-13	Business & work	apologies	bus_apologies	1	1
+2026-08-13	Congratulations	studentsandnewgrads	congrats_studentsandnewgrads	2	1
+2026-08-13	Congratulations	onotheroccasions	congrats_onotheroccasions	2	1
+2026-08-13	Congratulations	newjob	congrats_newjob	1	1
+2026-08-13	Events cards	eaug_smilemonth	eaug_smilemonth	15	2
+2026-08-13	Events cards	eaug_internationalleft_handers_day	eaug_internationalleft_handers_day	14	3
+2026-08-13	Events cards	ejun_summer_birthday	ejun_summer_birthday	4	1
+2026-08-13	Events cards	eaug_flwrmonthaug	eaug_flwrmonthaug	2	2
+2026-08-13	Events cards	eaug_romanceday	eaug_romanceday	2	2
+2026-08-13	Events cards	eaug_creamsicleday	eaug_creamsicleday	2	2
+2026-08-13	Events cards	eoct_nationaliloveyou_day	eoct_nationaliloveyou_day	2	1
+2026-08-13	Events cards	eaug_zorastriannewyear	eaug_zorastriannewyear	2	2
+2026-08-13	Events cards	wed_wed_congrats	wed_wed_congrats	2	1
+2026-08-13	Events cards	wed_foreachother	wed_foreachother	1	1
+2026-08-13	Events cards	esep_fall_specials	esep_fall_specials	1	1
+2026-08-13	Events cards	efeb_lent	efeb_lent	1	1
+2026-08-13	Events cards	eaug_indindependenceday	eaug_indindependenceday	1	1
+2026-08-13	Events cards	emar_stjosephs_day	emar_stjosephs_day	1	1
+2026-08-13	Events cards	esep_wifeappreciation_day	esep_wifeappreciation_day	1	1
+2026-08-13	Events cards	esep_longestkissday	esep_longestkissday	1	1
+2026-08-13	Everyday greetings	morning	gen_morning	22	8
+2026-08-13	Everyday greetings	getwell	gen_getwell	8	5
+2026-08-13	Everyday greetings	thinkingofyou	gen_thinkingofyou	5	2
+2026-08-13	Everyday greetings	quotesmessages_images_getwell_images	gen_quotesmessages_images_getwell_images	1	1
+2026-08-13	Everyday greetings	voyage	gen_voyage	1	1
+2026-08-13	Everyday greetings	hvgtday	gen_hvgtday	1	1
+2026-08-13	Family & loved ones	sonsdaughter	fkt_sonsdaughter	1	1
+2026-08-13	Flowers	roses	flwr_roses	2	2
+2026-08-13	Flowers	youcare	flwr_youcare	1	1
+2026-08-13	Friendship	hello	friend_hello	1	1
+2026-08-13	Friendship	justpals	friend_justpals	1	1
+2026-08-13	Inspirational & sympathy	sympathy	insp_sympathy	9	5
+2026-08-13	Inspirational & sympathy	support	insp_support	2	1
+2026-08-13	Inspirational & sympathy	health	insp_health	1	1
+2026-08-13	Invitations & parties	birth_gen	invp_birth_gen	3	1
+2026-08-13	Love & romance	iloveyou_general	love_iloveyou_general	7	5
+2026-08-13	Love & romance	iloveyou_couples	love_iloveyou_couples	4	2
+2026-08-13	Love & romance	iloveyou_crazy	love_iloveyou_crazy	4	2
+2026-08-13	Love & romance	youarespecial	love_youarespecial	1	1
+2026-08-13	Love & romance	lovepoems	love_lovepoems	1	1
+2026-08-13	Love & romance	iamsorry	love_iamsorry	1	1
+2026-08-13	Pets	lossofpet	pet_lossofpet	3	2
+2026-08-13	Pets	getwell	pet_getwell	2	2
+2026-08-13	Thank you	birthday	thank_birthday	14	1
+2026-08-13	Thank you	love	thank_love	6	4
+2026-08-13	Thank you	everyday	thank_everyday	5	3
+2026-08-13	Thank you	inspirational	thank_inspirational	2	1
+2026-08-13	Thank you	congratulations	thank_congratulations	2	1
+2026-08-13	Thank you	wedding	thank_wedding	1	1
+2026-08-13	World languages	hindi_rakshabandhan	w_hindi_rakshabandhan	1	1
+2026-08-13	World languages	mandarin_birthday	w_mandarin_birthday	1	1
