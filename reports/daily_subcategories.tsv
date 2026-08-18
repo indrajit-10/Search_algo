@@ -578,86 +578,88 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-07	Thank you	family	thank_family	1	1
 2026-08-07	Thank you	wedding	thank_wedding	1	1
 2026-08-07	Thank you	love	thank_love	1	1
-2026-08-08	Anniversary	anniversaryetc	anniv_anniversaryetc	36	12
-2026-08-08	Anniversary	wedanniv_couple	anniv_wedanniv_couple	14	8
-2026-08-08	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	2	1
-2026-08-08	Birthday	happybirthday	birth_happybirthday	427	55
-2026-08-08	Birthday	fun	birth_fun	20	7
-2026-08-08	Birthday	friends	birth_friends	12	10
-2026-08-08	Birthday	blessings	birth_blessings	10	6
+2026-08-08	Anniversary	anniversaryetc	anniv_anniversaryetc	39	12
+2026-08-08	Anniversary	wedanniv_couple	anniv_wedanniv_couple	6	4
+2026-08-08	Anniversary	flwrs	anniv_flwrs	1	1
+2026-08-08	Anniversary	ouranniversary_forher	anniv_ouranniversary_forher	1	1
+2026-08-08	Birthday	happybirthday	birth_happybirthday	386	50
+2026-08-08	Birthday	fun	birth_fun	15	6
+2026-08-08	Birthday	songs	birth_songs	10	4
+2026-08-08	Birthday	friends	birth_friends	8	5
+2026-08-08	Birthday	flowers	birth_flowers	8	6
 2026-08-08	Birthday	belated	birth_belated	7	6
-2026-08-08	Birthday	milestone	birth_milestone	6	5
-2026-08-08	Birthday	wishes	birth_wishes	6	3
-2026-08-08	Birthday	extfamily	birth_extfamily	5	4
-2026-08-08	Birthday	kids	birth_kids	5	4
-2026-08-08	Birthday	sonanddaughter	birth_sonanddaughter	5	4
-2026-08-08	Birthday	hubbywife	birth_hubbywife	5	4
-2026-08-08	Birthday	flowers	birth_flowers	5	2
-2026-08-08	Birthday	songs	birth_songs	4	4
-2026-08-08	Birthday	bronsis	birth_bronsis	4	4
+2026-08-08	Birthday	sonanddaughter	birth_sonanddaughter	7	6
+2026-08-08	Birthday	bronsis	birth_bronsis	7	5
+2026-08-08	Birthday	milestone	birth_milestone	6	4
+2026-08-08	Birthday	wishes	birth_wishes	6	4
+2026-08-08	Birthday	extfamily	birth_extfamily	6	4
+2026-08-08	Birthday	blessings	birth_blessings	6	4
+2026-08-08	Birthday	kids	birth_kids	3	3
+2026-08-08	Birthday	hubbywife	birth_hubbywife	3	2
+2026-08-08	Birthday	missyou	birth_missyou	2	1
 2026-08-08	Birthday	specials	birth_specials	1	1
-2026-08-08	Birthday	forhim	birth_forhim	1	1
-2026-08-08	Birthday	momndad	birth_momndad	1	1
+2026-08-08	Birthday	balloons	birth_balloons	1	1
+2026-08-08	Birthday	collassociates	birth_collassociates	1	1
 2026-08-08	Business & work	atworketc	bus_atworketc	1	1
-2026-08-08	Congratulations	newbaby	congrats_newbaby	5	4
+2026-08-08	Congratulations	newbaby	congrats_newbaby	3	2
+2026-08-08	Congratulations	newhome	congrats_newhome	2	2
+2026-08-08	Congratulations	foreveryone	congrats_foreveryone	2	2
 2026-08-08	Congratulations	engagement	congrats_engagement	1	1
-2026-08-08	Congratulations	newhome	congrats_newhome	1	1
-2026-08-08	Congratulations	foreveryone	congrats_foreveryone	1	1
-2026-08-08	Congratulations	newcarandlicense	congrats_newcarandlicense	1	1
+2026-08-08	Congratulations	studentsandnewgrads	congrats_studentsandnewgrads	1	1
 2026-08-08	Cute	hugs	cute_hugs	3	3
 2026-08-08	Events cards	eaug_nationalzucchini_day	eaug_nationalzucchini_day	13	2
-2026-08-08	Events cards	eaug_hugmonth	eaug_hugmonth	6	2
 2026-08-08	Events cards	eaug_happinesshappens_day	eaug_happinesshappens_day	4	4
 2026-08-08	Events cards	eaug_flwrmonthaug	eaug_flwrmonthaug	4	1
 2026-08-08	Events cards	eaug_booklover_day	eaug_booklover_day	3	1
 2026-08-08	Events cards	eaug_nationalraspberry_tart_day	eaug_nationalraspberry_tart_day	2	1
 2026-08-08	Events cards	eaug_internationalcat_day	eaug_internationalcat_day	2	2
 2026-08-08	Events cards	eaug_thankyouday	eaug_thankyouday	2	1
+2026-08-08	Events cards	wed_weddingetc	wed_weddingetc	2	1
 2026-08-08	Events cards	eaug_hugsweetheartday	eaug_hugsweetheartday	2	1
+2026-08-08	Events cards	eaug_womensequality_day	eaug_womensequality_day	2	1
+2026-08-08	Events cards	emar_womensday_wishes	emar_womensday_wishes	2	2
 2026-08-08	Events cards	eaug_nationallighthouse_day	eaug_nationallighthouse_day	1	1
+2026-08-08	Events cards	eaug_hugmonth	eaug_hugmonth	1	1
 2026-08-08	Events cards	eaug_smilemonth	eaug_smilemonth	1	1
 2026-08-08	Events cards	eaug_romawaremonth	eaug_romawaremonth	1	1
 2026-08-08	Events cards	eoct_nationalcat_day	eoct_nationalcat_day	1	1
-2026-08-08	Events cards	wed_weddingetc	wed_weddingetc	1	1
 2026-08-08	Events cards	ejun_summer_missingu	ejun_summer_missingu	1	1
-2026-08-08	Events cards	eaug_womensequality_day	eaug_womensequality_day	1	1
-2026-08-08	Events cards	esep_trueloveforeverday	esep_trueloveforeverday	1	1
-2026-08-08	Events cards	eaug_girlfriendsday	eaug_girlfriendsday	1	1
-2026-08-08	Events cards	emay_gethappyweek	emay_gethappyweek	1	1
-2026-08-08	Everyday greetings	thinkingofyou	gen_thinkingofyou	14	7
+2026-08-08	Events cards	wed_wed_congrats	wed_wed_congrats	1	1
+2026-08-08	Everyday greetings	thinkingofyou	gen_thinkingofyou	11	5
+2026-08-08	Everyday greetings	morning	gen_morning	7	5
 2026-08-08	Everyday greetings	getwell	gen_getwell	5	3
-2026-08-08	Everyday greetings	morning	gen_morning	4	4
-2026-08-08	Everyday greetings	hvgtday	gen_hvgtday	3	2
-2026-08-08	Everyday greetings	sorry	gen_sorry	3	2
+2026-08-08	Everyday greetings	weekend	gen_weekend	3	2
 2026-08-08	Everyday greetings	quotesmessages_images_getwell_messages	gen_quotesmessages_images_getwell_messages	2	1
-2026-08-08	Everyday greetings	weekend	gen_weekend	2	2
 2026-08-08	Everyday greetings	quotesmessages_images_goodmorning_images	gen_quotesmessages_images_goodmorning_images	2	1
 2026-08-08	Everyday greetings	goodnight	gen_goodnight	2	2
-2026-08-08	Everyday greetings	monblues	gen_monblues	2	2
+2026-08-08	Everyday greetings	hvgtday	gen_hvgtday	1	1
 2026-08-08	Everyday greetings	missyou	gen_missyou	1	1
 2026-08-08	Everyday greetings	hi	gen_hi	1	1
-2026-08-08	Everyday greetings	luck	gen_luck	1	1
+2026-08-08	Everyday greetings	sorry	gen_sorry	1	1
+2026-08-08	Family & loved ones	sonsdaughter	fkt_sonsdaughter	3	2
 2026-08-08	Family & loved ones	sisters	fkt_sisters	2	2
-2026-08-08	Flowers	flrwishes	flwr_flrwishes	38	1
-2026-08-08	Flowers	roses	flwr_roses	1	1
-2026-08-08	Friendship	bestfriends	friend_bestfriends	4	2
+2026-08-08	Flowers	flrwishes	flwr_flrwishes	39	1
+2026-08-08	Friendship	bestfriends	friend_bestfriends	5	3
+2026-08-08	Friendship	funny	friend_funny	3	1
 2026-08-08	Friendship	thoughts	friend_thoughts	1	1
-2026-08-08	Inspirational & sympathy	sympathy	insp_sympathy	9	6
+2026-08-08	Friendship	specialfriend	friend_specialfriend	1	1
+2026-08-08	Inspirational & sympathy	sympathy	insp_sympathy	11	8
 2026-08-08	Inspirational & sympathy	health	insp_health	3	1
-2026-08-08	Love & romance	iloveyou_general	love_iloveyou_general	12	9
-2026-08-08	Love & romance	sweetheart	love_sweetheart	5	3
+2026-08-08	Love & romance	iloveyou_general	love_iloveyou_general	9	6
 2026-08-08	Love & romance	dating	love_dating	2	2
+2026-08-08	Love & romance	hugs	love_hugs	2	1
 2026-08-08	Love & romance	iloveyou_kisses	love_iloveyou_kisses	1	1
 2026-08-08	Love & romance	iloveyou_crazy	love_iloveyou_crazy	1	1
 2026-08-08	Love & romance	lovepoems	love_lovepoems	1	1
 2026-08-08	Love & romance	lovesongs	love_lovesongs	1	1
 2026-08-08	Pets	lossofpet	pet_lossofpet	2	2
 2026-08-08	Pets	getwell	pet_getwell	2	1
-2026-08-08	Thank you	birthday	thank_birthday	26	3
-2026-08-08	Thank you	everyday	thank_everyday	7	4
-2026-08-08	Thank you	wedding	thank_wedding	4	2
-2026-08-08	Thank you	inspirational	thank_inspirational	2	2
-2026-08-08	Thank you	love	thank_love	2	2
+2026-08-08	Thank you	birthday	thank_birthday	19	4
+2026-08-08	Thank you	everyday	thank_everyday	5	2
+2026-08-08	Thank you	wedding	thank_wedding	2	1
+2026-08-08	Thank you	flower	thank_flower	2	1
+2026-08-08	Thank you	inspirational	thank_inspirational	1	1
+2026-08-08	Thank you	love	thank_love	1	1
 2026-08-09	Anniversary	anniversaryetc	anniv_anniversaryetc	33	15
 2026-08-09	Anniversary	wedanniv_couple	anniv_wedanniv_couple	7	5
 2026-08-09	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	1	1
@@ -1338,3 +1340,85 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-16	Thank you	wedding	thank_wedding	2	1
 2026-08-16	Thank you	congratulations	thank_congratulations	1	1
 2026-08-16	Thank you	friendship	thank_friendship	1	1
+2026-08-17	Anniversary	anniversaryetc	anniv_anniversaryetc	24	12
+2026-08-17	Anniversary	wedanniv_couple	anniv_wedanniv_couple	16	8
+2026-08-17	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	3	2
+2026-08-17	Birthday	happybirthday	birth_happybirthday	360	52
+2026-08-17	Birthday	fun	birth_fun	22	9
+2026-08-17	Birthday	blessings	birth_blessings	16	5
+2026-08-17	Birthday	milestone	birth_milestone	9	7
+2026-08-17	Birthday	friends	birth_friends	9	8
+2026-08-17	Birthday	sonanddaughter	birth_sonanddaughter	8	6
+2026-08-17	Birthday	flowers	birth_flowers	6	5
+2026-08-17	Birthday	wishes	birth_wishes	5	3
+2026-08-17	Birthday	belated	birth_belated	4	3
+2026-08-17	Birthday	hubbywife	birth_hubbywife	4	4
+2026-08-17	Birthday	bronsis	birth_bronsis	4	4
+2026-08-17	Birthday	extfamily	birth_extfamily	4	4
+2026-08-17	Birthday	kids	birth_kids	4	3
+2026-08-17	Birthday	songs	birth_songs	3	3
+2026-08-17	Birthday	forhim	birth_forhim	1	1
+2026-08-17	Birthday	momndad	birth_momndad	1	1
+2026-08-17	Congratulations	newbaby	congrats_newbaby	5	4
+2026-08-17	Congratulations	newhome	congrats_newhome	4	3
+2026-08-17	Congratulations	studentsandnewgrads	congrats_studentsandnewgrads	3	3
+2026-08-17	Congratulations	newjob	congrats_newjob	2	2
+2026-08-17	Congratulations	onotheroccasions	congrats_onotheroccasions	1	1
+2026-08-17	Congratulations	promotion	congrats_promotion	1	1
+2026-08-17	Congratulations	newcarandlicense	congrats_newcarandlicense	1	1
+2026-08-17	Cute	hugs	cute_hugs	3	3
+2026-08-17	Cute	cuteetc	cute_cuteetc	1	1
+2026-08-17	Events cards	eaug_vanillacustard_day	eaug_vanillacustard_day	7	3
+2026-08-17	Events cards	eaug_hugmonth	eaug_hugmonth	7	3
+2026-08-17	Events cards	eaug_friendshipweek	eaug_friendshipweek	5	4
+2026-08-17	Events cards	eoct_sweetday_family	eoct_sweetday_family	4	1
+2026-08-17	Events cards	eaug_babyboomers_recognition_day	eaug_babyboomers_recognition_day	4	1
+2026-08-17	Events cards	eaug_rakshabandhan_happy	eaug_rakshabandhan_happy	3	1
+2026-08-17	Events cards	eoct_sweetday_thanku	eoct_sweetday_thanku	2	1
+2026-08-17	Events cards	eaug_flwrmonthaug	eaug_flwrmonthaug	2	2
+2026-08-17	Events cards	eoct_sweetday_romance	eoct_sweetday_romance	2	1
+2026-08-17	Events cards	esep_longestkissday	esep_longestkissday	2	2
+2026-08-17	Events cards	eaug_icecream_pie_day	eaug_icecream_pie_day	2	2
+2026-08-17	Events cards	ejun_summer_happy	ejun_summer_happy	1	1
+2026-08-17	Events cards	eaug_romawaremonth	eaug_romawaremonth	1	1
+2026-08-17	Events cards	eapr_easter_weekend	eapr_easter_weekend	1	1
+2026-08-17	Events cards	esep_fall_specials	esep_fall_specials	1	1
+2026-08-17	Events cards	esep_trueloveforeverday	esep_trueloveforeverday	1	1
+2026-08-17	Events cards	eaug_girlfriendsday	eaug_girlfriendsday	1	1
+2026-08-17	Events cards	emay_gethappyweek	emay_gethappyweek	1	1
+2026-08-17	Everyday greetings	thinkingofyou	gen_thinkingofyou	29	7
+2026-08-17	Everyday greetings	getwell	gen_getwell	12	6
+2026-08-17	Everyday greetings	luck	gen_luck	5	3
+2026-08-17	Everyday greetings	monblues	gen_monblues	4	2
+2026-08-17	Everyday greetings	goodnight	gen_goodnight	4	3
+2026-08-17	Everyday greetings	morning	gen_morning	3	2
+2026-08-17	Everyday greetings	quotesmessages_images_goodmorning_images	gen_quotesmessages_images_goodmorning_images	3	1
+2026-08-17	Everyday greetings	hvgtday	gen_hvgtday	3	2
+2026-08-17	Everyday greetings	sorry	gen_sorry	3	2
+2026-08-17	Everyday greetings	hi	gen_hi	2	1
+2026-08-17	Everyday greetings	cheerup	gen_cheerup	1	1
+2026-08-17	Everyday greetings	youarewelcome	gen_youarewelcome	1	1
+2026-08-17	Everyday greetings	quotesmessages_images_getwell_messages	gen_quotesmessages_images_getwell_messages	1	1
+2026-08-17	Family & loved ones	familyoccasions	fkt_familyoccasions	3	2
+2026-08-17	Family & loved ones	sisters	fkt_sisters	1	1
+2026-08-17	Flowers	youcare	flwr_youcare	6	4
+2026-08-17	Flowers	roses	flwr_roses	1	1
+2026-08-17	Friendship	hello	friend_hello	6	3
+2026-08-17	Friendship	justpals	friend_justpals	2	1
+2026-08-17	Inspirational & sympathy	sympathy	insp_sympathy	9	9
+2026-08-17	Inspirational & sympathy	recovery	insp_recovery	1	1
+2026-08-17	Inspirational & sympathy	encour	insp_encour	1	1
+2026-08-17	Invitations & parties	otherinvitations	invp_otherinvitations	1	1
+2026-08-17	Love & romance	sweetheart	love_sweetheart	14	6
+2026-08-17	Love & romance	iloveyou_general	love_iloveyou_general	5	4
+2026-08-17	Love & romance	iloveyou_couples	love_iloveyou_couples	4	3
+2026-08-17	Love & romance	iloveyou_crazy	love_iloveyou_crazy	3	3
+2026-08-17	Love & romance	foreverlove	love_foreverlove	1	1
+2026-08-17	Love & romance	dating	love_dating	1	1
+2026-08-17	Love & romance	iloveyou_kisses	love_iloveyou_kisses	1	1
+2026-08-17	Thank you	birthday	thank_birthday	16	3
+2026-08-17	Thank you	everyday	thank_everyday	4	2
+2026-08-17	Thank you	wedding	thank_wedding	4	2
+2026-08-17	Thank you	love	thank_love	2	1
+2026-08-17	Thank you	invitations	thank_invitations	1	1
+2026-08-17	Thank you	inspirational	thank_inspirational	1	1
