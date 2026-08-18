@@ -440,7 +440,12 @@ def normalise(rows):
 # Finding the two files
 # --------------------------------------------------------------------------
 
-CATALOGUE_NAMES = ("ACTIVE_CARDS.xlsx", "active_cards.xlsx", "active_cards.csv",
+# cards_catalogue.tsv comes first: it is the exported card list plus every
+# later top-up merged in (see merge_catalogue.py). New cards go live between
+# exports, and a send of a card the list has never heard of counts as
+# uncategorised, so the merged file is the one to prefer when it exists.
+CATALOGUE_NAMES = ("cards_catalogue.tsv",
+                   "ACTIVE_CARDS.xlsx", "active_cards.xlsx", "active_cards.csv",
                    "card_database.csv", "card_database.csv.gz", "card_database.zip")
 
 

@@ -415,6 +415,28 @@ installs" is a dependency every machine that ever runs this would have to
 install. Its output is byte-identical for identical data, so a day that changes
 nothing shows no diff.
 
+### Keeping the card list current
+
+The card export is a snapshot, and cards go live after it is taken. A send of a
+card the list has never heard of has no `q1_value`, so it counts as
+uncategorised and vanishes from every category figure — on 8 August that was 29
+sends, one card alone taking 19.
+
+So top-ups get merged rather than replacing anything:
+
+```bash
+python3 merge_catalogue.py data/ACTIVE_CARDS.xlsx data/new_cards_*.tsv
+```
+
+Later files win, which makes it safe to re-run with the same arguments and safe
+to hand a card that has been recategorised. The result is
+`data/cards_catalogue.tsv`, which both tools now prefer over the raw export.
+Re-run the affected days afterwards — the same date replaces itself, so it is
+just `track_daily.py` again with the same two files.
+
+A card that stays unknown after a top-up is usually retired: the export lists
+*active* cards, and a retired card can still be shared from an old link.
+
 ---
 
 ## Letting someone else try it
@@ -498,6 +520,7 @@ side-by-side and it will stay quick.
 | `social_sends_report.py` | Daily social-sends log, counted by card category. |
 | `test_social_sends_report.py` | 90 assertions on the shapes a send file arrives in, the category split, the Events bucket and the cumulative total. |
 | `track_daily.py` | Adds a day to `reports/daily_tracking.xlsx` and its ledgers. |
+| `merge_catalogue.py` | Merges card-list top-ups into `data/cards_catalogue.tsv`. |
 | `xlsx_writer.py` | Multi-sheet .xlsx from the standard library. |
 | `test_track_daily.py` | 29 assertions on accumulating days without double-counting or losing one. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
