@@ -437,6 +437,14 @@ just `track_daily.py` again with the same two files.
 A card that stays unknown after a top-up is usually retired: the export lists
 *active* cards, and a retired card can still be shared from an old link.
 
+Four such cards are settled. A full export on 19 August covered the whole card
+range end to end — 13,116 cards, 100001 through 825114 — and none of `819653`,
+`118815`, `104587`, `343036` was in it. They are retired, not missing, so no
+top-up will ever categorise them. Between them they account for 8 sends across
+the first eighteen days, and they are the only genuinely uncategorised cards in
+the tracker; the rest of the uncategorised figure is the pivot's `desktop`
+total row, which is a channel label rather than a card.
+
 ---
 
 ## Letting someone else try it
