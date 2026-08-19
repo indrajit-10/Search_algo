@@ -2,11 +2,14 @@
 """
 merge_catalogue.py  --  keep one card list, topped up as new cards go live.
 
-    python3 merge_catalogue.py data/ACTIVE_CARDS.xlsx data/new_cards_*.tsv
+    python3 merge_catalogue.py data/ACTIVE_CARDS.xlsx data/card_database_UPDATED.xlsx \
+        data/new_cards_*.tsv
 
-The full export is a snapshot. Cards published after it was taken have no
-q1_value, so their sends land in "uncategorised" and drop out of every category
-figure - on 8 August that was 29 sends, one card alone taking 19 of them.
+Any single export is a snapshot with a hole in it. The active-card list omits
+retired cards, which still get shared from old links. The full database has the
+retired ones but stops before the newest. Cards published after either was taken
+have no q1_value at all, so their sends land in "uncategorised" and drop out of
+every category figure - on 8 August that was 29 sends, one card alone taking 19.
 
 So: merge. Later files win, which makes this safe to re-run with the same
 arguments and safe to hand a re-categorised card. The result goes to

@@ -7,8 +7,8 @@ date	category	q1_prefix	surface	sends	cards	cards_all
 2026-08-01	Congratulations	congrats	Web & mobile web	8	7	11
 2026-08-01	Congratulations	congrats	App	4	4	11
 2026-08-01	Cute	cute	App	4	2	2
-2026-08-01	Events cards	events	Web & mobile web	139	47	72
-2026-08-01	Events cards	events	App	102	39	72
+2026-08-01	Events cards	events	Web & mobile web	140	48	73
+2026-08-01	Events cards	events	App	102	39	73
 2026-08-01	Everyday greetings	gen	App	21	16	22
 2026-08-01	Everyday greetings	gen	Web & mobile web	7	7	22
 2026-08-01	Family & loved ones	fkt	App	3	3	3
@@ -32,8 +32,8 @@ date	category	q1_prefix	surface	sends	cards	cards_all
 2026-08-02	Congratulations	congrats	Web & mobile web	6	5	8
 2026-08-02	Congratulations	congrats	App	5	3	8
 2026-08-02	Cute	cute	App	1	1	1
-2026-08-02	Events cards	events	App	106	39	54
-2026-08-02	Events cards	events	Web & mobile web	61	28	54
+2026-08-02	Events cards	events	App	106	39	55
+2026-08-02	Events cards	events	Web & mobile web	62	29	55
 2026-08-02	Everyday greetings	gen	App	33	18	24
 2026-08-02	Everyday greetings	gen	Web & mobile web	7	7	24
 2026-08-02	Family & loved ones	fkt	Web & mobile web	2	2	3
@@ -216,8 +216,8 @@ date	category	q1_prefix	surface	sends	cards	cards_all
 2026-08-09	World languages	w	App	1	1	1
 2026-08-10	Anniversary	anniv	App	43	18	22
 2026-08-10	Anniversary	anniv	Web & mobile web	14	9	22
-2026-08-10	Birthday	birth	App	418	96	137
-2026-08-10	Birthday	birth	Web & mobile web	180	73	137
+2026-08-10	Birthday	birth	App	418	96	138
+2026-08-10	Birthday	birth	Web & mobile web	181	74	138
 2026-08-10	Congratulations	congrats	App	8	5	7
 2026-08-10	Congratulations	congrats	Web & mobile web	2	2	7
 2026-08-10	Cute	cute	App	3	2	2
@@ -265,8 +265,8 @@ date	category	q1_prefix	surface	sends	cards	cards_all
 2026-08-11	Thank you	thank	App	9	6	11
 2026-08-12	Anniversary	anniv	App	38	18	22
 2026-08-12	Anniversary	anniv	Web & mobile web	14	11	22
-2026-08-12	Birthday	birth	App	414	91	124
-2026-08-12	Birthday	birth	Web & mobile web	155	64	124
+2026-08-12	Birthday	birth	App	414	91	125
+2026-08-12	Birthday	birth	Web & mobile web	160	65	125
 2026-08-12	Congratulations	congrats	Web & mobile web	4	3	4
 2026-08-12	Congratulations	congrats	App	1	1	4
 2026-08-12	Cute	cute	App	16	3	3

@@ -56,6 +56,7 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-01	Events cards	eaug_rakshabandhan_interactive	eaug_rakshabandhan_interactive	1	1
 2026-08-01	Events cards	wed_weddingetc	wed_weddingetc	1	1
 2026-08-01	Events cards	ejan_thankyoucards	ejan_thankyoucards	1	1
+2026-08-01	Events cards	eaug_friendshipday_bands	eaug_friendshipday_bands	1	1
 2026-08-01	Events cards	eaug_coastguard_day	eaug_coastguard_day	1	1
 2026-08-01	Events cards	ejan_sendahugday_love	ejan_sendahugday_love	1	1
 2026-08-01	Events cards	eaug_nationalsunflower_day	eaug_nationalsunflower_day	1	1
@@ -141,6 +142,7 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-02	Events cards	eaug_friendshipday_makesmile	eaug_friendshipday_makesmile	1	1
 2026-08-02	Events cards	eaug_justbecauseday	eaug_justbecauseday	1	1
 2026-08-02	Events cards	eaug_thankyouday	eaug_thankyouday	1	1
+2026-08-02	Events cards	eaug_friendshipday_quotes	eaug_friendshipday_quotes	1	1
 2026-08-02	Events cards	eaug_romanceday	eaug_romanceday	1	1
 2026-08-02	Events cards	eaug_nationalraspberry_cream_pie_day	eaug_nationalraspberry_cream_pie_day	1	1
 2026-08-02	Events cards	efeb_friendweek	efeb_friendweek	1	1
@@ -749,7 +751,7 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-10	Anniversary	wedanniv_couple	anniv_wedanniv_couple	19	6
 2026-08-10	Anniversary	ouranniversary_forher	anniv_ouranniversary_forher	1	1
 2026-08-10	Anniversary	ouranniversary_forhim	anniv_ouranniversary_forhim	1	1
-2026-08-10	Birthday	happybirthday	birth_happybirthday	451	54
+2026-08-10	Birthday	happybirthday	birth_happybirthday	452	55
 2026-08-10	Birthday	belated	birth_belated	24	8
 2026-08-10	Birthday	fun	birth_fun	18	13
 2026-08-10	Birthday	sonanddaughter	birth_sonanddaughter	15	6
@@ -930,7 +932,7 @@ date	category	subcategory	q1_value	sends	cards
 2026-08-12	Anniversary	milestone	anniv_milestone	4	2
 2026-08-12	Anniversary	ouranniversary_forher	anniv_ouranniversary_forher	4	4
 2026-08-12	Birthday	happybirthday	birth_happybirthday	458	55
-2026-08-12	Birthday	fun	birth_fun	22	10
+2026-08-12	Birthday	fun	birth_fun	27	11
 2026-08-12	Birthday	flowers	birth_flowers	11	4
 2026-08-12	Birthday	bronsis	birth_bronsis	10	5
 2026-08-12	Birthday	sonanddaughter	birth_sonanddaughter	9	5

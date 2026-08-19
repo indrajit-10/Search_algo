@@ -425,7 +425,8 @@ sends, one card alone taking 19.
 So top-ups get merged rather than replacing anything:
 
 ```bash
-python3 merge_catalogue.py data/ACTIVE_CARDS.xlsx data/new_cards_*.tsv
+python3 merge_catalogue.py data/ACTIVE_CARDS.xlsx data/card_database_UPDATED.xlsx \
+    data/new_cards_*.tsv
 ```
 
 Later files win, which makes it safe to re-run with the same arguments and safe
@@ -434,16 +435,26 @@ to hand a card that has been recategorised. The result is
 Re-run the affected days afterwards — the same date replaces itself, so it is
 just `track_daily.py` again with the same two files.
 
-A card that stays unknown after a top-up is usually retired: the export lists
-*active* cards, and a retired card can still be shared from an old link.
+`card_database_UPDATED.xlsx` is the one that closed the gap. The active-card
+export lists only what is live — 13,116 cards — but a retired card still gets
+shared from an old link or a bookmark, and those sends had nowhere to go. The
+full database carries all 107,160 cards with a `status_id`, live and retired
+alike, so a send can be categorised whether or not the card is still on sale.
+It agreed with the active export and with every top-up on every shared card:
+zero recategorisations across 13,155 overlapping cards, which is the check
+worth re-running whenever a new database drops.
 
-Four such cards are settled. A full export on 19 August covered the whole card
-range end to end — 13,116 cards, 100001 through 825114 — and none of `819653`,
-`118815`, `104587`, `343036` was in it. They are retired, not missing, so no
-top-up will ever categorise them. Between them they account for 8 sends across
-the first eighteen days, and they are the only genuinely uncategorised cards in
-the tracker; the rest of the uncategorised figure is the pivot's `desktop`
-total row, which is a channel label rather than a card.
+It does not replace the top-ups. The database stops at card 359914, so the
+41 newest cards — the whole 359915–359950 run, Independence Day through
+Janmashtami — exist only in the day-by-day exports. That is why the merge lists
+them last rather than dropping them.
+
+What is left uncategorised is not a card list problem. Every pivot carries one
+row whose card number is the literal string `desktop`, and its counts sit only
+in the two `(Desktop)` columns — Facebook and Whatsapp — with every mobile-web
+column zero. It is desktop sends with no card recorded against them, about 33 a
+day, and it accounts for all 590 uncategorised sends in the first eighteen
+days. No catalogue can fix that; it needs the card number captured upstream.
 
 ---
 
