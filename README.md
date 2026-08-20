@@ -415,6 +415,44 @@ installs" is a dependency every machine that ever runs this would have to
 install. Its output is byte-identical for identical data, so a day that changes
 nothing shows no diff.
 
+### The day broken into hours
+
+```bash
+python3 hourly_report.py data/social_sends_2026-08-*.tsv
+```
+
+Writes `reports/daily_hourly.tsv` — the grid, a row per day and hour — and
+renders `reports/hourly_tracking.xlsx` from it: the grid itself, the same grid
+as percentages so days compare, the average shape of a weekday and of a weekend
+day, the hours that do not fit, and the bursts.
+
+**App sends only.** The app log stamps every send to the second; the web export
+is a card-by-channel pivot with no time in it at all, so there is no honest way
+to put a web send in an hour. About two thirds of sends are app, and the first
+sheet of the workbook says so.
+
+Two things it looks for, and they need separating because each distorts the
+other:
+
+*Hours that do not fit.* Expected is the day's own total spread over the hourly
+shape of comparable days, so a quiet day is not flagged for being quiet — only
+for being the wrong shape. Weekdays and weekends are fitted apart, because the
+early-morning send window is a weekday thing and judging Sunday against it
+flags every Sunday. The residual is `(observed − expected) / √expected`, the
+right scale for counts: an hour expecting 3 that sees 9 is stranger than one
+expecting 30 that sees 36.
+
+*Bursts.* One IP sending one card five or more times inside an hour. These are
+found by their own signature rather than by size, and taken out **before**
+anything is fitted — twenty copies of one card would otherwise pull the average
+towards themselves and then be measured as normal against it. Removing them
+took the dispersion over the first nineteen days from 1.66 to 1.31, where 1.00
+is what independent arrivals would give.
+
+An hour with no sends stays in the grid as a zero rather than vanishing.
+An outage is the one shape worth raising an alarm about, and a missing row
+would hide it.
+
 ### Keeping the card list current
 
 The card export is a snapshot, and cards go live after it is taken. A send of a
@@ -539,9 +577,11 @@ side-by-side and it will stay quick.
 | `social_sends_report.py` | Daily social-sends log, counted by card category. |
 | `test_social_sends_report.py` | 90 assertions on the shapes a send file arrives in, the category split, the Events bucket and the cumulative total. |
 | `track_daily.py` | Adds a day to `reports/daily_tracking.xlsx` and its ledgers. |
+| `hourly_report.py` | Breaks app sends into hours and flags the ones that do not fit. |
 | `merge_catalogue.py` | Merges card-list top-ups into `data/cards_catalogue.tsv`. |
 | `xlsx_writer.py` | Multi-sheet .xlsx from the standard library. |
 | `test_track_daily.py` | 29 assertions on accumulating days without double-counting or losing one. |
+| `test_hourly_report.py` | 31 assertions on empty hours, bursts, and fitting a day against its own shape. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
 | `fixtures/social_sends_paste.txt` | A send log copied out of the database browser, for the parser. |
 | `data/` | Where your export goes. Gitignored. |
