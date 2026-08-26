@@ -333,6 +333,8 @@ side-by-side and it will stay quick.
 | `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
 | `SIMPLE_FLOW.html` | **One page.** Six steps with a real search worked through them. Start here. |
 | `OLD_FLOW.html` | The same page for the old Sphinx search, same query. Print both, put them side by side. |
+| `LOGIC_FLOW.html` | **Every stage from typed words to cards on screen**, with the weight calculation and the freshness curve worked out in full. Seven pages. |
+| `explain_score.py` | Re-derives every number in that document from the live index and asserts the total against the engine. |
 | `FLOWCHART.html` | The detailed version — four pages, with the measurements behind each step. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
 
@@ -360,6 +362,15 @@ side-by-side and it will stay quick.
 > each one. [OLD_FLOW.html](OLD_FLOW.html) is the same page for the search it
 > replaces, on the same query. Print both and put them side by side — that is
 > the whole argument on two sheets of paper.
+>
+> **Want every step, with the arithmetic?** [LOGIC_FLOW.html](LOGIC_FLOW.html) is
+> the complete logic: all eight stages from the typed words to the cards on
+> screen, the scoring formula with its field weights, the freshness curve, the
+> eight relaxation rungs, and every constant in one table. One real search —
+> `funny birthday` — is carried the whole way through with its actual numbers.
+> Nothing in it is illustrative: `python explain_score.py "funny birthday"`
+> re-derives each figure from the live catalogue and checks the total against
+> the engine's own scorer.
 >
 > **Want the detail on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
 > as a diagram — the query pipeline, the relaxation ladder, and a what-changed

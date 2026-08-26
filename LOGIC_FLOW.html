@@ -1,0 +1,655 @@
+<title>From typed words to cards on screen</title>
+
+<style>
+  :root{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --rust:#a8341b; --rust-wash:#fbeeea;
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+            Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+      --rule:#333944; --hair:#252a33;
+      --signal:#77a9f5; --signal-wash:#1a2331;
+      --rust:#e58a70; --rust-wash:#2c1f1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+    --rule:#333944; --hair:#252a33;
+    --signal:#77a9f5; --signal-wash:#1a2331;
+    --rust:#e58a70; --rust-wash:#2c1f1c;
+  }
+  :root[data-theme="light"]{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --rust:#a8341b; --rust-wash:#fbeeea;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:940px; margin:0 auto; padding:48px 32px 72px; }
+
+  .masthead{ border-bottom:2px solid var(--ink); padding-bottom:18px; margin-bottom:8px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:36px; line-height:1.1;
+    margin:0 0 8px; letter-spacing:-.01em; text-wrap:balance;
+  }
+  .standfirst{ margin:0; max-width:64ch; color:var(--muted); font-size:16px; }
+  .meta{
+    display:flex; flex-wrap:wrap; gap:0 26px; margin:14px 0 0;
+    font-family:var(--mono); font-size:11.5px; color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .meta b{ color:var(--ink); font-weight:600; }
+
+  section{ margin-top:42px; }
+  h2{
+    font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  h2 .num{
+    font-family:var(--mono); font-size:12px; color:var(--signal);
+    letter-spacing:.1em; margin-right:10px; vertical-align:2px;
+  }
+  h3{
+    font-family:var(--serif); font-size:17px; font-weight:600; color:var(--signal);
+    margin:24px 0 8px;
+  }
+  .lede{ margin:0 0 18px; color:var(--muted); max-width:66ch; }
+  p{ max-width:70ch; }
+
+  figure{ margin:0 0 4px; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    margin-top:12px; padding-top:10px; border-top:1px solid var(--hair);
+    font-size:13px; color:var(--muted); max-width:70ch;
+  }
+
+  .formula{
+    font-family:var(--mono); font-size:13px; background:var(--signal-wash);
+    border-left:3px solid var(--signal); padding:11px 14px; margin:14px 0;
+    overflow-x:auto; white-space:pre; color:var(--ink);
+  }
+  .why{
+    font-size:13.5px; color:var(--muted); border-left:2px solid var(--hair);
+    padding-left:13px; margin:12px 0; max-width:68ch;
+  }
+  .why b{ color:var(--ink); }
+
+  table{ width:100%; border-collapse:collapse; margin:12px 0 4px; font-size:14px; }
+  caption{
+    text-align:left; font-family:var(--mono); font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); padding-bottom:8px;
+  }
+  th,td{ text-align:left; padding:6px 12px 6px 0; border-bottom:1px solid var(--hair);
+         vertical-align:top; }
+  th{ font-weight:600; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--muted); }
+  td.n{ font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right;
+        padding-right:18px; white-space:nowrap; }
+  td.n:last-child{ padding-right:0; }
+  td.c{ font-family:var(--mono); font-size:12.5px; }
+  td.tot{ border-top:1.5px solid var(--rule); font-weight:700; color:var(--signal); }
+  tr.sum td{ border-top:1.5px solid var(--rule); font-weight:700; }
+
+  code{ font-family:var(--mono); font-size:12.5px; background:var(--hair);
+        padding:1px 5px; border-radius:3px; }
+  .formula code{ background:none; padding:0; }
+
+  .foot{
+    margin-top:44px; padding-top:14px; border-top:1px solid var(--rule);
+    font-size:12.5px; color:var(--muted); display:flex; justify-content:space-between;
+    gap:20px; flex-wrap:wrap;
+  }
+  .foot code{ font-family:var(--mono); background:none; }
+
+  @page{ size:A4 portrait; margin:13mm; }
+  @media print{
+    :root{
+      --paper:#fff; --ink:#000; --muted:#444; --rule:#999; --hair:#ddd;
+      --signal:#0b5fbf; --signal-wash:#eaf1fb; --rust:#a8341b; --rust-wash:#fbeeea;
+    }
+    body{ font-size:10pt; }
+    .sheet{ max-width:none; padding:0; }
+    h1{ font-size:19pt; margin-bottom:3px; }
+    .standfirst{ font-size:9.5pt; max-width:78ch; }
+    .masthead{ padding-bottom:8px; margin-bottom:0; }
+    .eyebrow{ font-size:8.5pt; margin-bottom:6px; }
+    .meta{ margin-top:7px; font-size:8.5pt; }
+    h2{ font-size:14pt; }
+    h3{ font-size:11.5pt; margin:14px 0 6px; }
+    section{ margin-top:16px; }
+    .lede{ margin-bottom:9px; font-size:9.5pt; }
+    p{ font-size:9.5pt; }
+    .formula{ font-size:8.5pt; padding:8px 11px; margin:10px 0; }
+    .why{ font-size:9pt; }
+    table{ font-size:9pt; margin:9px 0 3px; }
+    caption, th{ font-size:8pt; }
+    code{ font-size:8.5pt; }
+    figure svg{ max-height:150mm; width:auto; max-width:100%; margin:0 auto; }
+    figcaption{ margin-top:6px; padding-top:6px; font-size:8.5pt; }
+    .foot{ margin-top:18px; }
+    figure, table{ break-inside:avoid; }
+    .formula, .why{ break-inside:avoid; }
+    tr{ break-inside:avoid; }
+    h2, h3{ break-after:avoid; }
+    .lede{ break-after:avoid; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">123Greetings &middot; card search &middot; complete logic</p>
+    <h1>From typed words to cards on screen</h1>
+    <p class="standfirst">
+      Every stage, every formula, every constant — and one real search carried
+      all the way through with its actual arithmetic. Nothing here is
+      illustrative: each figure was re-derived from the live catalogue and
+      checked against the engine.
+    </p>
+    <p class="meta">
+      <span><b>12,087</b> cards</span>
+      <span><b>7,463</b> words indexed</span>
+      <span><b>8</b> stages</span>
+      <span><b>1.1 ms</b> median query &middot; <b>3.4 ms</b> at p90</span>
+    </p>
+  </header>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">01</span>The whole path</h2>
+    <p class="lede">
+      Eight stages. The first four decide <em>what to look for</em>, the next two
+      decide <em>which cards</em>, and the last two decide <em>in what order</em>.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 900 430" role="img"
+           aria-label="Eight stages from query to output. Understanding: normalise, correct spelling, split run-together words, fill four slots. Selecting: build the candidate set, score every candidate. Ordering: apply freshness, band and sort. If too few cards come back, the search widens and returns to selecting.">
+        <defs>
+          <marker id="fa" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="faS" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--signal)"/>
+          </marker>
+        </defs>
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+           fill="currentColor" color="currentColor">
+
+          <text x="20" y="16" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">WHAT TO LOOK FOR</text>
+          <rect x="20" y="26" width="860" height="86" rx="5"
+                fill="none" stroke="var(--hair)" stroke-width="1"/>
+          <g font-size="12">
+            <rect x="34" y="44" width="188" height="52" rx="4" fill="none"
+                  stroke="currentColor" stroke-width="1.5"/>
+            <text x="128" y="66" text-anchor="middle" font-weight="700">1 normalise</text>
+            <text x="128" y="84" text-anchor="middle" font-size="11" fill="var(--muted)">apostrophes join</text>
+
+            <rect x="238" y="44" width="188" height="52" rx="4" fill="none"
+                  stroke="currentColor" stroke-width="1.5"/>
+            <text x="332" y="66" text-anchor="middle" font-weight="700">2 correct</text>
+            <text x="332" y="84" text-anchor="middle" font-size="11" fill="var(--muted)">edit distance</text>
+
+            <rect x="442" y="44" width="188" height="52" rx="4" fill="none"
+                  stroke="currentColor" stroke-width="1.5"/>
+            <text x="536" y="66" text-anchor="middle" font-weight="700">3 split &amp; link</text>
+            <text x="536" y="84" text-anchor="middle" font-size="11" fill="var(--muted)">merrychristmas</text>
+
+            <rect x="646" y="44" width="220" height="52" rx="4"
+                  fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+            <text x="756" y="66" text-anchor="middle" font-weight="700" fill="var(--signal)">4 fill the slots</text>
+            <text x="756" y="84" text-anchor="middle" font-size="11" fill="var(--signal)">occasion · tone · who · kind</text>
+          </g>
+          <g stroke="currentColor" stroke-width="1.5" fill="none">
+            <line x1="222" y1="70" x2="234" y2="70" marker-end="url(#fa)"/>
+            <line x1="426" y1="70" x2="438" y2="70" marker-end="url(#fa)"/>
+            <line x1="630" y1="70" x2="642" y2="70" marker-end="url(#fa)"/>
+          </g>
+
+          <line x1="450" y1="112" x2="450" y2="140" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#fa)"/>
+
+          <text x="20" y="158" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">WHICH CARDS</text>
+          <rect x="20" y="168" width="860" height="86" rx="5"
+                fill="none" stroke="var(--hair)" stroke-width="1"/>
+          <g font-size="12">
+            <rect x="34" y="186" width="390" height="52" rx="4" fill="none"
+                  stroke="currentColor" stroke-width="1.5"/>
+            <text x="229" y="208" text-anchor="middle" font-weight="700">5 build the candidate set</text>
+            <text x="229" y="226" text-anchor="middle" font-size="11" fill="var(--muted)">a card must satisfy every group and every slot</text>
+
+            <rect x="446" y="186" width="420" height="52" rx="4"
+                  fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+            <text x="656" y="208" text-anchor="middle" font-weight="700" fill="var(--signal)">6 score each candidate</text>
+            <text x="656" y="226" text-anchor="middle" font-size="11" fill="var(--signal)">rarity × where it sits, plus slot bonuses</text>
+          </g>
+          <line x1="424" y1="212" x2="442" y2="212" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#fa)"/>
+
+          <line x1="450" y1="254" x2="450" y2="282" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#fa)"/>
+
+          <text x="20" y="300" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">IN WHAT ORDER</text>
+          <rect x="20" y="310" width="860" height="86" rx="5"
+                fill="none" stroke="var(--hair)" stroke-width="1"/>
+          <g font-size="12">
+            <rect x="34" y="328" width="390" height="52" rx="4" fill="none"
+                  stroke="currentColor" stroke-width="1.5"/>
+            <text x="229" y="350" text-anchor="middle" font-weight="700">7 apply freshness</text>
+            <text x="229" y="368" text-anchor="middle" font-size="11" fill="var(--muted)">×1.15 at most, halving every 5 years</text>
+
+            <rect x="446" y="328" width="420" height="52" rx="4" fill="none"
+                  stroke="currentColor" stroke-width="1.5"/>
+            <text x="656" y="350" text-anchor="middle" font-weight="700">8 band, then sort</text>
+            <text x="656" y="368" text-anchor="middle" font-size="11" fill="var(--muted)">10 bands · tiebreak inside a band</text>
+          </g>
+          <line x1="424" y1="354" x2="442" y2="354" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#fa)"/>
+
+          <!-- the widen loop -->
+          <path d="M 880 212 L 894 212" fill="none" stroke="var(--signal)" stroke-width="0"/>
+          <path d="M 450 396 L 450 412 L 12 412 L 12 212 L 16 212"
+                fill="none" stroke="var(--signal)" stroke-width="1.5"
+                stroke-dasharray="5 4" marker-end="url(#faS)"/>
+          <text x="470" y="416" font-size="11" fill="var(--signal)">too few cards? give up the least important part and return to 5</text>
+        </g>
+      </svg>
+      <figcaption>
+        The dashed return is the relaxation ladder — eight rungs, each one asking
+        for less than the last, accumulating results as it goes. Its final rung
+        is unconditional, which is why a search can never come back empty.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">02</span>Stages 1–4 &middot; working out what to look for</h2>
+    <p class="lede">
+      Four passes over the typed text, each one narrow and each one answering a
+      specific failure.
+    </p>
+
+    <h3>1 &middot; Normalise</h3>
+    <div class="formula">decode %92 and &amp;#nn;   →  "Mother%92s"  →  "Mother's"
+"+" becomes a space   →  strip accents  →  lower case
+apostrophes are DELETED, not split on   →  "mother's"  →  "mothers"
+everything else non-alphanumeric  →  a space</div>
+    <div class="why">
+      <b>Why deletion, not splitting.</b> Splitting leaves a stray <code>s</code>
+      that matches almost nothing and drags the whole query to zero. Apostrophes
+      are <b>51 of the log's 516 distinct queries and 22,411 searches a
+      period</b> — 62% of all search volume, because the upstream rewriter
+      inflects stems into possessives (<code>goodness's</code>,
+      <code>friendship's</code>). Eleven of those queries return nothing at all
+      today: <b>1,325 searches, 43% of every empty page served</b>.
+    </div>
+    <div class="why">
+      <b>Deleting the apostrophe is necessary but not sufficient.</b> Applied on
+      its own to the current pipeline it makes matters worse — empty pages go
+      from 3,074 searches to 8,010, because queries that used to fail on a stray
+      <code>s</code> now fail on an unstemmed <code>mothers</code> instead. It
+      only pays off once stemming and the trimmed stop list land with it. See
+      <code>UPGRADE_PATH.md</code>.
+    </div>
+
+    <h3>2 &middot; Correct the spelling</h3>
+    <div class="formula">a word is "correct" if it sits on ≥ 3 cards     MIN_DICTIONARY_FREQUENCY
+otherwise find the nearest word that is         bounded Damerau–Levenshtein
+    a swapped pair costs 1, not 2              "birthdya" → "birthday"
+
+how many edits are allowed:
+    words &lt; 7 characters                 2     MAX_EDIT_DISTANCE
+    words ≥ 7 characters                 3     LOOSE_EDIT_DISTANCE
+    but never more than this share
+        of the longer of the two words   0.30  LOOSE_EDIT_RATIO</div>
+    <div class="why">
+      <b>Why the ratio.</b> Three edits is proportionate on a long word and
+      reckless on a short one. It admits <code>roshasana → roshhashanah</code>
+      (3 of 12 characters) and refuses <code>mariachi → march</code> (3 of 8) —
+      the ceiling of 3 is only reachable at all from ten letters up, because
+      below that 3 edits exceed 30% of the word. Measured on 600 sampled words
+      per band, damaged with three random edits:
+    </div>
+    <table>
+      <caption>share of three-edit typos corrected back to the right word</caption>
+      <thead><tr><th style="width:34%">Word length</th><th class="n" style="width:22%">Flat ceiling of 2</th><th class="n" style="width:22%">As shipped</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>7 to 9 letters</td><td class="n">25%</td><td class="n">36%</td><td>the ratio guard still refuses most of these</td></tr>
+        <tr><td>10 letters or more</td><td class="n">22%</td><td class="n">95%</td><td>where the third edit is proportionate</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      One- and two-edit behaviour is untouched: <b>97.5%</b> and <b>89.0%</b>
+      under both ceilings. The change only ever adds a third edit, and only to
+      words long enough to afford it.
+      <br><br>
+      <b>Why the 3-card floor.</b> The catalogue's own tags contain
+      <code>aniversary</code>, <code>chrismas</code> and <code>birthdy</code>,
+      added years ago as search bait. Without the floor those typos count as
+      real words and never get corrected.
+    </div>
+
+    <h3>3 &middot; Split run-together words, and link other names</h3>
+    <div class="formula">only if the corrector has already given up:
+    "merrychristmas"  →  "merry" + "christmas"
+    both halves must be words the catalogue uses (≥ 3 cards)
+
+separately, 7 validated festival links:
+    deepavali → diwali    chanukah → hanukkah    dasara → dussehra
+    each checked against the catalogue; 5 of 12 offered were dropped</div>
+    <div class="why">
+      <b>Why correction runs first.</b> Otherwise <code>aniversary</code> gets
+      carved into <code>ani|versary</code> instead of fixed. <b>Why the links are
+      validated:</b> a claim that two words mean the same thing is a claim about
+      the world, and one of the twelve offered pointed the wrong way round.
+    </div>
+
+    <h3>4 &middot; Fill the four slots</h3>
+    <table>
+      <caption>read from tags and title only — never the description</caption>
+      <thead><tr><th style="width:22%">Slot</th><th style="width:34%">Source column</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>occasion</td><td class="c">q1_value</td><td>birthday, diwali, get well</td></tr>
+        <tr><td>tone</td><td class="c">card_tags, card_title</td><td>funny, romantic, sorry</td></tr>
+        <tr><td>recipient</td><td class="c">card_tags, card_title</td><td>wife, mom, boss</td></tr>
+        <tr><td>format</td><td class="c">card_label_type, card_music_extn</td><td>animated, flash, musical</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      <b>The single most important rule in the system.</b> A card is funny
+      because someone <b>labelled</b> it funny, not because the word "fun"
+      appears in a sentence about it. <b>731 cards</b> say "fun" in their blurb
+      without being humour cards; only <b>200</b> are genuinely tagged. The
+      description still helps a card be <em>found</em>; it is never allowed to
+      decide what a card <em>is</em>.
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">03</span>Stages 5–6 &middot; the weight calculation</h2>
+    <p class="lede">
+      This is the arithmetic. Worked on a real card, for the real query
+      <code>funny birthday</code>.
+    </p>
+
+    <h3>The formula</h3>
+    <div class="formula">score(card) = Σ over query words   idf(word) × placement(word, card) × multiplier
+            + Σ over matched slots   slot bonus
+
+where
+    placement = Σ over the 5 fields   field weight × saturated count
+    saturated = (times × (1.2 + 1)) / (times + 1.2)          TF_SATURATION
+    idf       = log(1 + (12087 − cards with the word + 0.5) / (cards + 0.5))
+    slot bonus = 12.0 × min(selectivity / reference, 1.6)     FACET_BOOST</div>
+
+    <table>
+      <caption>the field weights</caption>
+      <thead><tr><th style="width:20%">Field</th><th class="n" style="width:14%">Weight</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>title</td><td class="n">3.0</td><td>Short and deliberate — but unreliable on its own: 83% of Halloween titles say "halloween", only 16% of Valentine's say "valentine"</td></tr>
+        <tr><td>tags</td><td class="n">2.5</td><td>Carry recall nothing else does: 44% of the 209 "funny" cards are reachable through their tags and no other field</td></tr>
+        <tr><td>category</td><td class="n">2.0</td><td>Reliable, but broad</td></tr>
+        <tr><td>description</td><td class="n">1.0</td><td>Widest reach, worst precision — the safety net</td></tr>
+        <tr><td>url</td><td class="n">0.4</td><td>A weak hint</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Worked example &middot; card #359736, “Aging Like Fine Wine Funny Bday Wish”</h3>
+
+    <table>
+      <caption>step 1 — where each word sits, and the saturated count</caption>
+      <thead><tr>
+        <th style="width:20%">Word</th><th style="width:24%">Field</th>
+        <th class="n" style="width:12%">Times</th><th class="n" style="width:14%">Field wt</th>
+        <th class="n" style="width:18%">Saturated</th></tr></thead>
+      <tbody>
+        <tr><td>funny</td><td>title</td><td class="n">1</td><td class="n">3.0</td><td class="n">3.00</td></tr>
+        <tr><td>funny</td><td>tags</td><td class="n">5</td><td class="n">2.5</td><td class="n">4.44</td></tr>
+        <tr><td>funny</td><td>url</td><td class="n">1</td><td class="n">0.4</td><td class="n">0.40</td></tr>
+        <tr class="sum"><td>funny</td><td>placement</td><td class="n"></td><td class="n"></td><td class="n">7.835</td></tr>
+        <tr><td>birthday</td><td>description</td><td class="n">2</td><td class="n">1.0</td><td class="n">1.38</td></tr>
+        <tr><td>birthday</td><td>tags</td><td class="n">8</td><td class="n">2.5</td><td class="n">4.78</td></tr>
+        <tr class="sum"><td>birthday</td><td>placement</td><td class="n"></td><td class="n"></td><td class="n">6.158</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      Note <b>“funny” appears 5 times in the tags and contributes 4.44, not
+      12.5</b>. That is the saturation: the fourth mention barely beats the
+      third, so a card cannot win by repeating a word.
+    </div>
+
+    <table>
+      <caption>step 2 — how rare each word is</caption>
+      <thead><tr><th style="width:26%">Word</th><th class="n" style="width:24%">On cards</th>
+        <th class="n" style="width:20%">idf</th><th>&nbsp;</th></tr></thead>
+      <tbody>
+        <tr><td>funny</td><td class="n">209</td><td class="n">4.055</td><td>rare — counts for a lot</td></tr>
+        <tr><td>birthday</td><td class="n">736</td><td class="n">2.798</td><td>common — counts for less</td></tr>
+      </tbody>
+    </table>
+
+    <table>
+      <caption>step 3 — the text score</caption>
+      <thead><tr><th style="width:22%">Word</th><th class="n" style="width:16%">idf</th>
+        <th class="n" style="width:18%">placement</th><th class="n" style="width:16%">multiplier</th>
+        <th class="n" style="width:18%">= </th></tr></thead>
+      <tbody>
+        <tr><td>funny</td><td class="n">4.055</td><td class="n">7.835</td><td class="n">1.00</td><td class="n">31.775</td></tr>
+        <tr><td>birthday</td><td class="n">2.798</td><td class="n">6.158</td><td class="n">1.00</td><td class="n">17.229</td></tr>
+        <tr class="sum"><td colspan="4">text score</td><td class="n">49.004</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      The multiplier is <b>1.0</b> for a word typed exactly or corrected, and
+      <b>0.4</b> for a completion of a partial word — unless that completion is
+      5× more common than what was typed, in which case it is clearly what was
+      meant and gets the full 1.0.
+    </div>
+
+    <table>
+      <caption>step 4 — slot bonuses, for slots this card actually carries</caption>
+      <thead><tr><th style="width:34%">Slot</th><th class="n" style="width:22%">On cards</th>
+        <th class="n" style="width:20%">Bonus</th><th>&nbsp;</th></tr></thead>
+      <tbody>
+        <tr><td>tone = humour</td><td class="n">200</td><td class="n">10.29</td><td>narrow, so worth more</td></tr>
+        <tr><td>occasion = birth</td><td class="n">511</td><td class="n">8.01</td><td>broader, so worth less</td></tr>
+        <tr class="sum"><td colspan="2">slot bonus</td><td class="n">18.296</td><td>&nbsp;</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      <b>Why the bonus scales.</b> "Is a December card" covers Christmas, Boxing
+      Day and ice-cream day alike, so a flat bonus would add the same 12 points
+      to all of them and flatten the text ranking that tells them apart. A narrow
+      slot really is worth more.
+    </div>
+
+    <table>
+      <caption>the raw score</caption>
+      <tbody>
+        <tr><td style="width:60%">text score</td><td class="n">49.004</td></tr>
+        <tr><td>slot bonus</td><td class="n">18.296</td></tr>
+        <tr class="sum"><td>raw score</td><td class="n">67.300</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">04</span>Stages 7–8 &middot; freshness and order</h2>
+    <p class="lede">
+      Two more operations on that 67.300, and the card has its place.
+    </p>
+
+    <h3>7 &middot; Freshness</h3>
+    <div class="formula">factor = 1 + 0.15 × 0.5 ^ (age in years / 5)      RECENCY_BOOST · RECENCY_HALFLIFE
+boosted = raw score × factor</div>
+
+    <table>
+      <caption>the curve</caption>
+      <thead><tr><th style="width:26%">Card age</th><th class="n" style="width:22%">Factor</th>
+        <th class="n" style="width:20%">Adds</th><th>&nbsp;</th></tr></thead>
+      <tbody>
+        <tr><td>new this year</td><td class="n">1.1500</td><td class="n">+15.0%</td><td>the whole allowance</td></tr>
+        <tr><td>5 years old</td><td class="n">1.0750</td><td class="n">+7.5%</td><td>half of it</td></tr>
+        <tr><td>10 years old</td><td class="n">1.0375</td><td class="n">+3.8%</td><td>a quarter</td></tr>
+        <tr><td>20 years old</td><td class="n">1.0094</td><td class="n">+0.9%</td><td>effectively nothing</td></tr>
+      </tbody>
+    </table>
+    <p>
+      This card is from 2026 and the newest in the catalogue is 2026, so its age
+      is 0 and it gets the full allowance:
+    </p>
+    <div class="formula">67.300 × 1.1500 = 77.395</div>
+    <div class="why">
+      <b>Why capped at 15%.</b> The old ranking sorted on lifetime sends, which
+      on a catalogue running since 2002 is a permanent incumbency — a card
+      uploaded last month cannot out-accumulate twenty years of head start. The
+      fix is <em>not</em> to flip that around: a large freshness bonus would
+      recreate the same complaint pointing the other way, with 2026 cards burying
+      a better 2011 match. <b>15% can reorder cards that were already close and
+      nothing else.</b>
+    </div>
+
+    <h3>8 &middot; Band, then sort</h3>
+    <div class="formula">band = int(10 × boosted / best boosted score in this result set)
+order = (band descending, tiebreak descending, title)
+tiebreak = send count when supplied, card year otherwise</div>
+    <div class="why">
+      <b>Why band at all.</b> Raw scores differ in the third decimal. Compared
+      exactly, the relevance score decides everything and no second sort can ever
+      apply — which is precisely why sends decided almost every result in the old
+      system. Rounding into ten bands is what makes a tiebreak possible.
+    </div>
+    <p>
+      For this search, <code>funny birthday</code> matched 24 cards. This one
+      scored highest, so it defines the top of the scale and lands in band 10:
+    </p>
+    <div class="formula">int(10 × 77.395 / 77.395) = 10</div>
+
+    <table>
+      <caption>how those 24 cards spread across the bands</caption>
+      <thead><tr><th style="width:20%">Band</th><th class="n" style="width:18%">Cards</th><th>&nbsp;</th></tr></thead>
+      <tbody>
+        <tr><td>10</td><td class="n">1</td><td>█</td></tr>
+        <tr><td>9</td><td class="n">3</td><td>███</td></tr>
+        <tr><td>8</td><td class="n">4</td><td>████</td></tr>
+        <tr><td>7</td><td class="n">11</td><td>███████████</td></tr>
+        <tr><td>6</td><td class="n">4</td><td>████</td></tr>
+        <tr><td>5</td><td class="n">1</td><td>█</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      Eleven cards share band 7. Without banding those eleven would be ordered by
+      three-decimal differences in their scores; with it, the tiebreak decides —
+      which is where send counts will go once they are exported.
+      See <code>OPEN_ITEMS.md</code> item 3.
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">05</span>When too few cards come back</h2>
+    <p class="lede">
+      Stages 5 and 6 run again with less asked of them, accumulating results,
+      until the page holds 20 cards.
+    </p>
+
+    <table>
+      <caption>the eight rungs, in order</caption>
+      <thead><tr><th class="n" style="width:8%">#</th><th style="width:44%">Ask for</th><th>Given up</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>every word and every slot</td><td>nothing</td></tr>
+        <tr><td class="n">2</td><td>drop the least informative word</td><td><code>card</code>, <code>for</code>, <code>my</code></td></tr>
+        <tr><td class="n">3</td><td>the slots plus the strongest word</td><td>the other words</td></tr>
+        <tr><td class="n">4</td><td>the slots only</td><td>all free text</td></tr>
+        <tr><td class="n">5</td><td>give up the vaguest slot, then the next</td><td>recipient, then tone, then format</td></tr>
+        <tr><td class="n">6</td><td>the strongest single word alone</td><td>every slot</td></tr>
+        <tr><td class="n">7</td><td>any word at all</td><td>the requirement to match all</td></tr>
+        <tr><td class="n">8</td><td><b>the newest cards</b></td><td>the query — this rung always returns</td></tr>
+      </tbody>
+    </table>
+    <div class="why">
+      <b>Occasion is given up last, recipient first.</b> A birthday card that is
+      not mother-specific is still a birthday card; a Mother's Day card is no use
+      to someone who asked for a birthday.
+      <br><br>
+      <b>Results accumulate rather than replace.</b> A precise match found on rung
+      1 stays above anything a later rung adds — the page fills out without the
+      best answer moving.
+      <br><br>
+      <b>Rung 8 is unconditional</b>, so zero results cannot happen. The page is
+      told which rung answered, so it can say "we could not find that, here is
+      what is new" rather than passing newest cards off as matches.
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">06</span>Every constant</h2>
+    <p class="lede">
+      All of them are at the top of <code>search_engine.py</code>. Changing one
+      changes the behaviour described above and nothing else.
+    </p>
+
+    <table>
+      <caption>search_engine.py</caption>
+      <thead><tr><th style="width:32%">Name</th><th class="n" style="width:14%">Value</th><th>What it governs</th></tr></thead>
+      <tbody>
+        <tr><td class="c">LIVE_STATUS</td><td class="n">"1"</td><td>which <code>status_id</code> is actually served</td></tr>
+        <tr><td class="c">EXCLUDE_LABEL_TYPES</td><td class="n">{"Y"}</td><td>YouTube cards — no artwork to show</td></tr>
+        <tr><td class="c">MIN_DICTIONARY_FREQUENCY</td><td class="n">3</td><td>cards a word needs to count as spelled correctly</td></tr>
+        <tr><td class="c">MAX_EDIT_DISTANCE</td><td class="n">2</td><td>edits allowed on a short word</td></tr>
+        <tr><td class="c">LOOSE_EDIT_DISTANCE</td><td class="n">3</td><td>edits allowed on a long one</td></tr>
+        <tr><td class="c">LOOSE_EDIT_RATIO</td><td class="n">0.30</td><td>…and only if they are this share of it</td></tr>
+        <tr><td class="c">MIN_COMPOUND_PART</td><td class="n">3</td><td>shortest half a run-together word can split into</td></tr>
+        <tr><td class="c">FIELD_WEIGHTS</td><td class="n">3 / 2.5 / 2 / 1 / 0.4</td><td>title, tags, category, description, url</td></tr>
+        <tr><td class="c">TF_SATURATION</td><td class="n">1.2</td><td>how fast repeats stop counting</td></tr>
+        <tr><td class="c">FACET_BOOST</td><td class="n">12.0</td><td>base value of a slot match</td></tr>
+        <tr><td class="c">PREFIX_DISCOUNT</td><td class="n">0.4</td><td>weight of a partial word's completion</td></tr>
+        <tr><td class="c">PREFIX_DOMINANCE</td><td class="n">5</td><td>…unless the completion is this much commoner</td></tr>
+        <tr><td class="c">RECENCY_BOOST</td><td class="n">0.15</td><td>most a new card can gain</td></tr>
+        <tr><td class="c">RECENCY_HALFLIFE</td><td class="n">5.0</td><td>years for that to halve</td></tr>
+        <tr><td class="c">MAX_RESULTS</td><td class="n">20</td><td>cards on a page — what "enough" means</td></tr>
+        <tr><td class="c">MIN_SUGGEST_CHARS</td><td class="n">2</td><td>when autocomplete opens</td></tr>
+        <tr><td class="c">SUGGEST_LIMIT</td><td class="n">8</td><td>suggestions shown</td></tr>
+      </tbody>
+    </table>
+
+    <div class="why">
+      <b>Check any of this yourself.</b> <code>python explain_score.py "funny
+      birthday"</code> re-derives every number in section 03 from the live
+      catalogue and asserts the total against the engine's own scorer. Give it
+      any query and it will do the same for whatever comes first.
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Plain-English version in <code>LOGIC.md</code> · one-page summary in <code>SIMPLE_FLOW.html</code></span>
+    <span>Worked example re-derived by <code>explain_score.py</code></span>
+  </div>
+</div>
