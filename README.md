@@ -331,7 +331,8 @@ side-by-side and it will stay quick.
 | `UPGRADE_FLOWCHART.html` | The upgrade sequence as a printable diagram — three A4 pages. |
 | `upgrade_stages.py` | Measures what each of those upgrade steps buys. Backs the table in `UPGRADE_PATH.md`. |
 | `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
-| `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |
+| `SIMPLE_FLOW.html` | **One page.** Six steps with a real search worked through them. Start here. |
+| `FLOWCHART.html` | The detailed version — four pages, with the measurements behind each step. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
 
 ---
@@ -353,7 +354,11 @@ side-by-side and it will stay quick.
 > retire the synonym list. Also as [UPGRADE_PATH.docx](UPGRADE_PATH.docx), and as
 > a printable diagram in [UPGRADE_FLOWCHART.html](UPGRADE_FLOWCHART.html).
 >
-> **Want it on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
+> **Just want the shape of it?** [SIMPLE_FLOW.html](SIMPLE_FLOW.html) is one
+> page: six steps, with the real search `mom birthdya` making its way through
+> each one. Print it and pin it up.
+>
+> **Want the detail on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
 > as a diagram — the query pipeline, the relaxation ladder, and a what-changed
 > table. Open it in a browser and print: three A4 pages, one per section, and the
 > colours were chosen to stay readable in greyscale.

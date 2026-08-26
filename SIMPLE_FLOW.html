@@ -1,0 +1,267 @@
+<title>How the search works</title>
+
+<style>
+  :root{
+    --paper:#ffffff;
+    --ink:#16181d;
+    --muted:#5c6270;
+    --rule:#c9cdd6;
+    --hair:#e4e7ec;
+    --signal:#0b5fbf;
+    --signal-wash:#eaf1fb;
+    --rust:#a8341b;
+    --rust-wash:#fbeeea;
+
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+            Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+      --rule:#333944; --hair:#252a33;
+      --signal:#77a9f5; --signal-wash:#1a2331;
+      --rust:#e58a70; --rust-wash:#2c1f1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+    --rule:#333944; --hair:#252a33;
+    --signal:#77a9f5; --signal-wash:#1a2331;
+    --rust:#e58a70; --rust-wash:#2c1f1c;
+  }
+  :root[data-theme="light"]{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --rust:#a8341b; --rust-wash:#fbeeea;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:860px; margin:0 auto; padding:44px 32px 60px; }
+
+  .masthead{ border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:22px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 9px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:34px; line-height:1.1;
+    margin:0 0 7px; letter-spacing:-.01em;
+  }
+  .standfirst{ margin:0; max-width:60ch; color:var(--muted); font-size:15.5px; }
+
+  figure{ margin:0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    margin-top:14px; padding-top:11px; border-top:1px solid var(--hair);
+    font-size:13px; color:var(--muted); max-width:70ch;
+  }
+
+  @page{ size:A4 portrait; margin:12mm; }
+  @media print{
+    :root{
+      --paper:#fff; --ink:#000; --muted:#444; --rule:#999; --hair:#ccc;
+      --signal:#0b5fbf; --signal-wash:#eaf1fb; --rust:#a8341b; --rust-wash:#fbeeea;
+    }
+    body{ font-size:10pt; }
+    .sheet{ max-width:none; padding:0; }
+    h1{ font-size:18pt; margin-bottom:3px; }
+    .standfirst{ font-size:9.5pt; max-width:80ch; }
+    .masthead{ padding-bottom:7px; margin-bottom:9px; }
+    .eyebrow{ font-size:8pt; margin-bottom:5px; }
+    /* The whole thing is meant to be one sheet. This is what holds it there. */
+    figure svg{ max-height:233mm; width:auto; max-width:100%; margin:0 auto; }
+    figcaption{ margin-top:7px; padding-top:6px; font-size:8.5pt; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">123Greetings &middot; card search</p>
+    <h1>How the search works</h1>
+    <p class="standfirst">
+      Six steps, and one real search making its way through them.
+    </p>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 900 975" role="img"
+         aria-label="The card search in six steps, with the query mom birthdya worked through each one. Someone types mom birthdya. Step one tidies the text. Step two fixes the spelling to mom birthday. Step three works out that it means a birthday card for a mother. Step four finds every card that fits and scores it. Step five checks whether enough came back and widens the search if not, looping back. Step six puts the best first. The result is 24 birthday cards for mothers. The old search returned no matches for the same query and showed ten unrelated popular cards.">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="aS" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--signal)"/>
+        </marker>
+      </defs>
+
+      <g font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+         fill="currentColor" color="currentColor">
+
+        <!-- column headings -->
+        <text x="30" y="18" font-size="12" font-weight="700" fill="var(--muted)"
+              letter-spacing="1.2" font-family="ui-monospace, Menlo, monospace">THE STEP</text>
+        <text x="530" y="18" font-size="12" font-weight="700" fill="var(--signal)"
+              letter-spacing="1.2" font-family="ui-monospace, Menlo, monospace">SOMEONE SEARCHES FOR…</text>
+
+        <!-- ============ someone types ============ -->
+        <rect x="30" y="34" width="440" height="54" rx="27"
+              fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="250" y="67" font-size="17" text-anchor="middle" font-weight="600">Someone types</text>
+
+        <rect x="530" y="34" width="340" height="54" rx="6"
+              fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+        <text x="700" y="68" font-size="20" text-anchor="middle" fill="var(--signal)"
+              font-family="ui-monospace, Menlo, monospace">mom birthdya</text>
+
+        <line x1="250" y1="88" x2="250" y2="122" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+
+        <!-- ============ 1 tidy ============ -->
+        <rect x="30" y="122" width="440" height="86" rx="6"
+              fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="54" y="152" font-size="15" font-weight="700">1 &nbsp;Tidy up the text</text>
+        <text x="54" y="177" font-size="14.5" fill="var(--muted)">Lower case, no punctuation.</text>
+        <text x="54" y="197" font-size="14.5" fill="var(--muted)">An apostrophe joins a word — never splits it.</text>
+
+        <text x="530" y="160" font-size="16" fill="var(--muted)"
+              font-family="ui-monospace, Menlo, monospace">mom birthdya</text>
+        <text x="530" y="188" font-size="13" fill="var(--rust)">This one step alone rescued</text>
+        <text x="530" y="205" font-size="13" fill="var(--rust)">22,399 searches a period.</text>
+
+        <line x1="250" y1="208" x2="250" y2="242" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+
+        <!-- ============ 2 spelling ============ -->
+        <rect x="30" y="242" width="440" height="86" rx="6"
+              fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="54" y="272" font-size="15" font-weight="700">2 &nbsp;Fix the spelling</text>
+        <text x="54" y="297" font-size="14.5" fill="var(--muted)">A word the cards don’t use becomes</text>
+        <text x="54" y="317" font-size="14.5" fill="var(--muted)">the closest one they do.</text>
+
+        <text x="530" y="280" font-size="16" fill="var(--signal)"
+              font-family="ui-monospace, Menlo, monospace">mom birthday</text>
+        <text x="530" y="308" font-size="13" fill="var(--muted)">The page says so: “Showing</text>
+        <text x="530" y="325" font-size="13" fill="var(--muted)">results for mom birthday”.</text>
+
+        <line x1="250" y1="328" x2="250" y2="362" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+
+        <!-- ============ 3 understand ============ -->
+        <rect x="30" y="362" width="440" height="106" rx="6"
+              fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
+        <text x="54" y="392" font-size="15" font-weight="700" fill="var(--signal)">3 &nbsp;Work out what they mean</text>
+        <text x="54" y="417" font-size="14.5" fill="var(--signal)">Not four loose words — an occasion,</text>
+        <text x="54" y="437" font-size="14.5" fill="var(--signal)">a person, a mood, a kind of card.</text>
+        <text x="54" y="457" font-size="13.5" fill="var(--muted)">Read from the labels on each card, not its blurb.</text>
+
+        <rect x="530" y="378" width="160" height="34" rx="4"
+              fill="none" stroke="var(--signal)" stroke-width="1.5"/>
+        <text x="610" y="400" font-size="14" text-anchor="middle" fill="var(--signal)">a birthday card</text>
+        <rect x="530" y="420" width="160" height="34" rx="4"
+              fill="none" stroke="var(--signal)" stroke-width="1.5"/>
+        <text x="610" y="442" font-size="14" text-anchor="middle" fill="var(--signal)">for a mother</text>
+
+        <line x1="250" y1="468" x2="250" y2="502" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+
+        <!-- ============ 4 find ============ -->
+        <rect x="30" y="502" width="440" height="86" rx="6"
+              fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="54" y="532" font-size="15" font-weight="700">4 &nbsp;Find every card that fits</text>
+        <text x="54" y="557" font-size="14.5" fill="var(--muted)">A rare word counts for a lot.</text>
+        <text x="54" y="577" font-size="14.5" fill="var(--muted)">A word on every card counts for almost nothing.</text>
+
+        <text x="620" y="516" font-size="14" fill="var(--muted)">Nothing is thrown away</text>
+        <text x="620" y="534" font-size="14" fill="var(--muted)">before searching. That is</text>
+        <text x="620" y="552" font-size="14" fill="var(--muted)">why “flash card” works now.</text>
+
+        <line x1="250" y1="588" x2="250" y2="622" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+
+        <!-- ============ 5 enough? ============ -->
+        <path d="M 250 622 L 400 676 L 250 730 L 100 676 Z"
+              fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="250" y="668" font-size="15" text-anchor="middle" font-weight="600">5 &nbsp;Enough</text>
+        <text x="250" y="690" font-size="15" text-anchor="middle" font-weight="600">cards?</text>
+
+        <!-- no -> widen, looping back -->
+        <line x1="400" y1="676" x2="470" y2="676" stroke="var(--signal)"
+              stroke-width="2" marker-end="url(#aS)"/>
+        <text x="435" y="666" font-size="13" fill="var(--signal)" text-anchor="middle">no</text>
+
+        <rect x="470" y="644" width="180" height="72" rx="6"
+              fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
+        <text x="560" y="670" font-size="15" font-weight="700" text-anchor="middle"
+              fill="var(--signal)">Widen it</text>
+        <text x="560" y="691" font-size="13" text-anchor="middle" fill="var(--signal)">give up the least</text>
+        <text x="560" y="705" font-size="13" text-anchor="middle" fill="var(--signal)">important part</text>
+
+        <path d="M 560 644 L 560 545 L 470 545" fill="none" stroke="var(--signal)"
+              stroke-width="2" stroke-dasharray="6 5" marker-end="url(#aS)"/>
+        <text x="572" y="600" font-size="13" fill="var(--signal)">and look again,</text>
+        <text x="572" y="618" font-size="13" fill="var(--signal)">keeping what</text>
+        <text x="572" y="636" font-size="13" fill="var(--signal)">was found</text>
+
+        <text x="676" y="726" font-size="13" fill="var(--signal)">There is always</text>
+        <text x="676" y="743" font-size="13" fill="var(--signal)">something to show,</text>
+        <text x="676" y="760" font-size="13" fill="var(--signal)">so an empty page</text>
+        <text x="676" y="777" font-size="13" fill="var(--signal)">cannot happen.</text>
+
+        <line x1="250" y1="730" x2="250" y2="764" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+        <text x="262" y="752" font-size="13" fill="var(--muted)">yes</text>
+
+        <!-- ============ 6 order ============ -->
+        <rect x="30" y="764" width="440" height="106" rx="6"
+              fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="54" y="794" font-size="15" font-weight="700">6 &nbsp;Put the best first</text>
+        <text x="54" y="819" font-size="14.5" fill="var(--muted)">A good match beats a popular one.</text>
+        <text x="54" y="839" font-size="14.5" fill="var(--muted)">Between two equally good ones,</text>
+        <text x="54" y="859" font-size="14.5" fill="var(--muted)">the newer card wins — but only just.</text>
+
+        <text x="530" y="812" font-size="13" fill="var(--muted)">Newness is capped, so a clearly</text>
+        <text x="530" y="830" font-size="13" fill="var(--muted)">better old card still wins. Fixing</text>
+        <text x="530" y="848" font-size="13" fill="var(--muted)">“old cards first” must not create</text>
+        <text x="530" y="866" font-size="13" fill="var(--muted)">“new cards first”.</text>
+
+        <line x1="250" y1="870" x2="250" y2="904" stroke="currentColor"
+              stroke-width="2" marker-end="url(#a)"/>
+
+        <!-- ============ result ============ -->
+        <rect x="30" y="904" width="440" height="56" rx="28"
+              fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2.5"/>
+        <text x="250" y="939" font-size="17" text-anchor="middle" font-weight="700"
+              fill="var(--signal)">Cards on screen</text>
+
+        <rect x="530" y="904" width="340" height="56" rx="6"
+              fill="none" stroke="var(--signal)" stroke-width="1.5"/>
+        <text x="700" y="928" font-size="15" text-anchor="middle" fill="var(--signal)"
+              font-weight="600">24 birthday cards for mothers</text>
+        <text x="700" y="949" font-size="13" text-anchor="middle" fill="var(--muted)">answered in about 1 millisecond</text>
+
+      </g>
+    </svg>
+
+    <figcaption>
+      <strong>The old search, on the same query:</strong> <em>“Sorry! The search
+      query you entered did not find any matching results. Did you mean mom
+      <strong>birthday</strong>?”</em> — followed by ten popular cards, of which
+      one was a birthday card and the rest were Raksha Bandhan, Lemon Juice Day,
+      Women’s Equality Day and National Dog Day. It knew the right spelling well
+      enough to suggest it, and did not search for it.
+    </figcaption>
+  </figure>
+</div>
