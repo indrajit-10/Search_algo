@@ -319,6 +319,8 @@ side-by-side and it will stay quick.
 | `LOGIC.md` | How the search works, in plain English. No code. |
 | `OLD_VS_NEW.md` | Point-by-point against the Sphinx spec (Algorithm v3.2). |
 | `UPGRADE_PATH.md` | How to get most of this by changing Sphinx in place, and whether a feedback loop can replace the synonym list. |
+| `UPGRADE_PATH.docx` | The same, as Word. |
+| `UPGRADE_FLOWCHART.html` | The upgrade sequence as a printable diagram — three A4 pages. |
 | `upgrade_stages.py` | Measures what each of those upgrade steps buys. Backs the table in `UPGRADE_PATH.md`. |
 | `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
 | `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |
@@ -340,7 +342,8 @@ side-by-side and it will stay quick.
 > in-place route — seven changes to the existing Sphinx setup, mostly config,
 > measured one at a time. It flags the two pairs that must ship together because
 > half of either makes the search worse, and answers whether a feedback loop can
-> retire the synonym list.
+> retire the synonym list. Also as [UPGRADE_PATH.docx](UPGRADE_PATH.docx), and as
+> a printable diagram in [UPGRADE_FLOWCHART.html](UPGRADE_FLOWCHART.html).
 >
 > **Want it on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
 > as a diagram — the query pipeline, the relaxation ladder, and a what-changed

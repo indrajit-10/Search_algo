@@ -1,0 +1,544 @@
+<title>Upgrading Sphinx in place</title>
+
+<style>
+  :root{
+    --paper:#ffffff;
+    --ink:#16181d;
+    --muted:#5c6270;
+    --rule:#c9cdd6;
+    --hair:#e4e7ec;
+    --signal:#0b5fbf;
+    --signal-wash:#eaf1fb;
+    --rust:#a8341b;
+    --rust-wash:#fbeeea;
+
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+            Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+      --rule:#333944; --hair:#252a33;
+      --signal:#77a9f5; --signal-wash:#1a2331;
+      --rust:#e58a70; --rust-wash:#2c1f1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+    --rule:#333944; --hair:#252a33;
+    --signal:#77a9f5; --signal-wash:#1a2331;
+    --rust:#e58a70; --rust-wash:#2c1f1c;
+  }
+  :root[data-theme="light"]{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --rust:#a8341b; --rust-wash:#fbeeea;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:940px; margin:0 auto; padding:48px 32px 72px; }
+
+  .masthead{ border-bottom:2px solid var(--ink); padding-bottom:18px; margin-bottom:8px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:38px; line-height:1.1;
+    margin:0 0 8px; letter-spacing:-.01em; text-wrap:balance;
+  }
+  .standfirst{ margin:0; max-width:64ch; color:var(--muted); font-size:16px; }
+  .meta{
+    display:flex; flex-wrap:wrap; gap:0 28px; margin:14px 0 0;
+    font-family:var(--mono); font-size:11.5px; color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .meta b{ color:var(--ink); font-weight:600; }
+
+  section{ margin-top:44px; }
+  h2{
+    font-family:var(--serif); font-size:22px; font-weight:600; margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  h2 .num{
+    font-family:var(--mono); font-size:12px; color:var(--signal);
+    letter-spacing:.1em; margin-right:10px; vertical-align:2px;
+  }
+  .lede{ margin:0 0 20px; color:var(--muted); max-width:66ch; }
+
+  figure{ margin:0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    margin-top:12px; padding-top:10px; border-top:1px solid var(--hair);
+    font-size:13px; color:var(--muted); max-width:70ch;
+  }
+
+  .key{
+    display:flex; flex-wrap:wrap; gap:8px 22px; margin:18px 0 0;
+    font-family:var(--mono); font-size:11.5px; color:var(--muted);
+  }
+  .key span{ display:flex; align-items:center; gap:7px; }
+  .swatch{ width:16px; height:9px; border:1.5px solid var(--rule); border-radius:2px; }
+  .swatch.sig{ border-color:var(--signal); background:var(--signal-wash); }
+  .swatch.rst{ border-color:var(--rust); background:var(--rust-wash); }
+
+  table{ width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+  caption{
+    text-align:left; font-family:var(--mono); font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); padding-bottom:8px;
+  }
+  th,td{ text-align:left; padding:7px 12px 7px 0; border-bottom:1px solid var(--hair); }
+  th{ font-weight:600; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--muted); }
+  td.n{ font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right;
+        padding-right:0; white-space:nowrap; }
+  td.was{ color:var(--rust); }
+  td.now{ color:var(--signal); font-weight:600; }
+  td.where{ font-family:var(--mono); font-size:12px; }
+  .pc{ color:var(--muted); font-size:12px; display:inline-block;
+       width:3.2em; text-align:right; }
+  .note{ margin:12px 0 0; font-size:13px; color:var(--muted); max-width:72ch; }
+  .note code{ font-family:var(--mono); font-size:12px; color:var(--ink); }
+
+  .foot{
+    margin-top:44px; padding-top:14px; border-top:1px solid var(--rule);
+    font-size:12.5px; color:var(--muted); display:flex; justify-content:space-between;
+    gap:20px; flex-wrap:wrap;
+  }
+  .foot code{ font-family:var(--mono); }
+
+  @page{ size:A4 portrait; margin:13mm; }
+  @media print{
+    :root{
+      --paper:#fff; --ink:#000; --muted:#444; --rule:#999; --hair:#ccc;
+      --signal:#0b5fbf; --signal-wash:#eaf1fb; --rust:#a8341b; --rust-wash:#fbeeea;
+    }
+    body{ font-size:10pt; }
+    .sheet{ max-width:none; padding:0; }
+    h1{ font-size:19pt; margin-bottom:3px; }
+    .standfirst{ font-size:9.5pt; max-width:78ch; }
+    .masthead{ padding-bottom:8px; margin-bottom:0; }
+    .eyebrow{ font-size:8.5pt; margin-bottom:6px; }
+    .meta{ margin-top:7px; font-size:8.5pt; }
+    h2{ font-size:13pt; }
+    section{ margin-top:13px; }
+    .lede{ margin-bottom:9px; font-size:9.5pt; }
+    figure svg{ max-height:196mm; width:auto; max-width:100%; margin:0 auto; }
+    #ladder svg{ max-height:172mm; }
+    figcaption{ margin-top:6px; padding-top:6px; font-size:8.5pt; }
+    .key{ margin-top:7px; font-size:8.5pt; }
+    table{ font-size:9pt; }
+    caption{ font-size:8pt; }
+    th{ font-size:8pt; }
+    .pc{ font-size:8pt; }
+    td.where{ font-size:8pt; }
+    .note{ font-size:8.5pt; margin-top:8px; }
+    .foot{ margin-top:20px; }
+    figure, table{ break-inside:avoid; }
+    h2{ break-after:avoid; }
+    .lede{ break-after:avoid; }
+    .page-break{ break-before:page; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">123Greetings &middot; card search &middot; upgrading in place</p>
+    <h1>Seven changes to the search you already have</h1>
+    <p class="standfirst">
+      Keeping Sphinx. Four of these are one line of config. Two of them are
+      regressions if you ship them alone — that pairing is what this sheet is
+      for.
+    </p>
+    <p class="meta">
+      <span><b>73&rarr;23</b> zero-result queries</span>
+      <span><b>1&rarr;10</b> of 10 for “funny”</span>
+      <span><b>4</b> one-line changes</span>
+      <span><b>2</b> reindexes</span>
+    </p>
+  </header>
+
+  <!-- ================================================================= -->
+  <section>
+    <h2><span class="num">01</span>The order to do them in</h2>
+    <p class="lede">
+      Top to bottom. The two bracketed pairs must land together — the left-hand
+      column says what happens if you ship only half.
+    </p>
+
+    <figure id="ladder">
+      <svg viewBox="0 0 1010 880" role="img"
+           aria-label="The seven upgrade steps in order. Apostrophes and stemming are bracketed as one shipment because apostrophes alone raise zero results from 73 to 81. Dropping the funny-to-fun synonym ships alone. Trimming the stop list and quorum relaxation are bracketed as one shipment because trimming alone raises zero results from 63 to 83. Field weights and the ordering change ship alone. Zero-result queries fall from 73 to 23 across the sequence.">
+        <defs>
+          <marker id="ua" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="uaS" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--signal)"/>
+          </marker>
+          <marker id="uaR" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rust)"/>
+          </marker>
+        </defs>
+
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+           fill="currentColor" color="currentColor">
+
+          <!-- column headings -->
+          <text x="20" y="20" font-size="11" font-weight="700" fill="var(--rust)"
+                letter-spacing="1.1">IF YOU SHIP ONLY HALF</text>
+          <text x="330" y="20" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">THE CHANGE</text>
+          <text x="700" y="20" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">WHERE IT GOES</text>
+          <text x="930" y="20" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1" text-anchor="end">ZERO</text>
+
+          <!-- start -->
+          <rect x="330" y="36" width="330" height="34" rx="17"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="495" y="58" font-size="12.5" text-anchor="middle">Sphinx as it is today</text>
+          <text x="930" y="58" font-size="13" text-anchor="end">73</text>
+
+          <line x1="495" y1="70" x2="495" y2="96" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ua)"/>
+
+          <!-- ===== PAIR 1 ===== -->
+          <path d="M 318 100 L 306 100 L 306 214 L 318 214" fill="none"
+                stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="298" y="151" font-size="11" font-weight="700" fill="var(--rust)"
+                text-anchor="end">ONE</text>
+          <text x="298" y="165" font-size="11" font-weight="700" fill="var(--rust)"
+                text-anchor="end">SHIPMENT</text>
+          <text x="298" y="188" font-size="11" fill="var(--rust)" text-anchor="end">apostrophes alone:</text>
+          <text x="298" y="202" font-size="11" fill="var(--rust)" text-anchor="end">73 &rarr; 81, WORSE</text>
+
+          <rect x="330" y="96" width="330" height="52" rx="4"
+                fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="346" y="117" font-size="12.5" font-weight="700" fill="var(--rust)">1 &nbsp;apostrophes stop splitting words</text>
+          <text x="346" y="137" font-size="11.5" fill="var(--muted)">“mother’s” indexes as “mothers”</text>
+          <text x="700" y="117" font-size="11.5" fill="var(--muted)">sphinx.conf</text>
+          <text x="700" y="133" font-size="11.5">ignore_chars</text>
+          <text x="700" y="149" font-size="10.5" fill="var(--rust)">reindex</text>
+
+          <line x1="495" y1="148" x2="495" y2="162" stroke="var(--rust)" stroke-width="1.5"/>
+
+          <rect x="330" y="162" width="330" height="52" rx="4"
+                fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="346" y="183" font-size="12.5" font-weight="700" fill="var(--rust)">2 &nbsp;stemming</text>
+          <text x="346" y="203" font-size="11.5" fill="var(--muted)">so “loves” still reaches “love”</text>
+          <text x="700" y="183" font-size="11.5" fill="var(--muted)">sphinx.conf</text>
+          <text x="700" y="199" font-size="11.5">morphology = stem_en</text>
+          <text x="930" y="196" font-size="13" text-anchor="end">61</text>
+
+          <line x1="495" y1="214" x2="495" y2="242" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ua)"/>
+
+          <!-- ===== SINGLE: synonyms ===== -->
+          <rect x="330" y="242" width="330" height="66" rx="4"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.5"/>
+          <text x="346" y="263" font-size="12.5" font-weight="700" fill="var(--signal)">3 &nbsp;delete three synonym lines</text>
+          <text x="346" y="282" font-size="11.5" fill="var(--signal)">funny &rArr; fun &middot; funnies &rArr; fun</text>
+          <text x="346" y="298" font-size="11.5" fill="var(--signal)">humor &rArr; fun</text>
+          <text x="700" y="263" font-size="11.5" fill="var(--muted)">your synonym module</text>
+          <text x="700" y="279" font-size="11.5">3 lines deleted</text>
+          <text x="700" y="295" font-size="10.5" fill="var(--signal)">no reindex</text>
+          <text x="930" y="279" font-size="13" text-anchor="end">63</text>
+
+          <line x1="495" y1="308" x2="495" y2="336" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ua)"/>
+
+          <!-- ===== PAIR 2 ===== -->
+          <path d="M 318 340 L 306 340 L 306 454 L 318 454" fill="none"
+                stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="298" y="391" font-size="11" font-weight="700" fill="var(--rust)"
+                text-anchor="end">ONE</text>
+          <text x="298" y="405" font-size="11" font-weight="700" fill="var(--rust)"
+                text-anchor="end">SHIPMENT</text>
+          <text x="298" y="428" font-size="11" fill="var(--rust)" text-anchor="end">stop list alone:</text>
+          <text x="298" y="442" font-size="11" fill="var(--rust)" text-anchor="end">63 &rarr; 83, WORSE</text>
+
+          <rect x="330" y="336" width="330" height="52" rx="4"
+                fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="346" y="357" font-size="12.5" font-weight="700" fill="var(--rust)">4 &nbsp;trim the 68-word stop list</text>
+          <text x="346" y="377" font-size="11.5" fill="var(--muted)">flash, animated, card, happy, wishes…</text>
+          <text x="700" y="357" font-size="11.5" fill="var(--muted)">sphinx.conf</text>
+          <text x="700" y="373" font-size="11.5">stopwords file</text>
+          <text x="700" y="389" font-size="10.5" fill="var(--rust)">reindex</text>
+
+          <line x1="495" y1="388" x2="495" y2="402" stroke="var(--rust)" stroke-width="1.5"/>
+
+          <rect x="330" y="402" width="330" height="52" rx="4"
+                fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.5"/>
+          <text x="346" y="423" font-size="12.5" font-weight="700" fill="var(--rust)">5 &nbsp;quorum relaxation</text>
+          <text x="346" y="443" font-size="11.5" fill="var(--muted)">all words &rarr; “a b c”/2 &rarr; /1</text>
+          <text x="700" y="423" font-size="11.5" fill="var(--muted)">search code</text>
+          <text x="700" y="439" font-size="11.5">~20 lines</text>
+          <text x="930" y="436" font-size="13" font-weight="700" fill="var(--signal)"
+                text-anchor="end">23</text>
+
+          <line x1="495" y1="454" x2="495" y2="482" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ua)"/>
+
+          <!-- ===== SINGLES: ranking ===== -->
+          <rect x="330" y="482" width="330" height="52" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="346" y="503" font-size="12.5" font-weight="700">6 &nbsp;field weights + BM25</text>
+          <text x="346" y="523" font-size="11.5" fill="var(--muted)">title 10 &middot; tags 8 &middot; blurb 2</text>
+          <text x="700" y="503" font-size="11.5" fill="var(--muted)">query OPTION</text>
+          <text x="700" y="519" font-size="11.5">field_weights=(…)</text>
+          <text x="700" y="535" font-size="10.5" fill="var(--signal)">no reindex</text>
+
+          <line x1="495" y1="534" x2="495" y2="562" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ua)"/>
+
+          <rect x="330" y="562" width="330" height="52" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="346" y="583" font-size="12.5" font-weight="700">7 &nbsp;band the score, then recency</text>
+          <text x="346" y="603" font-size="11.5" fill="var(--muted)">validity &rarr; band &rarr; newest &rarr; sends</text>
+          <text x="700" y="583" font-size="11.5" fill="var(--muted)">ORDER BY</text>
+          <text x="700" y="599" font-size="11.5">~5 lines</text>
+          <text x="700" y="615" font-size="10.5" fill="var(--signal)">no reindex</text>
+
+          <line x1="495" y1="614" x2="495" y2="642" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#ua)"/>
+
+          <!-- end -->
+          <rect x="330" y="642" width="330" height="46" rx="23"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
+          <text x="495" y="662" font-size="13" font-weight="700" text-anchor="middle"
+                fill="var(--signal)">23 zero-result queries, was 73</text>
+          <text x="495" y="679" font-size="11.5" text-anchor="middle" fill="var(--signal)">“funny” 10 of 10 &middot; results 4 years newer</text>
+
+          <!-- the separate one -->
+          <line x1="20" y1="716" x2="990" y2="716" stroke="var(--hair)" stroke-width="1"/>
+          <text x="20" y="742" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">AND ONE THAT IS NOT PART OF THE SEQUENCE</text>
+
+          <rect x="20" y="756" width="470" height="52" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="36" y="777" font-size="12.5" font-weight="700">0 &nbsp;turn off the query rewriter</text>
+          <text x="36" y="797" font-size="11.5" fill="var(--muted)">motherings &middot; goodness’s &middot; 1cards</text>
+
+          <rect x="520" y="756" width="470" height="52" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4"/>
+          <text x="536" y="777" font-size="12.5" font-weight="700">8 &nbsp;carousel shows newest, not most sent</text>
+          <text x="536" y="797" font-size="11.5" fill="var(--muted)">carousel_thank_xml_gen.pl, one ORDER BY</text>
+
+          <text x="20" y="836" font-size="11.5" fill="var(--muted)">Do step 0 first. It costs nothing, removes ~900 guaranteed-empty searches a period, and it</text>
+          <text x="20" y="852" font-size="11.5" fill="var(--muted)">has to go before any learning is switched on or the learner will confidently learn nonsense.</text>
+        </g>
+      </svg>
+
+      <figcaption>
+        Zero-result counts are from replaying 516 real queries. They come from a
+        re-implementation of the documented pipeline, which does <strong>not</strong>
+        reproduce the apostrophe bug — so it cannot show step 1’s real value. The
+        query log can: <strong>22,399 searches a period</strong>, 62% of all
+        traffic, lost to the apostrophe alone.
+      </figcaption>
+    </figure>
+
+    <p class="key">
+      <span><i class="swatch rst"></i> ships as a pair, or makes things worse</span>
+      <span><i class="swatch sig"></i> fixes a filed complaint on its own</span>
+      <span><i class="swatch"></i> ranking, no reindex</span>
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="page-break">
+    <h2><span class="num">02</span>What each step buys</h2>
+    <p class="lede">
+      Each row is the one above it plus one change, replayed over the same 516
+      queries. The two arrowed rows are the ones that go backwards alone.
+    </p>
+
+    <table>
+      <caption>measured, not estimated — <code>upgrade_stages.py</code> reruns it</caption>
+      <thead>
+        <tr>
+          <th style="width:40%">After this step</th>
+          <th class="n" style="width:15%">Zero results</th>
+          <th class="n" style="width:15%">“funny”</th>
+          <th class="n" style="width:15%">flash card</th>
+          <th class="n" style="width:15%">Mean year</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0 &nbsp;as it is today</td>
+          <td class="n">73</td><td class="n">1 of 10</td>
+          <td class="n was">zero</td><td class="n">2013.4</td>
+        </tr>
+        <tr>
+          <td>1 &nbsp;+ apostrophes join &nbsp;&larr; <em>alone</em></td>
+          <td class="n was">81</td><td class="n">1 of 10</td>
+          <td class="n was">zero</td><td class="n">2014.0</td>
+        </tr>
+        <tr>
+          <td>2 &nbsp;+ stemming</td>
+          <td class="n">61</td><td class="n">1 of 10</td>
+          <td class="n was">zero</td><td class="n">2014.0</td>
+        </tr>
+        <tr>
+          <td>3 &nbsp;+ drop <code>funny =&gt; fun</code></td>
+          <td class="n">63</td><td class="n now">9 of 10</td>
+          <td class="n was">zero</td><td class="n">2013.7</td>
+        </tr>
+        <tr>
+          <td>4 &nbsp;+ trim the stop list &nbsp;&larr; <em>alone</em></td>
+          <td class="n was">83</td><td class="n">9 of 10</td>
+          <td class="n was">zero</td><td class="n">2015.0</td>
+        </tr>
+        <tr>
+          <td>5 &nbsp;+ quorum relaxation</td>
+          <td class="n now">23</td><td class="n">9 of 10</td>
+          <td class="n now">2,176</td><td class="n">2015.9</td>
+        </tr>
+        <tr>
+          <td>6 &nbsp;+ field weights and IDF</td>
+          <td class="n">23</td><td class="n now">10 of 10</td>
+          <td class="n now">2,176</td><td class="n">2015.3</td>
+        </tr>
+        <tr>
+          <td>7 &nbsp;+ bands, newest breaks ties</td>
+          <td class="n">23</td><td class="n now">10 of 10</td>
+          <td class="n now">2,176</td><td class="n now">2017.1</td>
+        </tr>
+        <tr class="rule">
+          <td><em>the new engine, for reference</em></td>
+          <td class="n now">0</td><td class="n now">10 of 10</td>
+          <td class="n now">works</td><td class="n now">2018.4</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="note">
+      The last row is the gap this route does not close: spell correction, which
+      Sphinx has no equivalent for, and the unconditional last rung that makes
+      zero impossible. Both are reachable — Manticore’s <code>CALL SUGGEST</code>,
+      or about 120 lines in the application — but neither is a config change,
+      which is why they sit outside the seven.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="page-break">
+    <h2><span class="num">03</span>The synonym list, and what replaces it</h2>
+    <p class="lede">
+      The hand-written list is not the mechanism any more. What is left for it to
+      do is the one thing a feedback loop is good at.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 1010 460" role="img"
+           aria-label="Of 188 hand-written synonym pairs, most are now derived from the catalogue: misspellings by edit distance, run-together words by splitting, inflections by suffix folding, occasion words from the categories. Only different names for the same thing remain hand-written, seven pairs, each validated against the catalogue. A feedback loop learns those from reformulation pairs: a user searches deepavali, does not click, searches diwali, clicks.">
+        <defs>
+          <marker id="sa" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="saS" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--signal)"/>
+          </marker>
+        </defs>
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="currentColor">
+
+          <rect x="20" y="30" width="180" height="70" rx="4"
+                fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="110" y="58" font-size="24" font-weight="700" text-anchor="middle">188</text>
+          <text x="110" y="78" font-size="11.5" text-anchor="middle">hand-written</text>
+          <text x="110" y="93" font-size="11.5" text-anchor="middle">synonym pairs</text>
+
+          <line x1="200" y1="65" x2="248" y2="65" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#sa)"/>
+
+          <text x="264" y="24" font-size="11" font-weight="700" fill="var(--muted)"
+                letter-spacing="1.1">NOW DERIVED FROM THE CATALOGUE ITSELF</text>
+
+          <rect x="260" y="30" width="330" height="34" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="274" y="52" font-size="12">misspellings &mdash; by edit distance</text>
+          <rect x="260" y="70" width="330" height="34" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="274" y="92" font-size="12">run-together words &mdash; by splitting</text>
+          <rect x="260" y="110" width="330" height="34" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="274" y="132" font-size="12">inflections &mdash; by suffix folding</text>
+          <rect x="260" y="150" width="330" height="34" rx="3"
+                fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="274" y="172" font-size="12">occasion words &mdash; from the categories</text>
+
+          <text x="610" y="52" font-size="11.5" fill="var(--muted)">six list entries for</text>
+          <text x="610" y="67" font-size="11.5" fill="var(--muted)">“hashanah” alone —</text>
+          <text x="610" y="82" font-size="11.5" fill="var(--muted)">and it also gets</text>
+          <text x="610" y="97" font-size="11.5" fill="var(--muted)">“roshasana”, which</text>
+          <text x="610" y="112" font-size="11.5" fill="var(--muted)">was never on the list.</text>
+
+          <line x1="110" y1="100" x2="110" y2="212" stroke="currentColor"
+                stroke-width="1.5" marker-end="url(#sa)"/>
+
+          <rect x="20" y="212" width="180" height="70" rx="4"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
+          <text x="110" y="240" font-size="24" font-weight="700" text-anchor="middle"
+                fill="var(--signal)">7</text>
+          <text x="110" y="260" font-size="11.5" text-anchor="middle" fill="var(--signal)">left, each checked</text>
+          <text x="110" y="275" font-size="11.5" text-anchor="middle" fill="var(--signal)">against the data</text>
+
+          <line x1="200" y1="247" x2="248" y2="247" stroke="var(--signal)"
+                stroke-width="1.5" marker-end="url(#saS)"/>
+
+          <text x="264" y="230" font-size="11" font-weight="700" fill="var(--signal)"
+                letter-spacing="1.1">THE IRREDUCIBLE CASE: TWO NAMES FOR ONE THING</text>
+          <rect x="260" y="238" width="330" height="52" rx="3"
+                fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1"/>
+          <text x="274" y="259" font-size="12" fill="var(--signal)">deepavali = diwali &nbsp; chanukah = hanukkah</text>
+          <text x="274" y="278" font-size="11.5" fill="var(--muted)">no spelling rule can derive these — they are</text>
+
+          <text x="610" y="259" font-size="11.5" fill="var(--muted)">facts about the world,</text>
+          <text x="610" y="274" font-size="11.5" fill="var(--muted)">not about English.</text>
+
+          <line x1="425" y1="290" x2="425" y2="322" stroke="var(--signal)"
+                stroke-width="1.5" marker-end="url(#saS)"/>
+
+          <rect x="150" y="322" width="710" height="86" rx="4"
+                fill="none" stroke="var(--signal)" stroke-width="1.5"/>
+          <text x="168" y="344" font-size="12" font-weight="700" fill="var(--signal)">WHAT A FEEDBACK LOOP LEARNS INSTEAD</text>
+          <text x="168" y="366" font-size="12.5">searches “deepavali”  &rarr;  21 cards  &rarr;  no click  &rarr;  searches “diwali”  &rarr;  clicks</text>
+          <text x="168" y="386" font-size="11.5" fill="var(--muted)">Seen from enough different people, that sequence IS the synonym — and nobody had to think of it.</text>
+          <text x="168" y="402" font-size="11.5" fill="var(--muted)">Needs four columns you do not log today: session id, timestamp, card clicked, card sent.</text>
+
+          <text x="20" y="440" font-size="11.5" fill="var(--rust)">89.5% of your search traffic is in queries seen 20+ times — dense enough to learn from. But turn the query</text>
+          <text x="20" y="456" font-size="11.5" fill="var(--rust)">rewriter off first: “motherings”, “goodness’s” and “1cards” are the top of your log, and a learner will believe them.</text>
+        </g>
+      </svg>
+      <figcaption>
+        Of twelve name-pairs offered to the new engine, five were dropped because
+        the catalogue did not support them — including one where the data showed
+        the link pointing the wrong way round. A claim that two words mean the
+        same thing is a claim about the world, and those are the claims worth
+        checking.
+      </figcaption>
+    </figure>
+  </section>
+
+  <div class="foot">
+    <span>Full detail in <code>UPGRADE_PATH.md</code> · measurements from <code>upgrade_stages.py</code></span>
+    <span>516 real queries replayed · 12,087 live cards</span>
+  </div>
+</div>
