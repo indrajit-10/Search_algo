@@ -313,6 +313,8 @@ side-by-side and it will stay quick.
 | `data/` | Where your export goes. Gitignored. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
 | `OLD_VS_NEW.md` | Point-by-point against the Sphinx spec (Algorithm v3.2). |
+| `UPGRADE_PATH.md` | How to get most of this by changing Sphinx in place, and whether a feedback loop can replace the synonym list. |
+| `upgrade_stages.py` | Measures what each of those upgrade steps buys. Backs the table in `UPGRADE_PATH.md`. |
 | `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
 | `FLOWCHART.html` | The same thing as a diagram. Open in a browser, Ctrl/Cmd-P to print. |
 | `run.sh` / `run.bat` | One entry point. Builds `.venv`, then runs. |
@@ -328,6 +330,12 @@ side-by-side and it will stay quick.
 > reported complaints, and the three things the old system does that this one
 > does not. Also as [OLD_VS_NEW.docx](OLD_VS_NEW.docx) if you need to send it
 > round.
+>
+> **Not ready to replace it?** [UPGRADE_PATH.md](UPGRADE_PATH.md) is the
+> in-place route — seven changes to the existing Sphinx setup, mostly config,
+> measured one at a time. It flags the two pairs that must ship together because
+> half of either makes the search worse, and answers whether a feedback loop can
+> retire the synonym list.
 >
 > **Want it on paper?** [FLOWCHART.html](FLOWCHART.html) is the same explanation
 > as a diagram — the query pipeline, the relaxation ladder, and a what-changed
@@ -357,9 +365,10 @@ A query fills four slots, and each maps to a column you already have:
 | Format | `card_label_type`, `card_music_extn` | animated, flash, musical |
 
 Facets come from **tags and title only, never the description**. That single rule
-is the fix for "funny returns wrong results": 1,105 cards say "fun ecard" in
-their blurb without being humour cards, and they can no longer outrank the 150
-that are genuinely tagged.
+is the fix for "funny returns wrong results": 731 cards say "fun" in their blurb
+without being humour cards, and they can no longer outrank the 200 that are.
+The old pipeline made this worse still by rewriting the query "funny" to "fun"
+before searching — see OLD_VS_NEW.md.
 
 **2. Match and score.** Field-weighted, IDF-scaled. There is no stop-word list —
 `card` simply carries near-zero weight, so `flash card` can no longer annihilate

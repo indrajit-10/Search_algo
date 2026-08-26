@@ -31,10 +31,10 @@ measurable causes — and we found a sixth that was bigger than any of them.
 |---|---|
 | "Missing results" | The word list that removes filler words contained **"flash"** and **"animated"**. So *"flash card"* had both its words deleted and searched for nothing. |
 | "Spelling errors find nothing" | Correction was a hand-written list of about 200 words. Perfect on the 200; nothing at all on the 201st. *"birthdya"* is not on it, and found 0 of 819 birthday cards. |
-| "Funny gives wrong results" | 1,105 cards say *"a fun ecard"* in their blurb without being funny. Only 150 are genuinely tagged as humour. The blurb was winning. |
+| "Funny gives wrong results" | The synonym list rewrites *funny* to *fun* before the search runs. 817 cards say *"fun"* in their blurb; 731 of them are not humour cards. Only 200 are genuinely tagged as humour. |
 | "Misspellings give wrong output" | With no correction, a typo returned nothing, and a fallback quietly showed unrelated popular cards instead. |
 | "Old cards always first" | Ranking used **lifetime send count**. On a catalogue running since 2002, a card uploaded last month cannot ever catch up. New work was mathematically unrankable. |
-| **The one nobody reported** | **Any search containing an apostrophe returned zero results.** *"mother's day"* — 520 searches, nothing. *"father's day"* — 527 searches, nothing. Across the query log that is roughly **27,000 searches landing on an empty page**. |
+| **The one nobody reported** | **Any search containing an apostrophe returned zero results.** *"mother's day"* — 520 searches, nothing. *"father's day"* — 527 searches, nothing. Across the query log that is **22,399 searches landing on an empty page** — 96% of every empty page served. |
 
 That last one was found by reading the query log, not by anyone reporting it —
 which makes sense, because a user who gets nothing simply leaves.
@@ -47,12 +47,18 @@ Before anything else, the typed text is tidied.
 
 **Apostrophes join words, they do not split them.** *"mother's"* becomes
 *"mothers"*, not *"mother"* + *"s"*. Splitting left a stray "s" that matched
-nothing and dragged the whole search to zero. This one change rescued
-**22,269 searches** per period.
+nothing and dragged the whole search to zero. This one change rescues
+**22,399 searches** per period.
 
-**Encoded junk is decoded.** Card titles in the database contain `%92` where an
-apostrophe should be — 20,164 times. *"Mother%92s Day"* could never match
-*"mothers day"*. Both sides are now normalised to the same thing.
+**Encoded junk is decoded.** Card text contains `%92` where an apostrophe
+should be — *"Mother%92s Day"* could never match *"mothers day"*. Both sides are
+now normalised to the same thing.
+
+This is smaller than it first looks and worth stating accurately: `%92` occurs
+20,164 times across titles, descriptions and tags in the full export, but only
+**632 times on 295 of the 12,087 live cards**. The rest sits in archived rows
+nobody searches. The apostrophe damage was overwhelmingly on the *query* side,
+not in the catalogue.
 
 **Web-encoded spaces are handled.** Queries arrive as *"mother's+day"*. The plus
 becomes a space.
@@ -162,9 +168,11 @@ records whether a card is animated, Flash or musical.
 **Tone and recipient are read from a card's tags and title only — never from its
 description.**
 
-This is the entire fix for *"funny gives wrong results"*. There are 1,105 cards
-whose blurb says something like *"send this fun ecard"*. They are wedding cards,
-sympathy cards, anything. Only 150 are genuinely tagged as humour.
+This is the entire fix for *"funny gives wrong results"*, together with dropping
+the `funny => fun` synonym that caused it. There are 817 cards whose blurb
+says something like *"send this fun ecard"*, and 731 of them are not humour
+cards at all — they are weddings, sympathy, anything. Only 200 are genuinely
+tagged as humour.
 
 A card is funny because someone **labelled** it funny — not because the word
 "fun" appears in a sentence about it. The description still helps a card be
@@ -206,8 +214,8 @@ nothing about the occasion, which is why tags carry so much of the load.
 ### Matching a slot beats matching text
 
 If a card is tagged humour and someone asked for something funny, that counts for
-far more than the word appearing in a sentence. That is what stops the 1,105
-"fun ecard" blurbs outranking the 150 genuinely funny cards.
+far more than the word appearing in a sentence. That is what stops the 731
+"fun" blurbs outranking the 200 genuinely funny cards.
 
 The boost scales with how much a slot narrows things down. "Tagged humour" is
 specific and worth a lot. "Is a December card" covers Christmas, Boxing Day and

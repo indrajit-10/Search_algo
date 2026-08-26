@@ -1656,9 +1656,75 @@ greeting greetings happy image images in into like nor of off on onto or per pop
 postcard postcards printable so some somebody someone the this to top up via wishes wishing
 with yet your yours x
 """.split())
-OLD_SYNONYMS = {"bday": "birthday", "b'day": "birthday", "mom": "mother",
-                "mommy": "mother", "mama": "mother", "xmas": "christmas",
-                "x-mas": "christmas", "1st": "1", "cumpleanos": "birthday"}
+# The synonym module from the Algorithm v3.2 spec, verbatim - 188 pairs.
+#
+# Reproduced in full because three of its entries are the whole reason
+# "funny returns wrong results" was ever filed. The module rewrites the
+# query BEFORE Sphinx runs, so funny/funnies/humor all execute as "fun" -
+# a word on 409 titles and 817 descriptions against funny's 16 and 90.
+# The search then hits the 500-candidate cap with none of the top 10
+# tagged humour.
+OLD_SYNONYMS = {
+    "10th": "10", "14th": "14", "18th": "18", "1st": "1", "25th": "25",
+    "31st": "31", "4": "fourth", "4th": "fourth", "50th": "50", "65th": "65",
+    "70th": "70", "75th": "75", "80th": "80", "90th": "ninety",
+    "accident": "recovery", "al": "ul", "april": "apr", "august": "aug",
+    "b": "birthday", "banthan": "bandhan", "bay": "birthday",
+    "bday": "birthday", "bro": "brother", "buddy": "friendship",
+    "chai": "cai", "channukah": "hanukkah", "channukkah": "hanukkah",
+    "chanukah": "hanukkah", "chanukkah": "hanukkah", "children": "kid",
+    "chrismas": "christmas", "christmastide": "christmas",
+    "christmastime": "christmas", "cumpleanos": "birthday", "cuz": "cousin",
+    "dad": "father", "daddy": "father", "dads": "father", "danke": "thank",
+    "dasara": "dussehra", "death": "loss", "december": "dec",
+    "deepavali": "diwali", "deepawali": "diwali", "deewali": "diwali",
+    "depawali": "diwali", "dewali": "diwali", "dia": "diya",
+    "donut": "doughnut", "durgapooja": "puja", "durgapuja": "puja",
+    "durgapujo": "puja", "dussara": "dussehra", "dussehara": "dussehra",
+    "dussera": "dussehra", "dusshera": "dussehra", "edi": "eid",
+    "february": "feb", "first": "1", "fitri": "fitr", "forgotten": "belated",
+    "friend": "friendship", "funnies": "fun", "funny": "fun",
+    "ganapati": "ganesh", "ganesa": "ganesh", "ganesha": "ganesh",
+    "gong": "chinese", "gracias": "thank", "grad": "graduation",
+    "grads": "graduation", "graduate": "graduation", "gramps": "grandfather",
+    "gran": "grandmother", "granddad": "grandfather",
+    "grandma": "grandmother", "grandmom": "grandmother",
+    "grandpa": "grandfather", "grandparent": "grandfather",
+    "grannie": "grandmother", "granny": "grandmother", "gud": "good",
+    "hallween": "halloween", "haloween": "halloween", "hasana": "hashanah",
+    "hashana": "hashanah", "hashanna": "hashanah", "hashannah": "hashanah",
+    "hashona": "hashanah", "hashonah": "hashanah", "holidays": "seasons",
+    "holloween": "halloween", "humor": "fun", "idul": "eid",
+    "ill": "recovery", "im": "am", "intl": "international", "january": "jan",
+    "july": "jul", "june": "jun", "kwanza": "kwanzaa", "labour": "labor",
+    "luv": "love", "m": "im", "ma": "mother", "mama": "mother",
+    "mamma": "mother", "mammy": "mother", "march": "mar",
+    "marriage": "wedding", "mas": "christmas", "mater": "mother",
+    "merci": "thank", "mom": "mother", "momma": "mother", "mommy": "mother",
+    "moms": "mother", "mum": "mother", "mummy": "mother", "newyear": "year",
+    "noel": "christmas", "norooz": "nowruz", "norouz": "nowruz",
+    "noruz": "nowruz", "nourooz": "nowruz", "november": "nov",
+    "nowrooz": "nowruz", "nowrouz": "nowruz", "october": "oct",
+    "paddy": "patrick", "pal": "friendship", "papa": "father",
+    "pappa": "father", "parsi": "zoroastrian", "pat": "patrick",
+    "pater": "father", "pooja": "puja", "pop": "father", "pujo": "puja",
+    "rahki": "raksha", "rake": "raksha", "rakee": "raksha", "rakhe": "raksha",
+    "rakhee": "raksha", "rakhsa": "raksha", "rakhsha": "raksha",
+    "raki": "raksha", "rakish": "raksha", "ramadhan": "ramadan",
+    "ramazan": "ramadan", "ramdan": "ramadan", "ramzaan": "ramadan",
+    "ramzan": "ramadan", "residence": "address", "rhaki": "raksha",
+    "riki": "raksha", "romance": "love", "roshashana": "rosh",
+    "roshhashonah": "rosh", "saint": "st", "saintnick": "santaclaus",
+    "september": "sep", "shana": "rosh", "shavuos": "shavuot",
+    "shivratri": "shivaratri", "sick": "recovery", "sis": "sister",
+    "thankgiving": "thanksgiving", "thanks": "thank", "thanx": "thank",
+    "thirty-first": "31", "thx": "thank", "tosh": "rosh", "trip": "voyage",
+    "tube": "youtube", "twenty-fifth": "25", "ty": "thank", "u": "you",
+    "vday": "valentine", "video": "youtube", "videos": "youtube",
+    "vinayak": "ganesh", "vinayaka": "ganesh", "x-mas": "christmas",
+    "xmas": "christmas", "yr": "year", "yule": "christmas",
+    "yuletide": "christmas",
+}
 OLD_CAP = 500
 
 

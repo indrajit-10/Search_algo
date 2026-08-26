@@ -32,9 +32,18 @@ query *before* Sphinx runs, so a search for **funny** is executed as **fun**.
 
 Rewriting one to the other multiplies the candidate pool roughly sixfold with
 cards that were never humour cards. Only **200** cards in the catalogue are
-genuinely humour. Running the old pipeline on *funny* returns 210 matches with
-**5 of the top 10** tagged humour; the new engine returns **10 of 10**
-(the test asserts a floor of 8).
+genuinely humour.
+
+Running the old pipeline on *funny* now **hits the 500-candidate cap** with
+**1 of the top 10** tagged humour — 0 of 10 if candidates are taken in insertion
+order rather than by weight. The new engine returns **10 of 10** (its test
+asserts a floor of 8).
+
+*(An earlier draft of this document said 5 of 10. That was measured against a
+9-entry stand-in for your synonym module, written before I had seen the real
+one. With the actual 188 pairs in place the old pipeline does considerably
+worse, which strengthens rather than weakens the point. The simulation now
+carries your list verbatim.)*
 
 That one line in a config file is the whole complaint.
 
