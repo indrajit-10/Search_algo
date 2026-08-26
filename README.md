@@ -191,6 +191,10 @@ Open **http://localhost:8000**. Type and results appear as you go.
 - **New / Compare** — Compare shows old and new side by side with thumbnails.
 - **Freshness** — off / subtle / strong / heavy. The status bar shows the mean
   result year, so you can pick the setting by looking rather than guessing.
+- **Live look** — the same results in the site's own markup and stylesheets:
+  `ul.sub-cat`, `.thumb-hold`, `p.msg-red`. One card a row at `_pc` size, no
+  description, just the red liner. This is the one to show people.
+- **Report** — every search recorded, and what came back. See below.
 - **Image URLs** — see below.
 
 **Thumbnails work out of the box.** The template is confirmed against card
@@ -310,7 +314,8 @@ side-by-side and it will stay quick.
 | `test_edge_cases.py` | 513 assertions on hostile and malformed input. |
 | `audit_catalogue.py` | Measures the failures in the current system from the raw export. |
 | `fixtures/real_queries.tsv` | Real queries with volumes and production result counts. |
-| `data/` | Where your export goes. Gitignored. |
+| `data/` | Where your export goes, and where `query_log.tsv` is written. Gitignored. |
+| `assets/` | The site's own `static_R1.css`, so the live look works without CDN access. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
 | `OLD_VS_NEW.md` | Point-by-point against the Sphinx spec (Algorithm v3.2). |
 | `UPGRADE_PATH.md` | How to get most of this by changing Sphinx in place, and whether a feedback loop can replace the synonym list. |
