@@ -209,7 +209,13 @@ The `_pc` derivative may be jpg for every card or may follow `card_thumb_extn`.
 The page tries jpg first and retries once with the card's own extension, so both
 conventions work. Only if both miss does the tile show the URL it tried.
 
-**Card links are off.** The card page for that same card is
+**Card links are off by default, but the mapping now exists.** Run
+`python derive_card_urls.py --write` and it writes `data/card_urls.tsv` — every
+category's page path, worked out from the export. It gets 7 of the 8 real URLs
+available. Fifteen top-level sections still need confirming against the live
+site; the script prints a URL to test for each. See `OPEN_ITEMS.md` item 1.
+
+The old explanation, for context: the card page is
 `/birthday/happy_birthday/birthday191.html`, but its `q1_value` is
 `birth_happybirthday` — `birth` has to become `birthday` and `happybirthday` has
 to become `happy_birthday`. Neither follows from splitting the slug, and the
@@ -318,6 +324,8 @@ side-by-side and it will stay quick.
 | `assets/` | The site's own `static_R1.css`, so the live look works without CDN access. |
 | `LOGIC.md` | How the search works, in plain English. No code. |
 | `OLD_VS_NEW.md` | Point-by-point against the Sphinx spec (Algorithm v3.2). |
+| `OPEN_ITEMS.md` | **Every open problem, its cause, and what closes it.** Start here for what is left. |
+| `derive_card_urls.py` | Works out each card's page URL from the export. Writes `data/card_urls.tsv`. |
 | `UPGRADE_PATH.md` | How to get most of this by changing Sphinx in place, and whether a feedback loop can replace the synonym list. |
 | `UPGRADE_PATH.docx` | The same, as Word. |
 | `UPGRADE_FLOWCHART.html` | The upgrade sequence as a printable diagram — three A4 pages. |
