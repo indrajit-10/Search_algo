@@ -94,8 +94,8 @@
   </header>
 
   <figure>
-    <svg viewBox="0 0 900 975" role="img"
-         aria-label="The card search in six steps, with the query mom birthdya worked through each one. Someone types mom birthdya. Step one tidies the text. Step two fixes the spelling to mom birthday. Step three works out that it means a birthday card for a mother. Step four finds every card that fits and scores it. Step five checks whether enough came back and widens the search if not, looping back. Step six puts the best first. The result is 24 birthday cards for mothers. The old search returned no matches for the same query and showed ten unrelated popular cards.">
+    <svg viewBox="0 0 900 1010" role="img"
+         aria-label="The card search in six steps, with the query mom birthdya worked through each one. Someone types mom birthdya. Step one tidies the text. Step two fixes the spelling to mom birthday. Step three works out that it means a birthday card for a mother. Step four finds every card that fits, weighing each word by how rare it is and by where on the card it sits: title counts three, labels two and a half, section two, blurb one. Step five checks whether enough came back and widens the search if not, looping back. Step six puts the best first. The result is 24 birthday cards for mothers in about a millisecond.">
       <defs>
         <marker id="a" viewBox="0 0 10 10" refX="9" refY="5"
                 markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -110,13 +110,11 @@
       <g font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
          fill="currentColor" color="currentColor">
 
-        <!-- column headings -->
         <text x="30" y="18" font-size="12" font-weight="700" fill="var(--muted)"
               letter-spacing="1.2" font-family="ui-monospace, Menlo, monospace">THE STEP</text>
         <text x="530" y="18" font-size="12" font-weight="700" fill="var(--signal)"
               letter-spacing="1.2" font-family="ui-monospace, Menlo, monospace">SOMEONE SEARCHES FOR…</text>
 
-        <!-- ============ someone types ============ -->
         <rect x="30" y="34" width="440" height="54" rx="27"
               fill="none" stroke="currentColor" stroke-width="2"/>
         <text x="250" y="67" font-size="17" text-anchor="middle" font-weight="600">Someone types</text>
@@ -129,7 +127,6 @@
         <line x1="250" y1="88" x2="250" y2="122" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
 
-        <!-- ============ 1 tidy ============ -->
         <rect x="30" y="122" width="440" height="86" rx="6"
               fill="none" stroke="currentColor" stroke-width="1.5"/>
         <text x="54" y="152" font-size="15" font-weight="700">1 &nbsp;Tidy up the text</text>
@@ -144,7 +141,6 @@
         <line x1="250" y1="208" x2="250" y2="242" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
 
-        <!-- ============ 2 spelling ============ -->
         <rect x="30" y="242" width="440" height="86" rx="6"
               fill="none" stroke="currentColor" stroke-width="1.5"/>
         <text x="54" y="272" font-size="15" font-weight="700">2 &nbsp;Fix the spelling</text>
@@ -159,7 +155,6 @@
         <line x1="250" y1="328" x2="250" y2="362" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
 
-        <!-- ============ 3 understand ============ -->
         <rect x="30" y="362" width="440" height="106" rx="6"
               fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
         <text x="54" y="392" font-size="15" font-weight="700" fill="var(--signal)">3 &nbsp;Work out what they mean</text>
@@ -177,81 +172,90 @@
         <line x1="250" y1="468" x2="250" y2="502" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
 
-        <!-- ============ 4 find ============ -->
-        <rect x="30" y="502" width="440" height="86" rx="6"
+        <!-- step 4, with the weights -->
+        <rect x="30" y="502" width="440" height="116" rx="6"
               fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <text x="54" y="532" font-size="15" font-weight="700">4 &nbsp;Find every card that fits</text>
-        <text x="54" y="557" font-size="14.5" fill="var(--muted)">A rare word counts for a lot.</text>
-        <text x="54" y="577" font-size="14.5" fill="var(--muted)">A word on every card counts for almost nothing.</text>
+        <text x="54" y="530" font-size="15" font-weight="700">4 &nbsp;Find every card that fits</text>
+        <text x="54" y="553" font-size="14" fill="var(--muted)">A rare word counts for a lot. A word on nearly</text>
+        <text x="54" y="571" font-size="14" fill="var(--muted)">every card counts for almost nothing.</text>
+        <text x="54" y="592" font-size="13" fill="var(--muted)">And where it sits on the card counts too:</text>
+        <g font-size="11" fill="var(--muted)"
+           font-family="ui-monospace, Menlo, monospace">
+          <text x="54" y="612">title</text>
+          <rect x="88" y="602" width="54" height="11" rx="2" fill="var(--signal)"/>
+          <text x="152" y="612">labels</text>
+          <rect x="198" y="602" width="45" height="11" rx="2" fill="var(--signal)"/>
+          <text x="253" y="612">section</text>
+          <rect x="306" y="602" width="36" height="11" rx="2" fill="var(--signal)"/>
+          <text x="352" y="612">blurb</text>
+          <rect x="390" y="602" width="18" height="11" rx="2" fill="var(--rule)"/>
+        </g>
 
-        <text x="620" y="516" font-size="14" fill="var(--muted)">Nothing is thrown away</text>
-        <text x="620" y="534" font-size="14" fill="var(--muted)">before searching. That is</text>
-        <text x="620" y="552" font-size="14" fill="var(--muted)">why “flash card” works now.</text>
+        <text x="620" y="516" font-size="13.5" fill="var(--muted)">The blurb is the longest,</text>
+        <text x="620" y="534" font-size="13.5" fill="var(--muted)">vaguest field, so it is the</text>
+        <text x="620" y="552" font-size="13.5" fill="var(--muted)">safety net — never the</text>
+        <text x="620" y="570" font-size="13.5" fill="var(--muted)">reason a card ranks first.</text>
 
-        <line x1="250" y1="588" x2="250" y2="622" stroke="currentColor"
+        <line x1="250" y1="618" x2="250" y2="652" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
 
-        <!-- ============ 5 enough? ============ -->
-        <path d="M 250 622 L 400 676 L 250 730 L 100 676 Z"
+        <!-- step 5, the decision -->
+        <path d="M 250 652 L 400 706 L 250 760 L 100 706 Z"
               fill="none" stroke="currentColor" stroke-width="2"/>
-        <text x="250" y="668" font-size="15" text-anchor="middle" font-weight="600">5 &nbsp;Enough</text>
-        <text x="250" y="690" font-size="15" text-anchor="middle" font-weight="600">cards?</text>
+        <text x="250" y="698" font-size="15" text-anchor="middle" font-weight="600">5 &nbsp;Enough</text>
+        <text x="250" y="720" font-size="15" text-anchor="middle" font-weight="600">cards?</text>
 
-        <!-- no -> widen, looping back -->
-        <line x1="400" y1="676" x2="470" y2="676" stroke="var(--signal)"
+        <line x1="400" y1="706" x2="470" y2="706" stroke="var(--signal)"
               stroke-width="2" marker-end="url(#aS)"/>
-        <text x="435" y="666" font-size="13" fill="var(--signal)" text-anchor="middle">no</text>
+        <text x="435" y="696" font-size="13" fill="var(--signal)" text-anchor="middle">no</text>
 
-        <rect x="470" y="644" width="180" height="72" rx="6"
+        <rect x="470" y="674" width="180" height="72" rx="6"
               fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2"/>
-        <text x="560" y="670" font-size="15" font-weight="700" text-anchor="middle"
+        <text x="560" y="700" font-size="15" font-weight="700" text-anchor="middle"
               fill="var(--signal)">Widen it</text>
-        <text x="560" y="691" font-size="13" text-anchor="middle" fill="var(--signal)">give up the least</text>
-        <text x="560" y="705" font-size="13" text-anchor="middle" fill="var(--signal)">important part</text>
+        <text x="560" y="721" font-size="13" text-anchor="middle" fill="var(--signal)">give up the least</text>
+        <text x="560" y="735" font-size="13" text-anchor="middle" fill="var(--signal)">important part</text>
 
-        <path d="M 560 644 L 560 545 L 470 545" fill="none" stroke="var(--signal)"
+        <path d="M 560 674 L 560 588 L 470 588" fill="none" stroke="var(--signal)"
               stroke-width="2" stroke-dasharray="6 5" marker-end="url(#aS)"/>
-        <text x="572" y="600" font-size="13" fill="var(--signal)">and look again,</text>
-        <text x="572" y="618" font-size="13" fill="var(--signal)">keeping what</text>
-        <text x="572" y="636" font-size="13" fill="var(--signal)">was found</text>
+        <text x="572" y="620" font-size="13" fill="var(--signal)">and look again,</text>
+        <text x="572" y="638" font-size="13" fill="var(--signal)">keeping what</text>
+        <text x="572" y="656" font-size="13" fill="var(--signal)">was found</text>
 
-        <text x="676" y="726" font-size="13" fill="var(--signal)">There is always</text>
-        <text x="676" y="743" font-size="13" fill="var(--signal)">something to show,</text>
-        <text x="676" y="760" font-size="13" fill="var(--signal)">so an empty page</text>
-        <text x="676" y="777" font-size="13" fill="var(--signal)">cannot happen.</text>
+        <text x="676" y="768" font-size="13" fill="var(--signal)">There is always</text>
+        <text x="676" y="785" font-size="13" fill="var(--signal)">something to show,</text>
+        <text x="676" y="802" font-size="13" fill="var(--signal)">so an empty page</text>
+        <text x="676" y="819" font-size="13" fill="var(--signal)">cannot happen.</text>
 
-        <line x1="250" y1="730" x2="250" y2="764" stroke="currentColor"
+        <line x1="250" y1="760" x2="250" y2="794" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
-        <text x="262" y="752" font-size="13" fill="var(--muted)">yes</text>
+        <text x="262" y="782" font-size="13" fill="var(--muted)">yes</text>
 
-        <!-- ============ 6 order ============ -->
-        <rect x="30" y="764" width="440" height="106" rx="6"
+        <rect x="30" y="794" width="440" height="106" rx="6"
               fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <text x="54" y="794" font-size="15" font-weight="700">6 &nbsp;Put the best first</text>
-        <text x="54" y="819" font-size="14.5" fill="var(--muted)">A good match beats a popular one.</text>
-        <text x="54" y="839" font-size="14.5" fill="var(--muted)">Between two equally good ones,</text>
-        <text x="54" y="859" font-size="14.5" fill="var(--muted)">the newer card wins — but only just.</text>
+        <text x="54" y="824" font-size="15" font-weight="700">6 &nbsp;Put the best first</text>
+        <text x="54" y="849" font-size="14.5" fill="var(--muted)">A good match beats a popular one.</text>
+        <text x="54" y="869" font-size="14.5" fill="var(--muted)">Between two equally good ones,</text>
+        <text x="54" y="889" font-size="14.5" fill="var(--muted)">the newer card wins — but only just.</text>
 
-        <text x="530" y="812" font-size="13" fill="var(--muted)">Newness is capped, so a clearly</text>
-        <text x="530" y="830" font-size="13" fill="var(--muted)">better old card still wins. Fixing</text>
-        <text x="530" y="848" font-size="13" fill="var(--muted)">“old cards first” must not create</text>
-        <text x="530" y="866" font-size="13" fill="var(--muted)">“new cards first”.</text>
+        <text x="530" y="852" font-size="13" fill="var(--muted)">Newness is capped, so a clearly</text>
+        <text x="530" y="870" font-size="13" fill="var(--muted)">better old card still wins. Fixing</text>
+        <text x="530" y="888" font-size="13" fill="var(--muted)">“old cards first” must not create</text>
+        <text x="530" y="906" font-size="13" fill="var(--muted)">“new cards first”.</text>
 
-        <line x1="250" y1="870" x2="250" y2="904" stroke="currentColor"
+        <line x1="250" y1="900" x2="250" y2="934" stroke="currentColor"
               stroke-width="2" marker-end="url(#a)"/>
 
-        <!-- ============ result ============ -->
-        <rect x="30" y="904" width="440" height="56" rx="28"
+        <rect x="30" y="934" width="440" height="56" rx="28"
               fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="2.5"/>
-        <text x="250" y="939" font-size="17" text-anchor="middle" font-weight="700"
+        <text x="250" y="969" font-size="17" text-anchor="middle" font-weight="700"
               fill="var(--signal)">Cards on screen</text>
 
-        <rect x="530" y="904" width="340" height="56" rx="6"
+        <rect x="530" y="934" width="340" height="56" rx="6"
               fill="none" stroke="var(--signal)" stroke-width="1.5"/>
-        <text x="700" y="928" font-size="15" text-anchor="middle" fill="var(--signal)"
+        <text x="700" y="958" font-size="15" text-anchor="middle" fill="var(--signal)"
               font-weight="600">24 birthday cards for mothers</text>
-        <text x="700" y="949" font-size="13" text-anchor="middle" fill="var(--muted)">answered in about 1 millisecond</text>
-
+        <text x="700" y="979" font-size="13" text-anchor="middle" fill="var(--muted)">answered in about 1 millisecond</text>
       </g>
     </svg>
 
