@@ -97,7 +97,10 @@ Long words are exactly the ones people get wrong by three or more letters —
 transliterated festival names above all. *"roshasana"* is three slips from
 *"roshhashanah"*, so it found **nothing at all**, while 240 Rosh Hashanah cards
 sat in the catalogue. Allowing three mistakes on long words takes the success
-rate on that kind of word from **27% to 92%**.
+rate on that kind of word from **21% to 96%** — measured on words of ten letters
+or more, which is where a third mistake stays under 30% of the word. Between
+seven and nine letters the ratio still refuses most third edits, and the gain is
+a smaller **27% to 39%**. One- and two-letter mistakes are unaffected either way.
 
 The catch is that three mistakes is a lot of licence, so it has to be earned:
 the mistakes must be **under 30% of the word**. That is what separates
@@ -201,8 +204,8 @@ The same word is worth different amounts depending on where it appears:
 
 | Where | Weight | Why |
 |---|---|---|
-| Title | 3.0 | Short and deliberate — but only 31–67% of titles even name their own occasion |
-| Tags | 2.5 | Carry unique recall: 36% of *"funny"* matches come from tags alone |
+| Title | 3.0 | Short and deliberate — but unreliable alone: 83% of Halloween titles say *"halloween"*, only 16% of Valentine's say *"valentine"* |
+| Tags | 2.5 | Carry recall nothing else does: 44% of the 209 *"funny"* cards are reachable through their tags and no other field |
 | Category | 2.0 | Reliable but broad |
 | Description | 1.0 | Widest reach, worst precision — the safety net, never the reason a card ranks first |
 | Web address | 0.4 | Weak hint |

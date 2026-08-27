@@ -1,0 +1,340 @@
+<title>The search in five ideas</title>
+
+<style>
+  :root{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec; --tint:#f5f7fa;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+            Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+      --rule:#333944; --hair:#252a33; --tint:#1a1d23;
+      --signal:#77a9f5; --signal-wash:#1a2331;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+    --rule:#333944; --hair:#252a33; --tint:#1a1d23;
+    --signal:#77a9f5; --signal-wash:#1a2331;
+  }
+  :root[data-theme="light"]{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec; --tint:#f5f7fa;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:15.5px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:820px; margin:0 auto; padding:52px 32px 64px; }
+
+  header{ border-bottom:2px solid var(--ink); padding-bottom:16px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:34px; line-height:1.1;
+    margin:0 0 10px; letter-spacing:-.01em;
+  }
+  .standfirst{ margin:0; color:var(--muted); font-size:16px; max-width:62ch; }
+
+  .idea{
+    display:grid; grid-template-columns:38px 1fr; gap:0 18px;
+    margin-top:30px; align-items:start;
+  }
+  .n{
+    font-family:var(--mono); font-size:22px; font-weight:600; color:var(--signal);
+    line-height:1.25; font-variant-numeric:tabular-nums;
+  }
+  .idea h2{
+    font-family:var(--serif); font-size:20px; font-weight:600; margin:0 0 6px;
+    letter-spacing:-.01em; line-height:1.25;
+  }
+  .idea p{ margin:0 0 9px; max-width:62ch; }
+  .idea p:last-child{ margin-bottom:0; }
+  .so{
+    color:var(--muted); font-size:14px; border-left:2px solid var(--hair);
+    padding-left:13px; margin-top:11px;
+  }
+  .so b{ color:var(--ink); }
+
+  figure{ margin:14px 0 0; }
+  figure svg{ width:100%; height:auto; display:block; max-width:520px; }
+  figcaption{ margin-top:9px; font-size:13px; color:var(--muted); max-width:62ch; }
+
+  .walk{
+    margin-top:34px; border:1px solid var(--rule); border-radius:6px;
+    background:var(--tint); padding:20px 22px;
+  }
+  .walk h2{
+    font-family:var(--serif); font-size:19px; font-weight:600; margin:0 0 4px;
+  }
+  .walk .sub{ margin:0 0 16px; font-size:14px; color:var(--muted); }
+  .steps{ display:grid; gap:10px 16px; grid-template-columns:auto 1fr; }
+  .steps dt{
+    font-family:var(--mono); font-size:12.5px; color:var(--signal);
+    white-space:nowrap; padding-top:2px;
+  }
+  .steps dd{ margin:0; font-size:14.5px; }
+  .steps dd code{
+    font-family:var(--mono); font-size:13px; background:var(--signal-wash);
+    padding:1px 6px; border-radius:3px;
+  }
+  .versus{
+    margin:16px 0 0; padding-top:14px; border-top:1px solid var(--rule);
+    font-size:14px; color:var(--muted); max-width:66ch;
+  }
+  .versus b{ color:var(--ink); }
+
+  .more{
+    margin-top:34px; padding-top:16px; border-top:1px solid var(--rule);
+  }
+  .more h2{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); font-weight:600; margin:0 0 12px;
+  }
+  .more dl{ display:grid; gap:8px 16px; grid-template-columns:auto 1fr; margin:0; }
+  .more dt{ font-family:var(--mono); font-size:12.5px; white-space:nowrap; }
+  .more dd{ margin:0; font-size:14px; color:var(--muted); }
+
+  code{ font-family:var(--mono); font-size:13px; }
+
+  @page{ size:A4 portrait; margin:14mm; }
+  @media print{
+    :root{
+      --paper:#fff; --ink:#000; --muted:#444; --rule:#999; --hair:#ddd;
+      --tint:#f6f6f6; --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    }
+    body{ font-size:9.8pt; line-height:1.45; }
+    .sheet{ max-width:none; padding:0; }
+    h1{ font-size:19pt; margin-bottom:5px; }
+    .standfirst{ font-size:9.5pt; max-width:76ch; }
+    header{ padding-bottom:9px; }
+    .idea{ margin-top:14px; break-inside:avoid; }
+    .idea h2{ font-size:12.5pt; }
+    .idea p{ max-width:76ch; }
+    .n{ font-size:15pt; }
+    .so{ font-size:9pt; margin-top:7px; }
+    figure svg{ max-width:400px; }
+    figcaption{ font-size:8.5pt; margin-top:6px; }
+    .walk{ margin-top:16px; padding:13px 15px; break-inside:avoid; }
+    .walk h2{ font-size:12pt; }
+    .walk .sub{ font-size:9pt; margin-bottom:10px; }
+    .steps{ gap:6px 14px; }
+    .steps dd{ font-size:9.5pt; }
+    .steps dt{ font-size:8.5pt; }
+    .versus{ font-size:9pt; margin-top:11px; padding-top:9px; }
+    .more{ margin-top:16px; padding-top:10px; break-inside:avoid; }
+    .more dd{ font-size:9pt; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header>
+    <p class="eyebrow">123Greetings &middot; card search</p>
+    <h1>The search in five ideas</h1>
+    <p class="standfirst">
+      Everything the new search does, and why, on two sides of one sheet. No
+      formulas — those are in <code>LOGIC_FLOW.html</code> if you ever need them.
+    </p>
+  </header>
+
+  <!-- 1 ------------------------------------------------------------------ -->
+  <div class="idea">
+    <div class="n">1</div>
+    <div>
+      <h2>It searches for what they meant, not what they typed</h2>
+      <p>
+        Four repairs happen before anything is looked up. The apostrophe is
+        joined into the word rather than splitting it. Typos are corrected
+        against the words your catalogue actually uses. Words typed run together
+        are pulled apart. Then the query is read as <em>an occasion, a person, a
+        mood and a kind of card</em> — not as loose words.
+      </p>
+      <p class="so">
+        The apostrophe alone was <b>96% of every empty page you served</b> —
+        22,399 searches a period, because <code>love's</code>,
+        <code>friend's</code> and <code>family's</code> each returned nothing.
+      </p>
+    </div>
+  </div>
+
+  <!-- 2 ------------------------------------------------------------------ -->
+  <div class="idea">
+    <div class="n">2</div>
+    <div>
+      <h2>A label means more than a sentence</h2>
+      <p>
+        A card is funny because somebody labelled it funny — not because the word
+        "fun" turns up somewhere in its description. The description helps a card
+        be <em>found</em>; it is never allowed to decide what a card <em>is</em>.
+      </p>
+      <p class="so">
+        <b>817 cards say "fun" in their blurb. Only 200 are humour cards.</b>
+        The old search rewrote <code>funny</code> to <code>fun</code> and
+        searched the blurbs — which is exactly why "funny gives wrong results"
+        was reported.
+      </p>
+    </div>
+  </div>
+
+  <!-- 3 ------------------------------------------------------------------ -->
+  <div class="idea">
+    <div class="n">3</div>
+    <div>
+      <h2>Where a word sits decides how much it counts</h2>
+      <p>
+        The same word is worth different amounts depending on which part of the
+        card it is in. A word in the title is deliberate; a word in the blurb
+        might be a passing mention.
+      </p>
+
+      <figure>
+        <svg viewBox="0 0 400 150" role="img"
+             aria-label="Field weights as bars: title 3.0, tags 2.5, category 2.0, description 1.0, url 0.4.">
+          <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+             font-size="12" fill="currentColor">
+            <text x="0" y="17">title</text>
+            <rect x="96" y="7" width="240" height="13" fill="currentColor"/>
+            <text x="346" y="17">3.0</text>
+
+            <text x="0" y="47">tags</text>
+            <rect x="96" y="37" width="200" height="13" fill="currentColor"/>
+            <text x="346" y="47">2.5</text>
+
+            <text x="0" y="77">section</text>
+            <rect x="96" y="67" width="160" height="13" fill="currentColor"/>
+            <text x="346" y="77">2.0</text>
+
+            <text x="0" y="107">blurb</text>
+            <rect x="96" y="97" width="80" height="13" fill="currentColor"/>
+            <text x="346" y="107">1.0</text>
+
+            <text x="0" y="137">web address</text>
+            <rect x="96" y="127" width="32" height="13" fill="currentColor"/>
+            <text x="346" y="137">0.4</text>
+          </g>
+        </svg>
+        <figcaption>
+          The blurb is the longest and vaguest field, so it works as the safety
+          net — it helps a card be found and rarely puts one first. In the old
+          search every field weighed the same, so a passing mention in a blurb
+          counted for as much as a title.
+        </figcaption>
+      </figure>
+
+      <p style="margin-top:14px">
+        Two smaller rules ride along with it. <b>A rare word counts for more than
+        a common one</b>, so in <code>funny birthday</code> the word "funny" does
+        most of the work. And <b>repeating a word barely helps</b> — saying
+        "funny" five times in the tags is worth 1.8&times; saying it once, not
+        5&times;, so a card cannot win by stuffing.
+      </p>
+    </div>
+  </div>
+
+  <!-- 4 ------------------------------------------------------------------ -->
+  <div class="idea">
+    <div class="n">4</div>
+    <div>
+      <h2>Newness nudges. It never decides</h2>
+      <p>
+        A new card gets at most <b>15% on top</b> of how well it matches, and
+        that bonus halves every five years — so a card from 2021 gets about 7%,
+        one from 2006 gets almost nothing.
+      </p>
+      <p class="so">
+        This is the fix for <b>"old cards always first"</b>, and the cap is the
+        whole point of it. The old ranking sorted on lifetime sends, which on a
+        catalogue running since 2002 is a permanent head start no new card can
+        catch. A large freshness bonus would just create the same complaint
+        pointing the other way. 15% can reorder two cards that were already
+        close, and nothing else.
+      </p>
+    </div>
+  </div>
+
+  <!-- 5 ------------------------------------------------------------------ -->
+  <div class="idea">
+    <div class="n">5</div>
+    <div>
+      <h2>It cannot come back empty</h2>
+      <p>
+        If too few cards fit, the search gives up the least important part of the
+        request and looks again — keeping everything it already found — and
+        repeats that until the page is full. The last step is unconditional, so
+        an empty page is not possible.
+      </p>
+      <p class="so">
+        The page is also told <b>which step answered</b>. That is what lets it
+        say "we couldn't find that — here's what's new" honestly, instead of
+        showing popular cards as though they were matches, which is what the old
+        carousel did.
+      </p>
+    </div>
+  </div>
+
+  <!-- worked example ----------------------------------------------------- -->
+  <div class="walk">
+    <h2>One search, start to finish</h2>
+    <p class="sub">Somebody types <code>mom birthdya</code> and hits enter.</p>
+    <dl class="steps">
+      <dt>tidy</dt>
+      <dd>lower case, punctuation out &mdash; <code>mom birthdya</code></dd>
+
+      <dt>correct</dt>
+      <dd><code>birthdya</code> is one swap from <code>birthday</code>. The page
+          says <em>"Showing results for birthdya → birthday"</em>.</dd>
+
+      <dt>understand</dt>
+      <dd>not two words, but <b>a birthday card for a mother</b></dd>
+
+      <dt>find</dt>
+      <dd><b>39 cards</b> carry both labels</dd>
+
+      <dt>order</dt>
+      <dd>best match first, newness breaking near-ties</dd>
+
+      <dt>show</dt>
+      <dd><em>Special Birthday Wishes For Your Mom</em>, then 19 more like it
+          &mdash; in about a millisecond</dd>
+    </dl>
+    <p class="versus">
+      <b>The old search, same query:</b> "Sorry! The search query you entered did
+      not find any matching results. Did you mean <em>mom birthday</em>?" —
+      followed by ten popular cards, of which one was a birthday card and the
+      rest were Raksha Bandhan, Lemon Juice Day, Women's Equality Day and
+      National Dog Day. It knew the right spelling well enough to suggest it, and
+      did not search for it.
+    </p>
+  </div>
+
+  <!-- where to go next --------------------------------------------------- -->
+  <div class="more">
+    <h2>If you want more than this page</h2>
+    <dl>
+      <dt>SIMPLE_FLOW.html</dt>
+      <dd>The same thing as a picture — six boxes, one sheet. Good for a wall.</dd>
+      <dt>OLD_FLOW.html</dt>
+      <dd>The identical picture for the search this replaces. Print both and put them side by side.</dd>
+      <dt>LOGIC_FLOW.html</dt>
+      <dd>Every stage with its formula, the scoring worked out on a real card, and every constant. Seven pages.</dd>
+      <dt>OPEN_ITEMS.md</dt>
+      <dd>The nine things still open, what causes each, and who can close it. Read this before planning any work.</dd>
+      <dt>UPGRADE_PATH.md</dt>
+      <dd>If you would rather upgrade Sphinx in place than replace it — seven changes, measured one at a time.</dd>
+    </dl>
+  </div>
+
+</div>

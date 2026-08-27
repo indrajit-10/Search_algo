@@ -133,17 +133,17 @@
     .meta{ margin-top:7px; font-size:8.5pt; }
     h2{ font-size:14pt; }
     h3{ font-size:11.5pt; margin:14px 0 6px; }
-    section{ margin-top:16px; }
+    section{ margin-top:13px; }
     .lede{ margin-bottom:9px; font-size:9.5pt; }
     p{ font-size:9.5pt; }
-    .formula{ font-size:8.5pt; padding:8px 11px; margin:10px 0; }
+    .formula{ font-size:8.5pt; padding:8px 11px; margin:8px 0; }
     .why{ font-size:9pt; }
-    table{ font-size:9pt; margin:9px 0 3px; }
+    table{ font-size:9pt; margin:7px 0 3px; }
     caption, th{ font-size:8pt; }
     code{ font-size:8.5pt; }
     figure svg{ max-height:150mm; width:auto; max-width:100%; margin:0 auto; }
     figcaption{ margin-top:6px; padding-top:6px; font-size:8.5pt; }
-    .foot{ margin-top:18px; }
+    .foot{ margin-top:10px; }
     figure, table{ break-inside:avoid; }
     .formula, .why{ break-inside:avoid; }
     tr{ break-inside:avoid; }
@@ -300,20 +300,21 @@ apostrophes are DELETED, not split on   →  "mother's"  →  "mothers"
 everything else non-alphanumeric  →  a space</div>
     <div class="why">
       <b>Why deletion, not splitting.</b> Splitting leaves a stray <code>s</code>
-      that matches almost nothing and drags the whole query to zero. Apostrophes
-      are <b>51 of the log's 516 distinct queries and 22,411 searches a
-      period</b> — 62% of all search volume, because the upstream rewriter
-      inflects stems into possessives (<code>goodness's</code>,
-      <code>friendship's</code>). Eleven of those queries return nothing at all
-      today: <b>1,325 searches, 43% of every empty page served</b>.
+      that matches almost nothing and drags the whole query to zero. By
+      production's own recorded result counts, <b>50 apostrophe queries returned
+      zero — 22,399 searches a period, 96% of every empty page served</b>.
+      Apostrophes are 51 queries and 22,411 searches in all, <b>62% of your
+      total search volume</b>, because the upstream rewriter inflects stems into
+      possessives: <code>love's</code> 2,489, <code>friend's</code> 2,364,
+      <code>family's</code> 2,010, all returning nothing.
     </div>
     <div class="why">
-      <b>Deleting the apostrophe is necessary but not sufficient.</b> Applied on
-      its own to the current pipeline it makes matters worse — empty pages go
-      from 3,074 searches to 8,010, because queries that used to fail on a stray
-      <code>s</code> now fail on an unstemmed <code>mothers</code> instead. It
-      only pays off once stemming and the trimmed stop list land with it. See
-      <code>UPGRADE_PATH.md</code>.
+      <b>Deleting the apostrophe is necessary but not sufficient</b> if you are
+      upgrading Sphinx in place rather than replacing it. Applied on its own it
+      makes the simulation worse — empty pages go from 3,074 searches to 8,010 —
+      because queries that used to fail on a stray <code>s</code> then fail on an
+      unstemmed <code>mothers</code> instead. It only pays off once stemming and
+      the trimmed stop list ship with it. See <code>UPGRADE_PATH.md</code>.
     </div>
 
     <h3>2 &middot; Correct the spelling</h3>
@@ -331,15 +332,15 @@ how many edits are allowed:
       reckless on a short one. It admits <code>roshasana → roshhashanah</code>
       (3 of 12 characters) and refuses <code>mariachi → march</code> (3 of 8) —
       the ceiling of 3 is only reachable at all from ten letters up, because
-      below that 3 edits exceed 30% of the word. Measured on 600 sampled words
-      per band, damaged with three random edits:
+      below that 3 edits exceed 30% of the word. Measured over five samples of
+      500 catalogue words per band, each damaged with three random edits:
     </div>
     <table>
       <caption>share of three-edit typos corrected back to the right word</caption>
       <thead><tr><th style="width:34%">Word length</th><th class="n" style="width:22%">Flat ceiling of 2</th><th class="n" style="width:22%">As shipped</th><th></th></tr></thead>
       <tbody>
-        <tr><td>7 to 9 letters</td><td class="n">25%</td><td class="n">36%</td><td>the ratio guard still refuses most of these</td></tr>
-        <tr><td>10 letters or more</td><td class="n">22%</td><td class="n">95%</td><td>where the third edit is proportionate</td></tr>
+        <tr><td>7 to 9 letters</td><td class="n">27%</td><td class="n">39%</td><td>the ratio guard still refuses most of these</td></tr>
+        <tr><td>10 letters or more</td><td class="n">21%</td><td class="n">96%</td><td>where the third edit is proportionate</td></tr>
       </tbody>
     </table>
     <div class="why">

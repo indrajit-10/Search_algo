@@ -331,7 +331,8 @@ side-by-side and it will stay quick.
 | `UPGRADE_FLOWCHART.html` | The upgrade sequence as a printable diagram — three A4 pages. |
 | `upgrade_stages.py` | Measures what each of those upgrade steps buys. Backs the table in `UPGRADE_PATH.md`. |
 | `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
-| `SIMPLE_FLOW.html` | **One page.** Six steps with a real search worked through them. Start here. |
+| `HOW_IT_WORKS.html` | **Start here.** The whole search in five ideas, two sides of one sheet, no formulas. |
+| `SIMPLE_FLOW.html` | The same thing as a picture — six steps with a real search worked through them. |
 | `OLD_FLOW.html` | The same page for the old Sphinx search, same query. Print both, put them side by side. |
 | `LOGIC_FLOW.html` | **Every stage from typed words to cards on screen**, with the weight calculation and the freshness curve worked out in full. Seven pages. |
 | `explain_score.py` | Re-derives every number in that document from the live index and asserts the total against the engine. |
@@ -340,6 +341,13 @@ side-by-side and it will stay quick.
 
 ---
 
+> **Read one thing and nothing else?** [HOW_IT_WORKS.html](HOW_IT_WORKS.html) is
+> the whole search in five ideas — what it does before it looks anything up, why
+> a label beats a sentence, how the weights work, why newness only nudges, and
+> why an empty page cannot happen. Two sides of one sheet, no formulas, with one
+> real search carried through at the end. Everything else below is detail on top
+> of this.
+>
 > **Want the reasoning rather than the commands?** [LOGIC.md](LOGIC.md) explains
 > the whole thing in plain English — what happens between someone typing and
 > cards appearing, and why each decision was made. No code, no jargon.
@@ -387,8 +395,9 @@ alias → spell-correct → split run-together words → extract facets.
 Correction spends up to 3 edits, but only where they are under 30% of the word.
 A flat ceiling of 2 is half a four-letter word and a sixth of a twelve-letter
 one: `roshasana` is 3 edits from `roshhashanah` and so found nothing, while the
-ratio still blocks `mariachi` → `march`. Success on 3-edit typos of long words
-goes from 27% to 92%; 1- and 2-edit behaviour is untouched.
+ratio still blocks `mariachi` → `march`. Success on 3-edit typos goes from 21% to
+96% at ten letters or more, and from 27% to 39% at seven to nine, where the ratio
+still refuses most third edits; 1- and 2-edit behaviour is untouched.
 
 A query fills four slots, and each maps to a column you already have:
 
