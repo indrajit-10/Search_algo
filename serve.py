@@ -857,7 +857,7 @@ function cardHTML(c){
     thumb = `<img loading="lazy" src="${img}" alt="" onerror="${onerr}">`;
   }
 
-  // No description here on purpose: the blurb is the field with the worst
+  // No description here on purpose: card_description is the field with the worst
   // precision, and showing it next to a result invites judging the search by
   // prose it deliberately does not rank on.
   const body = `<div class="thumbwrap">${thumb}</div>

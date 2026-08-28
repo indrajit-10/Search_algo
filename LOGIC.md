@@ -31,7 +31,7 @@ measurable causes — and we found a sixth that was bigger than any of them.
 |---|---|
 | "Missing results" | The word list that removes filler words contained **"flash"** and **"animated"**. So *"flash card"* had both its words deleted and searched for nothing. |
 | "Spelling errors find nothing" | Correction was a hand-written list of about 200 words. Perfect on the 200; nothing at all on the 201st. *"birthdya"* is not on it, and found 0 of 819 birthday cards. |
-| "Funny gives wrong results" | The synonym list rewrites *funny* to *fun* before the search runs. 817 cards say *"fun"* in their blurb; 731 of them are not humour cards. Only 200 are genuinely tagged as humour. |
+| "Funny gives wrong results" | The synonym list rewrites *funny* to *fun* before the search runs. 817 cards say *"fun"* in their description; 731 of them are not humour cards. Only 200 are genuinely tagged as humour. |
 | "Misspellings give wrong output" | With no correction, a typo returned nothing, and a fallback quietly showed unrelated popular cards instead. |
 | "Old cards always first" | Ranking used **lifetime send count**. On a catalogue running since 2002, a card uploaded last month cannot ever catch up. New work was mathematically unrankable. |
 | **The one nobody reported** | **Any search containing an apostrophe returned zero results.** *"mother's day"* — 520 searches, nothing. *"father's day"* — 527 searches, nothing. Across the query log that is **22,399 searches landing on an empty page** — 96% of every empty page served. |
@@ -172,7 +172,7 @@ records whether a card is animated, Flash or musical.
 description.**
 
 This is the entire fix for *"funny gives wrong results"*, together with dropping
-the `funny => fun` synonym that caused it. There are 817 cards whose blurb
+the `funny => fun` synonym that caused it. There are 817 cards whose description
 says something like *"send this fun ecard"*, and 731 of them are not humour
 cards at all — they are weddings, sympathy, anything. Only 200 are genuinely
 tagged as humour.
@@ -218,7 +218,7 @@ nothing about the occasion, which is why tags carry so much of the load.
 
 If a card is tagged humour and someone asked for something funny, that counts for
 far more than the word appearing in a sentence. That is what stops the 731
-"fun" blurbs outranking the 200 genuinely funny cards.
+"fun" descriptions outranking the 200 genuinely funny cards.
 
 The boost scales with how much a slot narrows things down. "Tagged humour" is
 specific and worth a lot. "Is a December card" covers Christmas, Boxing Day and

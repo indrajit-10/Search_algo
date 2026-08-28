@@ -129,7 +129,8 @@ def audit_funny(rows, blobs):
     print(f"    with a genuine humor tag:  {len(genuine):,}")
     print(f"    matching on prose only:    {len(matched)-len(genuine):,}")
 
-    # A stemmer collapsing funny -> fun pulls in every "fun"/"fun-filled" blurb.
+    # A stemmer collapsing funny -> fun pulls in every "fun"/"fun-filled"
+    # card_description.
     leak = [i for i, b in enumerate(blobs)
             if re.search(r"\bfun(-|\s|ny|ni)", b) and not has_humor_tag(rows[i])]
     print(f"\n  'fun'/'fun-filled' with NO humor tag (stem-leak victims): {len(leak):,}")

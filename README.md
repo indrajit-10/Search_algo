@@ -331,7 +331,8 @@ side-by-side and it will stay quick.
 | `UPGRADE_FLOWCHART.html` | The upgrade sequence as a printable diagram — three A4 pages. |
 | `upgrade_stages.py` | Measures what each of those upgrade steps buys. Backs the table in `UPGRADE_PATH.md`. |
 | `OLD_VS_NEW.docx` | The same document as Word, for circulating. Generated from the `.md`, which stays the source — edit that and ask for a rebuild. |
-| `HOW_IT_WORKS.html` | **Start here.** The whole search in five ideas, two sides of one sheet, no formulas. |
+| `HOW_IT_WORKS.html` | **Start here.** The whole search in five ideas, no formulas, and a table of every word used against the column it names. |
+| `QUERY_FLOWCHART.html` | One page: every step a query goes through, in order, with its decision points and the four ways it can end. |
 | `SIMPLE_FLOW.html` | The same thing as a picture — six steps with a real search worked through them. |
 | `OLD_FLOW.html` | The same page for the old Sphinx search, same query. Print both, put them side by side. |
 | `LOGIC_FLOW.html` | **Every stage from typed words to cards on screen**, with the weight calculation and the freshness curve worked out in full. Seven pages. |
@@ -344,9 +345,14 @@ side-by-side and it will stay quick.
 > **Read one thing and nothing else?** [HOW_IT_WORKS.html](HOW_IT_WORKS.html) is
 > the whole search in five ideas — what it does before it looks anything up, why
 > a label beats a sentence, how the weights work, why newness only nudges, and
-> why an empty page cannot happen. Two sides of one sheet, no formulas, with one
-> real search carried through at the end. Everything else below is detail on top
-> of this.
+> why an empty page cannot happen. No formulas, one real search carried through
+> at the end, and a closing table naming the column behind every word used — so
+> nothing in any of these documents is unexplained jargon. Everything else below
+> is detail on top of this.
+>
+> **Want it as a flowchart?** [QUERY_FLOWCHART.html](QUERY_FLOWCHART.html) is one
+> page: every step in the order it runs, the six questions the code asks along
+> the way, the one loop, and the four different pages a search can end on.
 >
 > **Want the reasoning rather than the commands?** [LOGIC.md](LOGIC.md) explains
 > the whole thing in plain English — what happens between someone typing and
@@ -409,7 +415,7 @@ A query fills four slots, and each maps to a column you already have:
 | Format | `card_label_type`, `card_music_extn` | animated, flash, musical |
 
 Facets come from **tags and title only, never the description**. That single rule
-is the fix for "funny returns wrong results": 731 cards say "fun" in their blurb
+is the fix for "funny returns wrong results": 731 cards say "fun" in their description
 without being humour cards, and they can no longer outrank the 200 that are.
 The old pipeline made this worse still by rewriting the query "funny" to "fun"
 before searching — see OLD_VS_NEW.md.

@@ -1,0 +1,233 @@
+<title>What happens when someone hits enter</title>
+
+<style>
+  :root{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --exit:#7a6a20; --exit-wash:#fbf6e4;
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+            Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+      --rule:#333944; --hair:#252a33;
+      --signal:#77a9f5; --signal-wash:#1a2331;
+      --exit:#d9c26a; --exit-wash:#26220f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161a; --ink:#e7eaf0; --muted:#98a0ae;
+    --rule:#333944; --hair:#252a33;
+    --signal:#77a9f5; --signal-wash:#1a2331;
+    --exit:#d9c26a; --exit-wash:#26220f;
+  }
+  :root[data-theme="light"]{
+    --paper:#ffffff; --ink:#16181d; --muted:#5c6270;
+    --rule:#c9cdd6; --hair:#e4e7ec;
+    --signal:#0b5fbf; --signal-wash:#eaf1fb;
+    --exit:#7a6a20; --exit-wash:#fbf6e4;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:900px; margin:0 auto; padding:44px 30px 60px; }
+
+  header{ border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:20px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 9px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:32px; line-height:1.12;
+    margin:0 0 8px; letter-spacing:-.01em;
+  }
+  .standfirst{ margin:0; color:var(--muted); font-size:15.5px; max-width:66ch; }
+
+  .key{
+    display:flex; flex-wrap:wrap; gap:8px 26px; margin:14px 0 0;
+    font-size:12.5px; color:var(--muted); align-items:center;
+  }
+  .key span{ display:flex; align-items:center; gap:7px; }
+  .key i{ display:inline-block; width:22px; height:12px; border:1.4px solid currentColor; }
+  .key i.step{ color:var(--ink); }
+  .key i.ask{ color:var(--signal); transform:rotate(45deg); width:12px; height:12px; }
+  .key i.out{ color:var(--exit); border-radius:6px; background:var(--exit-wash); }
+
+  figure{ margin:0; }
+  figure svg{ width:100%; height:auto; display:block; }
+  figcaption{
+    margin-top:16px; padding-top:12px; border-top:1px solid var(--rule);
+    font-size:13.5px; color:var(--muted); max-width:74ch;
+  }
+  figcaption b{ color:var(--ink); }
+  figcaption code{ font-family:var(--mono); font-size:12.5px; }
+
+  .foot{
+    margin-top:26px; padding-top:12px; border-top:1px solid var(--hair);
+    font-size:12.5px; color:var(--muted);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+  }
+  .foot code{ font-family:var(--mono); }
+
+  @page{ size:A4 portrait; margin:12mm; }
+  @media print{
+    :root{
+      --paper:#fff; --ink:#000; --muted:#444; --rule:#999; --hair:#ddd;
+      --signal:#0b5fbf; --signal-wash:#eaf1fb; --exit:#6d5f1c; --exit-wash:#fbf6e4;
+    }
+    body{ font-size:10pt; }
+    .sheet{ max-width:none; padding:0; }
+    header{ padding-bottom:7px; margin-bottom:10px; }
+    h1{ font-size:17pt; margin-bottom:4px; }
+    .standfirst{ font-size:9pt; max-width:82ch; }
+    .eyebrow{ font-size:8pt; margin-bottom:5px; }
+    .key{ font-size:8pt; margin-top:8px; gap:5px 20px; }
+    figure svg{ max-height:198mm; width:auto; max-width:100%; margin:0 auto; }
+    figcaption{ margin-top:7px; padding-top:6px; font-size:8pt; max-width:none; }
+    .foot{ margin-top:6px; padding-top:5px; font-size:8pt; }
+    figure{ break-inside:avoid; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header>
+    <p class="eyebrow">123Greetings &middot; card search &middot; execution path</p>
+    <h1>What happens when someone hits enter</h1>
+    <p class="standfirst">
+      Every step a query goes through, in the order it goes through them, with
+      the four places it can leave. Field names are the columns in your export.
+    </p>
+    <p class="key">
+      <span><i class="step"></i> a step</span>
+      <span><i class="ask"></i> a question</span>
+      <span><i class="out"></i> the page is sent</span>
+    </p>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 900 1049" role="img"
+         aria-label="Execution flowchart. A query arrives. If it is all digits and a card number we hold, that one card is returned. Otherwise the text is normalised. If nothing is left, the newest cards are shown. Otherwise each word is checked: a word naming a slot is left alone, a word on three or more cards is kept, anything else is corrected, and a word still unrecognised is split in two. The four slots are read from tags and title. A ladder of eight rungs is built. Each rung in turn finds cards satisfying every word group and every slot, scores and orders them, and appends the new ones; if twenty cards are not yet on the page and rungs remain, the next rung runs. If anything matched, the page is returned along with which rung answered. If nothing matched, the closest occasion or the newest cards are shown, flagged as a fallback.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <g font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+         fill="currentColor">
+      <!-- FLOW -->
+        <rect x="110" y="8" width="400" height="40" rx="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="310" y="33" font-size="14" font-weight="600" text-anchor="middle">someone hits enter</text>
+        <path d="M 310 65 L 500 98 L 310 131 L 120 98 Z" fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.6"/>
+        <text x="310" y="94" font-size="13" font-weight="600" text-anchor="middle" fill="var(--signal)">all digits, and a card we hold?</text>
+        <text x="310" y="111" font-size="11" text-anchor="middle" fill="var(--signal)">e.g. 123057</text>
+        <rect x="110" y="148" width="400" height="80" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="169" font-size="13" font-weight="600">tidy the text</text>
+        <text x="130" y="188" font-size="11">decode %92 &middot; "+" becomes a space &middot; strip accents</text>
+        <text x="130" y="204" font-size="11">lower case &middot; delete apostrophes, never split on them</text>
+        <text x="130" y="219" font-size="11">everything else non-alphanumeric becomes a space</text>
+        <path d="M 310 244 L 500 274 L 310 302 L 120 274 Z" fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.6"/>
+        <text x="310" y="278" font-size="13" font-weight="600" text-anchor="middle" fill="var(--signal)">is any word left?</text>
+        <rect x="110" y="320" width="400" height="110" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="340" font-size="13" font-weight="600">sort out each word, in this order</text>
+        <text x="130" y="360" font-size="11">1 &nbsp;names a slot value, like &ldquo;flash&rdquo;?&nbsp; leave it exactly alone</text>
+        <text x="130" y="375" font-size="11">2 &nbsp;on 3 cards or more?&nbsp; it is spelled right, keep it</text>
+        <text x="130" y="390" font-size="11">3 &nbsp;otherwise correct it, and tell the page what changed</text>
+        <text x="130" y="406" font-size="11">4 &nbsp;still nothing?&nbsp; try splitting it &mdash; merrychristmas</text>
+        <text x="130" y="422" font-size="11">then widen it: prefixes, other festival names, singulars</text>
+        <rect x="110" y="447" width="400" height="64" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="468" font-size="13" font-weight="600">read the four slots</text>
+        <text x="130" y="487" font-size="11">occasion &middot; recipient &middot; tone &middot; format</text>
+        <text x="130" y="502" font-size="11">from card_tags and card_title only &mdash; never card_description</text>
+        <rect x="110" y="528" width="400" height="64" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="549" font-size="13" font-weight="600">build the ladder</text>
+        <text x="130" y="568" font-size="11">8 rungs, most demanding first. Recipient is given up first,</text>
+        <text x="130" y="584" font-size="11">occasion last, and the final rung always returns something.</text>
+        <rect x="110" y="609" width="400" height="33" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="630" font-size="13" font-weight="600">take the next rung down</text>
+        <rect x="110" y="659" width="400" height="64" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="680" font-size="13" font-weight="600">find every card that satisfies it</text>
+        <text x="130" y="699" font-size="11">every word that rung still asks for, and every slot it still</text>
+        <text x="130" y="714" font-size="11">asks for, must be on the card</text>
+        <rect x="110" y="740" width="400" height="64" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="130" y="761" font-size="13" font-weight="600">score, order, add the ones not already there</text>
+        <text x="130" y="780" font-size="11">rarity &times; where it sits on the card, plus slot bonuses,</text>
+        <text x="130" y="796" font-size="11">then freshness, then banded and sorted</text>
+        <path d="M 310 821 L 500 854 L 310 887 L 120 854 Z" fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.6"/>
+        <text x="310" y="850" font-size="13" font-weight="600" text-anchor="middle" fill="var(--signal)">20 cards on the page?</text>
+        <text x="310" y="867" font-size="11" text-anchor="middle" fill="var(--signal)">or the rungs are used up</text>
+        <path d="M 310 904 L 500 937 L 310 970 L 120 937 Z" fill="var(--signal-wash)" stroke="var(--signal)" stroke-width="1.6"/>
+        <text x="310" y="933" font-size="13" font-weight="600" text-anchor="middle" fill="var(--signal)">did anything match at all?</text>
+        <text x="310" y="950" font-size="11" text-anchor="middle" fill="var(--signal)">across every rung</text>
+        <rect x="110" y="987" width="400" height="54" rx="9" fill="var(--exit-wash)" stroke="var(--exit)" stroke-width="1.6"/>
+        <text x="310" y="1008" font-size="13" font-weight="600" text-anchor="middle" fill="var(--exit)">the cards, best first</text>
+        <text x="310" y="1024" font-size="10.5" text-anchor="middle" fill="var(--exit)">plus which rung answered, and any spelling it</text>
+        <text x="310" y="1038" font-size="10.5" text-anchor="middle" fill="var(--exit)">changed, so the page can say so</text>
+        <line x1="310" y1="48" x2="310" y2="65" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="500" y1="98" x2="574" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="540.0" y="91" font-size="11.5" text-anchor="middle">yes</text>
+        <rect x="580" y="76" width="300" height="44" rx="9" fill="var(--exit-wash)" stroke="var(--exit)" stroke-width="1.6"/>
+        <text x="730" y="95" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--exit)">that one card</text>
+        <text x="730" y="112" font-size="10.5" text-anchor="middle" fill="var(--exit)">nothing else is searched</text>
+        <line x1="310" y1="131" x2="310" y2="148" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="321" y="144" font-size="11.5">no</text>
+        <line x1="310" y1="228" x2="310" y2="244" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="500" y1="274" x2="574" y2="274" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="540.0" y="266" font-size="11.5" text-anchor="middle">no</text>
+        <rect x="580" y="252" width="300" height="44" rx="9" fill="var(--exit-wash)" stroke="var(--exit)" stroke-width="1.6"/>
+        <text x="730" y="270" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--exit)">the newest cards</text>
+        <text x="730" y="288" font-size="10.5" text-anchor="middle" fill="var(--exit)">&ldquo;showing the latest cards&rdquo;</text>
+        <line x1="310" y1="302" x2="310" y2="320" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="321" y="316" font-size="11.5">yes</text>
+        <line x1="310" y1="430" x2="310" y2="447" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="310" y1="511" x2="310" y2="528" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="310" y1="592" x2="310" y2="609" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="310" y1="642" x2="310" y2="659" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="310" y1="723" x2="310" y2="740" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="310" y1="804" x2="310" y2="821" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <polyline points="120,854 60,854 60,626 104,626" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+        <text x="68" y="873" font-size="11.5">no</text>
+        <text x="68" y="592" font-size="11" fill="var(--muted)">keeping</text>
+        <text x="68" y="604" font-size="11" fill="var(--muted)">what was</text>
+        <text x="68" y="618" font-size="11" fill="var(--muted)">found</text>
+        <line x1="310" y1="887" x2="310" y2="904" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="321" y="900" font-size="11.5">yes</text>
+        <line x1="500" y1="937" x2="574" y2="937" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="540.0" y="930" font-size="11.5" text-anchor="middle">no</text>
+        <rect x="580" y="908" width="300" height="58" rx="9" fill="var(--exit-wash)" stroke="var(--exit)" stroke-width="1.6"/>
+        <text x="730" y="925" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--exit)">the closest occasion,</text>
+        <text x="730" y="940" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--exit)">or the newest cards</text>
+        <text x="730" y="957" font-size="10.5" text-anchor="middle" fill="var(--exit)">and the page is told it is a fallback</text>
+        <line x1="310" y1="970" x2="310" y2="987" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="321" y="983" font-size="11.5">yes</text>
+      <!-- /FLOW -->
+      </g>
+    </svg>
+    <figcaption>
+      <b>The dashed line is the only loop.</b> Everything above it runs once.
+      A rung that finds nothing is simply skipped, and results
+      <b>accumulate</b> rather than replace — so a precise match found on the
+      first rung stays at the top while later rungs fill the rest of the page.
+      Because the last rung asks for nothing at all, the "no" branch at the
+      bottom is reached only when the query normalised to words the catalogue
+      has never seen. <b>An empty page is not a possible outcome.</b>
+    </figcaption>
+  </figure>
+
+  <div class="foot">
+    <span>All four exits send a page. Three of them say what they are.</span>
+    <span>The arithmetic behind "score, order" is in <code>LOGIC_FLOW.html</code> §03</span>
+  </div>
+
+</div>

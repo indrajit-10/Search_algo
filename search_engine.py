@@ -234,7 +234,8 @@ SLOT_PRIORITY = {"occasion": 0, "format": 1, "tone": 2, "recipient": 3}
 # These are the four slots a greeting-card query decomposes into. Matching a
 # facet is a different operation from matching text, which is the entire fix for
 # the "funny" complaint: a card is humour because it is TAGGED humour, not
-# because its blurb contains the word "fun".
+# because its card_tags say humour, not because its card_description happens
+# to contain the word "fun".
 # ---------------------------------------------------------------------------
 
 TONE = {
@@ -957,10 +958,11 @@ class SearchIndex:
         """
         THE FIX FOR "funny".
 
-        Facets come from tags and title ONLY - never from the description. The
-        1,105 cards whose blurb says "fun ecard" are not humour cards, and the
-        150 that are tagged funny should never lose to them. Description still
-        contributes to the text score, just not to what a card IS.
+        Facets come from tags and title ONLY - never from the description.
+        817 live cards say "fun" somewhere in card_description and 731 of them
+        are not humour cards; the 200 that really are tagged humour should
+        never lose to them. Description still contributes to the text score,
+        just not to what a card IS.
         """
         evidence = set(fields["tags"]) | set(fields["title"])
 

@@ -71,14 +71,28 @@
   figure svg{ width:100%; height:auto; display:block; max-width:520px; }
   figcaption{ margin-top:9px; font-size:13px; color:var(--muted); max-width:62ch; }
 
-  .walk{
+  .walk, .gloss{
     margin-top:34px; border:1px solid var(--rule); border-radius:6px;
     background:var(--tint); padding:20px 22px;
   }
-  .walk h2{
+  .walk h2, .gloss h2{
     font-family:var(--serif); font-size:19px; font-weight:600; margin:0 0 4px;
   }
-  .walk .sub{ margin:0 0 16px; font-size:14px; color:var(--muted); }
+  .walk .sub, .gloss .sub{ margin:0 0 16px; font-size:14px; color:var(--muted); max-width:66ch; }
+
+  .gloss table{ width:100%; border-collapse:collapse; font-size:14px; }
+  .gloss th{
+    text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted); font-weight:600;
+    padding:0 14px 7px 0; border-bottom:1px solid var(--rule);
+  }
+  .gloss td{
+    text-align:left; padding:7px 14px 7px 0; vertical-align:top;
+    border-bottom:1px solid var(--hair);
+  }
+  .gloss tr:last-child td{ border-bottom:none; }
+  .gloss td:first-child{ font-weight:600; white-space:nowrap; }
+  .gloss code{ font-family:var(--mono); font-size:12.5px; white-space:nowrap; }
   .steps{ display:grid; gap:10px 16px; grid-template-columns:auto 1fr; }
   .steps dt{
     font-family:var(--mono); font-size:12.5px; color:var(--signal);
@@ -119,16 +133,20 @@
     h1{ font-size:19pt; margin-bottom:5px; }
     .standfirst{ font-size:9.5pt; max-width:76ch; }
     header{ padding-bottom:9px; }
-    .idea{ margin-top:14px; break-inside:avoid; }
+    .idea{ margin-top:10px; break-inside:avoid; }
     .idea h2{ font-size:12.5pt; }
     .idea p{ max-width:76ch; }
     .n{ font-size:15pt; }
     .so{ font-size:9pt; margin-top:7px; }
     figure svg{ max-width:400px; }
     figcaption{ font-size:8.5pt; margin-top:6px; }
-    .walk{ margin-top:16px; padding:13px 15px; break-inside:avoid; }
-    .walk h2{ font-size:12pt; }
-    .walk .sub{ font-size:9pt; margin-bottom:10px; }
+    .walk, .gloss{ margin-top:12px; padding:12px 14px; break-inside:avoid; }
+    .walk h2, .gloss h2{ font-size:12pt; }
+    .walk .sub, .gloss .sub{ font-size:9pt; margin-bottom:10px; max-width:78ch; }
+    .gloss table{ font-size:9pt; }
+    .gloss th{ font-size:8pt; }
+    .gloss td{ padding:3px 12px 3px 0; }
+    .gloss code{ font-size:8.5pt; }
     .steps{ gap:6px 14px; }
     .steps dd{ font-size:9.5pt; }
     .steps dt{ font-size:8.5pt; }
@@ -145,8 +163,9 @@
     <p class="eyebrow">123Greetings &middot; card search</p>
     <h1>The search in five ideas</h1>
     <p class="standfirst">
-      Everything the new search does, and why, on two sides of one sheet. No
-      formulas — those are in <code>LOGIC_FLOW.html</code> if you ever need them.
+      Everything the new search does, and why — five ideas, one worked search,
+      and a table of every word used, so nothing here is jargon. No formulas;
+      those are in <code>LOGIC_FLOW.html</code> if you ever need them.
     </p>
   </header>
 
@@ -174,16 +193,16 @@
   <div class="idea">
     <div class="n">2</div>
     <div>
-      <h2>A label means more than a sentence</h2>
+      <h2>A tag means more than a sentence</h2>
       <p>
         A card is funny because somebody labelled it funny — not because the word
         "fun" turns up somewhere in its description. The description helps a card
         be <em>found</em>; it is never allowed to decide what a card <em>is</em>.
       </p>
       <p class="so">
-        <b>817 cards say "fun" in their blurb. Only 200 are humour cards.</b>
+        <b>817 cards say "fun" in their description. Only 200 are tagged as humour.</b>
         The old search rewrote <code>funny</code> to <code>fun</code> and
-        searched the blurbs — which is exactly why "funny gives wrong results"
+        searched the descriptions — which is exactly why "funny gives wrong results"
         was reported.
       </p>
     </div>
@@ -196,7 +215,7 @@
       <h2>Where a word sits decides how much it counts</h2>
       <p>
         The same word is worth different amounts depending on which part of the
-        card it is in. A word in the title is deliberate; a word in the blurb
+        card it is in. A word in the title is deliberate; a word in the description
         might be a passing mention.
       </p>
 
@@ -213,24 +232,27 @@
             <rect x="96" y="37" width="200" height="13" fill="currentColor"/>
             <text x="346" y="47">2.5</text>
 
-            <text x="0" y="77">section</text>
+            <text x="0" y="77">category</text>
             <rect x="96" y="67" width="160" height="13" fill="currentColor"/>
             <text x="346" y="77">2.0</text>
 
-            <text x="0" y="107">blurb</text>
+            <text x="0" y="107">description</text>
             <rect x="96" y="97" width="80" height="13" fill="currentColor"/>
             <text x="346" y="107">1.0</text>
 
-            <text x="0" y="137">web address</text>
+            <text x="0" y="137">page url</text>
             <rect x="96" y="127" width="32" height="13" fill="currentColor"/>
             <text x="346" y="137">0.4</text>
           </g>
         </svg>
         <figcaption>
-          The blurb is the longest and vaguest field, so it works as the safety
-          net — it helps a card be found and rarely puts one first. In the old
-          search every field weighed the same, so a passing mention in a blurb
-          counted for as much as a title.
+          Those five names are the columns in your own export &mdash;
+          <code>card_title</code>, <code>card_tags</code>, <code>q1_value</code>,
+          <code>card_description</code>, <code>card_page_url</code>. The
+          description is the longest and vaguest of them, so it works as the
+          safety net: it helps a card be found and rarely puts one first. In the
+          old search every field weighed the same, so a passing mention in a
+          description counted for as much as a title.
         </figcaption>
       </figure>
 
@@ -301,7 +323,7 @@
       <dd>not two words, but <b>a birthday card for a mother</b></dd>
 
       <dt>find</dt>
-      <dd><b>39 cards</b> carry both labels</dd>
+      <dd><b>39 cards</b> match both slots</dd>
 
       <dt>order</dt>
       <dd>best match first, newness breaking near-ties</dd>
@@ -320,10 +342,36 @@
     </p>
   </div>
 
+  <!-- glossary ------------------------------------------------------------ -->
+  <div class="gloss">
+    <h2>Every word used here, and the thing it actually is</h2>
+    <p class="sub">
+      No invented vocabulary. Each word below names a column in your export or a
+      value the code computes from one, so anything in these documents can be
+      pointed at in the data.
+    </p>
+    <table>
+      <thead><tr><th style="width:19%">Word</th><th style="width:29%">In your export</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td>title</td><td><code>card_title</code></td><td>The greeting printed on the card — <em>"Across The Miles…"</em>. Often says nothing about the occasion.</td></tr>
+        <tr><td>tags</td><td><code>card_tags</code></td><td>The keywords somebody attached to the card. This is where <em>funny</em>, <em>romantic</em>, <em>mom</em> live.</td></tr>
+        <tr><td>category</td><td><code>q1_value</code></td><td>The part of the site the card sits in — <code>birth_happybirthday</code>.</td></tr>
+        <tr><td>description</td><td><code>card_description</code></td><td>The sentence or two written about the card. The longest field and the vaguest.</td></tr>
+        <tr><td>page url</td><td><code>card_page_url</code></td><td>The card's filename. Weak, but its words are usually meaningful.</td></tr>
+        <tr><td>slot</td><td>computed</td><td>One of four things a query can ask for: <b>occasion</b>, <b>recipient</b>, <b>tone</b>, <b>format</b>. Read from tags and title. The code calls these <em>facets</em>.</td></tr>
+        <tr><td>weight</td><td>computed</td><td>How much a word counts when it is found in a given field — the numbers in the chart above.</td></tr>
+        <tr><td>rung</td><td>computed</td><td>One step of the widening in idea 5. Eight of them, each asking for less than the last.</td></tr>
+        <tr><td>the carousel</td><td>—</td><td>Your current page of popular cards, shown when a search finds nothing.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <!-- where to go next --------------------------------------------------- -->
   <div class="more">
     <h2>If you want more than this page</h2>
     <dl>
+      <dt>QUERY_FLOWCHART.html</dt>
+      <dd>One page: every step in the order it runs, the questions asked along the way, and the four ways a search can end.</dd>
       <dt>SIMPLE_FLOW.html</dt>
       <dd>The same thing as a picture — six boxes, one sheet. Good for a wall.</dd>
       <dt>OLD_FLOW.html</dt>
