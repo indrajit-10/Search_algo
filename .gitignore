@@ -1,0 +1,11 @@
+# Card exports and search reports are private business data.
+*.zip
+card_*.csv
+*search_results*.txt
+data/
+
+# Generated from a private card export: rebuild with intent/build_intent_table.py.
+intent/output/*.csv
+
+__pycache__/
+*.pyc

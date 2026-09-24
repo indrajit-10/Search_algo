@@ -1,0 +1,432 @@
+phrase,terms
+husband,husband spouse:0.8 him:0.4
+hubby,husband spouse:0.8 him:0.4
+wife,wife spouse:0.8 her:0.4
+wifey,wife spouse:0.8 her:0.4
+spouse,spouse husband:0.8 wife:0.8
+boyfriend,boyfriend sweetheart:0.8 him:0.4
+bf,boyfriend sweetheart:0.8 him:0.4
+girlfriend,girlfriend sweetheart:0.8 her:0.4
+gf,girlfriend sweetheart:0.8 her:0.4
+lover,sweetheart couple:0.6 romantic:0.5
+partner,sweetheart:0.8 spouse:0.8 couple:0.6
+fiance,sweetheart:0.8 couple:0.6 engagement:0.5
+fiancee,sweetheart:0.8 couple:0.6 engagement:0.5
+sweetheart,sweetheart couple:0.5
+valentine,valentine
+valentines,valentine
+valentines day,valentine
+v day,valentine
+vday,valentine
+mother,mother parent:0.7 her:0.4
+mom,mother parent:0.7 her:0.4
+mum,mother parent:0.7 her:0.4
+mommy,mother parent:0.7 her:0.4
+mummy,mother parent:0.7 her:0.4
+mama,mother parent:0.7 her:0.4
+ma,mother parent:0.7 her:0.4
+mothers day,mothers_day mother:0.5
+moms day,mothers_day mother:0.5
+father,father parent:0.7 him:0.4
+dad,father parent:0.7 him:0.4
+daddy,father parent:0.7 him:0.4
+papa,father parent:0.7 him:0.4
+fathers day,fathers_day father:0.5
+dads day,fathers_day father:0.5
+parents,parent mother:0.7 father:0.7
+mother in law,mother_in_law mother:0.5
+father in law,father_in_law father:0.5
+sister,sister sibling:0.8 her:0.4
+sis,sister sibling:0.8 her:0.4
+brother,brother sibling:0.8 him:0.4
+bro,brother sibling:0.8 him:0.4
+siblings,sibling brother:0.8 sister:0.8
+son,son child:0.7 him:0.3
+daughter,daughter child:0.7 her:0.3
+children,child kid:0.8
+child,child kid:0.8
+kids,kid child:0.8
+kid,kid child:0.8
+baby,baby kid:0.5
+grandma,grandmother grandparent:0.8 her:0.3
+granny,grandmother grandparent:0.8 her:0.3
+grandmother,grandmother grandparent:0.8 her:0.3
+nana,grandmother grandparent:0.8 her:0.3
+grandpa,grandfather grandparent:0.8 him:0.3
+grandfather,grandfather grandparent:0.8 him:0.3
+grandparents,grandparent grandmother:0.8 grandfather:0.8
+aunt,aunt relatives:0.6
+aunty,aunt relatives:0.6
+uncle,uncle relatives:0.6
+cousin,cousin relatives:0.6
+relatives,relatives family:0.6
+family,family
+friend,friend
+friends,friend
+buddy,friend
+pal,friend
+bff,best_friends friend:0.8
+best friend,best_friends friend:0.8
+best friends,best_friends friend:0.8
+boss,boss colleague:0.6
+manager,boss colleague:0.6
+colleague,colleague
+coworker,colleague
+co worker,colleague
+office,work colleague:0.6
+employee,employee colleague:0.6
+staff,employee colleague:0.6
+teacher,teacher
+teachers,teacher
+teachers day,teachers_day teacher:0.5
+nurse,nurse
+doctor,doctor
+her,her
+him,him
+women,women her:0.4
+men,men him:0.4
+cat,cat pet:0.6
+dog,dog pet:0.6
+pet,pet
+birthday,birthday
+bday,birthday
+b day,birthday
+cumpleanos,birthday spanish
+belated,belated
+forgot,belated
+forgotten,belated
+late,belated
+missed,belated:0.6 miss_you:0.6
+anniversary,anniversary
+anniv,anniversary
+wedding,wedding
+marriage,wedding
+married,wedding just_married:0.8
+just married,just_married wedding:0.8
+engaged,engagement
+engagement,engagement
+propose,proposal propose_day:0.6
+proposal,proposal propose_day:0.6
+will you marry me,proposal
+get well,get_well
+get well soon,get_well
+sick,get_well
+ill,get_well
+illness,get_well
+hospital,get_well
+surgery,get_well
+recover,get_well
+recovery,get_well
+feel better,get_well
+condolence,sympathy
+condolences,sympathy
+sympathy,sympathy
+passed away,sympathy
+died,sympathy
+death,sympathy
+loss,sympathy
+rip,sympathy
+sorry for your loss,sympathy
+sorry,sorry
+apology,sorry
+apologize,sorry
+forgive,sorry
+thank you,thank_you
+thanks,thank_you
+thx,thank_you
+ty,thank_you
+gracias,thank_you spanish
+merci,thank_you french
+danke,thank_you german
+dhanyavad,thank_you hindi:0.5
+congratulations,congratulations
+congrats,congratulations
+well done,congratulations
+new baby,new_baby baby:0.6
+newborn,new_baby baby:0.6
+its a boy,new_baby baby:0.6
+its a girl,new_baby baby:0.6
+baby shower,baby_shower baby:0.6
+pregnancy,pregnancy
+pregnant,pregnancy
+new home,new_home
+housewarming,new_home
+new job,new_job
+promotion,promotion
+retirement,retirement
+retiring,retirement
+farewell,farewell
+goodbye,farewell
+leaving,farewell
+graduation,graduation
+graduate,graduation
+grad,graduation
+exam,good_luck:0.6 student:0.5
+good luck,good_luck
+best of luck,good_luck
+luck,good_luck
+good morning,good_morning
+morning,good_morning
+good night,good_night
+night,good_night
+have a great day,have_a_great_day
+weekend,weekend
+monday,monday_blues
+miss you,miss_you
+missing you,miss_you
+long distance,long_distance miss_you:0.6
+thinking of you,thinking_of_you
+thinking about you,thinking_of_you
+keep in touch,keep_in_touch
+take care,take_care
+hello,hello
+hi,hello
+hey,hello
+cheer up,cheer_up
+encouragement,encouragement
+encourage,encouragement
+motivation,inspirational encouragement:0.6
+motivational,inspirational encouragement:0.6
+inspirational,inspirational
+support,support
+stress,stress
+just because,just_because
+i love you,i_love_you love:0.6
+love you,i_love_you love:0.6
+love,love
+romantic,romantic love:0.5
+romance,romantic love:0.5
+crush,new_love romantic:0.5
+dating,dating
+invitation,invitation
+invite,invitation
+party,party invitation:0.6
+bon voyage,bon_voyage
+travel,bon_voyage
+trip,bon_voyage
+journey,bon_voyage
+welcome,youre_welcome:0.5
+funny,funny
+fun,funny
+humor,funny
+humour,funny
+joke,funny
+jokes,funny
+lol,funny
+cute,cute
+teddy,teddy
+teddy bear,teddy
+hug,hugs
+hugs,hugs
+kiss,kisses
+kisses,kisses
+flowers,flowers
+flower,flowers
+roses,roses
+rose,roses
+religious,religious
+christian,religious
+spiritual,religious
+god,religious
+prayer,religious
+blessing,blessings
+blessings,blessings
+bless,blessings
+songs,songs
+song,songs
+music,songs
+poem,poems
+poems,poems
+poetry,poems
+quotes,quotes
+quote,quotes
+zodiac,zodiac
+horoscope,zodiac
+milestone,milestone
+balloons,balloons
+business,business
+corporate,business
+formal,formal
+christmas,christmas
+xmas,christmas
+x mas,christmas
+noel,christmas
+navidad,christmas spanish
+feliz navidad,christmas spanish
+weihnachten,christmas german
+santa,santa christmas:0.6
+santa claus,santa christmas:0.6
+carols,carols
+new year,new_year
+newyear,new_year
+new years,new_year
+new years eve,new_years_eve new_year:0.6
+nye,new_years_eve new_year:0.6
+chinese new year,chinese_new_year new_year:0.5
+lunar new year,chinese_new_year new_year:0.5
+gong xi fa cai,chinese_new_year
+tet,tet
+halloween,halloween
+diwali,diwali
+deepavali,diwali
+dipawali,diwali
+deepawali,diwali
+dewali,diwali
+diya,diya diwali:0.6
+rangoli,rangoli diwali:0.6
+holi,holi
+rakhi,raksha_bandhan
+raksha bandhan,raksha_bandhan
+rakshabandhan,raksha_bandhan
+bhai dooj,bhai_dooj
+bhaiya dooj,bhai_dooj
+bhau beej,bhai_dooj
+karva chauth,karva_chauth
+karwa chauth,karva_chauth
+dussehra,dussehra
+dasara,dussehra
+navratri,navratri
+durga puja,durga_puja
+ganesh chaturthi,ganesh_chaturthi
+ganesh,ganesh_chaturthi
+janmashtami,janmashtami
+krishna,janmashtami
+onam,onam
+pongal,pongal
+lohri,lohri
+sankranti,makar_sankranti
+makar sankranti,makar_sankranti
+baisakhi,baisakhi
+vaisakhi,baisakhi
+ugadi,ugadi
+gudi padwa,gudi_padwa
+shivratri,shivaratri
+maha shivratri,shivaratri
+ram navami,ram_navami
+guru nanak,guru_nanak_jayanti
+gurpurab,guru_nanak_jayanti
+gandhi jayanti,gandhi_jayanti
+independence day,independence_day
+republic day,republic_day
+eid,eid
+eid mubarak,eid eid_mubarak:0.6
+eid al fitr,eid_al_fitr eid:0.6
+eid ul fitr,eid_al_fitr eid:0.6
+eid al adha,eid_al_adha eid:0.6
+eid ul adha,eid_al_adha eid:0.6
+bakrid,eid_al_adha eid:0.6
+ramadan,ramadan
+ramzan,ramadan
+ramadan mubarak,ramadan
+hari raya,hari_raya
+nowruz,nowruz
+navroz,nowruz parsi_new_year:0.8
+parsi new year,parsi_new_year
+hanukkah,hanukkah
+chanukah,hanukkah
+passover,passover
+rosh hashanah,rosh_hashanah
+shana tova,rosh_hashanah
+yom kippur,yom_kippur
+purim,purim
+kwanzaa,kwanzaa
+easter,easter
+good friday,good_friday
+st patricks day,st_patricks_day
+st patrick,st_patricks_day
+saint patricks day,st_patricks_day
+patricks day,st_patricks_day
+thanksgiving,thanksgiving
+fourth of july,fourth_of_july
+4th of july,fourth_of_july
+july 4th,fourth_of_july
+memorial day,memorial_day
+veterans day,veterans_day
+labor day,labor_day
+labour day,labor_day
+mothers,mother parent:0.7
+fathers,father parent:0.7
+womens day,womens_day women:0.5
+international womens day,womens_day women:0.5
+mens day,mens_day men:0.5
+bosses day,bosses_day boss:0.5
+boss day,bosses_day boss:0.5
+sweetest day,sweetest_day
+grandparents day,grandparents_day grandparent:0.5
+friendship day,friendship_day friendship:0.6
+friendship,friendship friend:0.6
+childrens day,childrens_day child:0.5
+daughters day,daughters_day daughter:0.5
+sisters day,sisters_day sister:0.5
+brothers day,brothers_day brother:0.5
+doctors day,doctors_day doctor:0.5
+nurses day,nurses_day nurse:0.5
+admin professionals day,admin_professionals_day secretary:0.5
+secretary,secretary colleague:0.6
+day of the dead,day_of_the_dead
+dia de los muertos,day_of_the_dead spanish:0.3
+april fools,april_fools
+april fools day,april_fools
+black friday,black_friday
+boxing day,boxing_day
+seasons greetings,seasons_greetings holidays:0.6
+happy holidays,holidays
+holidays,holidays
+holiday season,holidays
+winter,winter
+summer,summer
+spring,spring
+autumn,autumn
+fall,autumn
+back to school,back_to_school
+spanish,spanish
+espanol,spanish
+feliz,spanish:0.5
+french,french
+joyeux,french:0.5
+german,german
+frohe,german:0.5
+russian,russian
+chinese,chinese_new_year:0.3 mandarin:0.5
+mandarin,mandarin
+hindi,hindi
+thank,thank_you
+birth day,birthday
+birthdays,birthday
+bday wishes,birthday
+goodnight,good_night
+good nite,good_night
+goodmorning,good_morning
+good afternoon,have_a_great_day:0.6
+across the miles,miss_you long_distance
+send off,farewell
+blessed,blessings
+musical,songs
+happy for you,congratulations
+you are special,you_are_special
+special,you_are_special:0.6
+funeral,sympathy
+passing,sympathy:0.8
+rest in peace,sympathy
+granddaughter,child:0.6 kid:0.5
+grand daughter,child:0.6 kid:0.5
+grandaughter,child:0.6 kid:0.5
+grandson,child:0.6 kid:0.5
+grand son,child:0.6 kid:0.5
+grandchild,child:0.6 kid:0.5
+grandkids,child:0.6 kid:0.5
+niece,relatives:0.8 family:0.5
+nephew,relatives:0.8 family:0.5
+stepmom,mother parent:0.7
+step mom,mother parent:0.7
+stepdad,father parent:0.7
+step dad,father parent:0.7
+son in law,son:0.7 relatives:0.6
+soninlaw,son:0.7 relatives:0.6
+daughter in law,daughter:0.7 relatives:0.6
+first birthday,birthday milestone
+one year,milestone:0.6
+youtube,
+video,
+videos,
+events,

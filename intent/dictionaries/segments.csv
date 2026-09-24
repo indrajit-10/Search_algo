@@ -1,0 +1,313 @@
+segment,terms
+forher,her
+forhim,him
+hubbywife,husband wife spouse
+huswife,husband wife spouse
+bronsis,brother sister sibling
+brothers,brother sibling
+sisters,sister sibling
+momndad,mother father parent
+loveyoumom,mother
+loveyoudad,father
+specialdad,father
+sonanddaughter,son daughter child
+sonsdaughter,son daughter child
+son,son child
+daughter,daughter child
+grandfather,grandfather grandparent
+grandparents,grandparent grandmother grandfather
+extfamily,family relatives
+family,family
+familyetc,family
+familyoccasions,family
+homefamfriends,family friend
+frndfamily,family friend
+nearndearones,loved_ones family
+lovedones,loved_ones family
+of_families,family
+husband,husband spouse
+friends,friend
+friend,friend
+frnd,friend
+fnd,friend
+justpals,friend
+netpals,friend
+teenfriends,friend teen
+bestfriends,best_friends friend
+specialfriend,friend
+friendsforever,friend
+betweenfriends,friend
+lovenfriendship,friend love
+friendship,friendship friend
+collassociates,colleague
+boss,boss
+womenboss,boss women
+customers,customer
+kids,kid child
+babies,baby
+couples,couple
+couple,couple
+foreachother,couple
+soulmates,couple romantic
+lovers,couple romantic
+sweetheart,sweetheart romantic
+pets,pet
+petsetc,pet
+fun,funny
+funny,funny
+humor,funny
+joke,funny
+pranks,funny
+tuestoons,funny
+valenfun,funny
+cute,cute
+cuteetc,cute
+teddy,teddy cute
+smile,smile
+smiles,smile
+makesmile,smile
+sendsmile,smile
+angels,angels
+heart,love
+religion,religious
+religious,religious
+religiousblessings,religious blessings
+relbless,religious blessings
+rebless,religious blessings
+irblessings,religious blessings
+blessings,blessings
+prayer,religious
+prayers,religious
+of_prayer,religious
+aarti,religious
+koran,religious
+love,love romantic
+romance,romantic love
+kisses,kisses romantic
+kiss,kisses romantic
+hugnkiss,hugs kisses romantic
+hugs,hugs
+warmhugs,hugs
+cutehugs,hugs cute
+hugsncaring,hugs caring
+flowers,flowers
+flower,flowers
+flwrs,flowers
+flwr,flowers
+flrwishes,flowers
+flowerwishes,flowers
+bouquets,flowers
+roses,roses flowers
+redroses,roses flowers
+songs,songs
+lovesongs,songs love
+poetry,poems
+poem,poems
+lovepoems,poems love
+quotes,quotes
+inspirational,inspirational
+inspiration,inspirational
+encour,encouragement inspirational
+of_encouragement,encouragement inspirational
+support,support inspirational
+stressbusters,stress inspirational
+zodiac,zodiac
+milestone,milestone
+balloons,balloons
+gifts,gifts
+images,images
+formal,formal
+fgreet,formal
+fgreetings,formal
+busgreet,business formal
+formal_bus,business formal
+formal_buscards,business formal
+business,business
+busrelations,business
+relation,business
+professional,business
+businessandworkplace,business work
+atwork,work colleague
+atworketc,work colleague
+work,work
+youcare,caring
+caring,caring
+thanku,thank_you
+thankyou,thank_you
+thank,thank_you
+thanks,thank_you
+missing,miss_you
+missyou,miss_you
+missingu,miss_you
+missingyou,miss_you
+acrossthemiles,miss_you long_distance
+belated,belated
+belatedwishes,belated
+getwell,get_well
+recovery,get_well
+health,get_well
+sympathy,sympathy
+lossofpet,sympathy pet
+sorry,sorry
+iamsorry,sorry
+apologies,sorry
+invitations,invitation
+invitation,invitation
+otherinvitations,invitation
+party,invitation party
+clubs,invitation
+birth,birthday
+wed,wedding
+wedanniv,wedding_anniversary anniversary
+ouranniversary,anniversary couple
+happybirthday,birthday
+engagement,engagement
+engaged,engagement
+justmarried,just_married wedding
+marryme,proposal
+congrats,congratulations
+congrat,congratulations
+congratulations,congratulations
+newbaby,new_baby baby
+babyshower,baby_shower baby
+pregnancy,pregnancy baby
+newhome,new_home
+newjob,new_job
+promotion,promotion
+retirement,retirement
+farewell,farewell
+studentsandnewgrads,graduation student
+newcarandlicense,new_car
+goodnight,good_night
+morning,good_morning
+hvgtday,have_a_great_day
+havegreatday,have_a_great_day
+weekend,weekend
+monblues,monday_blues
+cheerup,cheer_up
+luck,good_luck
+luckirish,good_luck st_patricks_day
+thinkingofyou,thinking_of_you
+thinkingyou,thinking_of_you
+thoughts,thinking_of_you
+keepintouch,keep_in_touch
+stayintouch,keep_in_touch
+justbecause,just_because
+hi,hello
+hello,hello
+hihello,hello
+takecare,take_care
+voyage,bon_voyage
+bonvoyage,bon_voyage
+youarewelcome,youre_welcome
+nameday,name_day
+sports,sports
+midcrisis,midlife_crisis
+announce,announcement
+announcements,announcement
+appointments,appointment
+accolades,appreciation
+appreciate,appreciation
+enotes,
+iloveyou,i_love_you love
+youarespecial,you_are_special
+crazy,romantic
+foreverlove,forever_love romantic
+newlove,new_love romantic
+dating,dating romantic
+diyas,diya
+rangoli,rangoli
+horror,horror
+witches,witches
+hauntedhouse,horror
+pumpkins,pumpkin
+trick,trick_or_treat
+newsanta,santa
+spirit_carols,carols
+carols,carols
+turkey,turkey
+egghunt,easter_egg
+bemyvalen,valentine romantic
+fireworks,fireworks
+patriotic,patriotic
+patriotism,patriotic
+edmub,eid_mubarak
+mub,eid_mubarak
+fasting,fasting
+seder,seder
+summerchristmas,christmas summer
+orthodoxchristmas,orthodox_christmas christmas
+reso,resolutions
+nyear,new_year
+christmas,christmas
+birthday,birthday
+spanish,spanish
+french,french
+german,german
+italian,italian
+english,english
+chinese,chinese
+russian,russian
+mandarin,mandarin
+hindi,hindi
+happy,
+wishes,
+wish,
+greetings,
+messages,
+celebration,
+celebrations,
+celeb,
+cheers,
+specials,
+spl,
+general,
+etc,
+anniversaryetc,
+loveetc,
+friendshipetc,
+weddingetc,
+foryou,
+foreveryone,
+onotheroccasions,
+everyday,
+social,
+interactive,
+card,
+more,
+goodies,
+traditions,
+spirit,
+spirit_customs,
+tributes,
+arndworld,
+newjingle,
+fgreet_business,business formal
+greetings_busgreet,business formal
+greetings_social,
+flwr_bouquets,flowers
+flwr_redroses,roses flowers
+couples_forher,couple her
+couples_forhim,couple him
+wishes_daughter,daughter child
+wishes_son,son child
+frndfamily_grandfather,grandfather grandparent
+frndfamily_husband,husband spouse
+frndfamily_son,son child
+frndfamily_nearndearones,loved_ones family
+backto,back_to_school
+school,student
+ecards,
+gen,
+wedding,wedding
+youare_welcome,youre_welcome
+year,
+law,
+eve,
+immaculate,
+conception,
+uncles,
+history,
+heritage,
+appreciation,
+corps,
