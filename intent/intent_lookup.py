@@ -66,16 +66,33 @@ def parse_terms(value):
 
 class IntentIndex:
     def __init__(self, out_dir=OUT_DIR, dict_dir=DICT_DIR):
-        self.term_dim, self.term_codes = {}, {}
         with open(os.path.join(out_dir, "intent_table.csv"), encoding="utf-8", newline="") as f:
-            for r in csv.DictReader(f):
-                self.term_dim[r["term"]] = r["dimension"]
-                self.term_codes[r["term"]] = r["codes"].split()
-        self.categories = {}
+            terms = list(csv.DictReader(f))
         with open(os.path.join(out_dir, "category_intents.csv"), encoding="utf-8", newline="") as f:
-            for r in csv.DictReader(f):
-                r["cards"] = int(r["cards"])
-                self.categories[r["code"]] = r
+            categories = list(csv.DictReader(f))
+        self.load(terms, categories, dict_dir)
+
+    @classmethod
+    def from_tables(cls, terms, categories, dict_dir=DICT_DIR):
+        """Builds the index from tables already in memory, such as a search index's own copy.
+
+        `terms` are rows of term, dimension and space-separated codes; `categories` are rows
+        of code, cards and the facet columns. Both are what build_intent_table writes.
+        """
+        index = cls.__new__(cls)
+        index.load(terms, categories, dict_dir)
+        return index
+
+    def load(self, terms, categories, dict_dir=DICT_DIR):
+        self.term_dim, self.term_codes = {}, {}
+        for r in terms:
+            self.term_dim[r["term"]] = r["dimension"]
+            self.term_codes[r["term"]] = r["codes"].split()
+        self.categories = {}
+        for r in categories:
+            r = dict(r)
+            r["cards"] = int(r["cards"])
+            self.categories[r["code"]] = r
         n = len(self.categories)
         self.idf = {t: math.log(1 + n / len(codes)) for t, codes in self.term_codes.items()}
 
