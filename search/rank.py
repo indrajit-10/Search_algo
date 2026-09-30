@@ -51,6 +51,7 @@ W_LEX = 0.40       # the query's words, matched on title, tags, category and des
 W_INTENT = 0.35    # the categories the query asks for, whether or not its words appear
 W_QUALITY = 0.14   # how well the card does with people, from the export's popularity column
 W_SEASON = 0.08    # how near the card's occasion is, for queries that name no date
+SEASON_INTENT = 0.50  # and how far that can lift a category among equally plausible ones
 W_FRESH = 0.03     # how recently the card was added
 
 TITLE_PHRASE_BONUS = 0.10   # the query, in order, inside the title: someone named a card
@@ -66,6 +67,13 @@ MAX_LEX_CANDIDATES = 400    # text matches carried into the blended score, best 
 PER_CODE_RESULTS = 3        # and shown from each, before the rest are pushed down
 MIN_CORRECTION_LENGTH = 4   # shorter words are left alone; the fix is worse than the typo
 MIN_CORRECTION_FREQUENCY = 3  # and a fix has to be a word the catalogue really uses
+
+# A word in more than this share of the catalogue is not a search term. Half of every query
+# on a card site is "cards", "for", "my", "free", "happy", and a card that matched only
+# those matched nothing. Lucene's own common-terms cutoff works the same way. It needs a
+# catalogue big enough for a frequency to mean something, hence the floor.
+STOPWORD_SHARE = 0.20
+STOPWORD_MIN_CARDS = 500
 
 ALPHABET = "abcdefghijklmnopqrstuvwxyz"
 
@@ -107,6 +115,10 @@ class Search:
         # Words the intent dictionaries know. A phrase such as "hubby" is spelled correctly
         # even when no card says it, so spelling must not touch it.
         self.phrase_words = {w for phrase in self.intent.phrases for w in phrase.split()}
+        self.category_months = {
+            code: [index_module.MONTHS[t] for t in category["months"].split()
+                   if t in index_module.MONTHS]
+            for code, category in self.categories.items()}
         self.popular = sorted(range(len(self.docs)),
                               key=lambda i: (-self.docs[i]["quality"], i))
 
@@ -142,33 +154,72 @@ class Search:
 
     # -- stage 2 and 3: recall, then rank ---------------------------------------------
 
+    @staticmethod
+    def is_stopword(document_frequency, total):
+        """A word too common to be a search term, decided by the catalogue, not a word list."""
+        return total >= STOPWORD_MIN_CARDS and document_frequency / total > STOPWORD_SHARE
+
     def lexical(self, words):
-        """BM25F over the four indexed fields. Returns scores and the words each card matched."""
+        """BM25F over the four indexed fields.
+
+        Returns the scores, the words each card matched, how much of the query's information
+        each card covered, and the total there was to cover.
+
+        Coverage is what stops one word from carrying a card. "sorry i forgot your birthday"
+        has a card titled "I Forgot Day" -- a real August novelty holiday -- and BM25 alone
+        ranks it first, because `forgot` is rare and the title is short. Matching one word
+        out of five is not a text match.
+
+        It is weighted by how rare each word is rather than counted, because on a card site
+        half of every query is "cards", "for", "my" and "free". Counting words, three
+        stopwords outvote `hubby`; weighting them, they are worth almost nothing, which is
+        exactly what they tell you.
+        """
         scores = collections.defaultdict(float)
         matched = collections.defaultdict(list)
+        covered = collections.defaultdict(float)
         total = len(self.docs)
+        information = 0.0
         for word in dict.fromkeys(words):
             postings = self.postings.get(word)
-            if not postings:
+            if not postings or self.is_stopword(len(postings), total):
                 continue
             idf = math.log(1 + (total - len(postings) + 0.5) / (len(postings) + 0.5))
+            information += idf
             for doc, tf in postings:
                 norm = tf + K1 * (1 - B + B * self.lengths[doc] / self.avgdl)
                 scores[doc] += idf * tf * (K1 + 1) / norm
                 matched[doc].append(word)
-        return scores, matched
+                covered[doc] += idf
+        return scores, matched, covered, information
 
-    def intent_codes(self, query):
-        """The categories the query asks for, scored 0..1 against the best one."""
-        results = self.intent.lookup(query, top=INTENT_TOP)
+    def category_season(self, code):
+        return season_weight(self.category_months.get(code, ()), self.today.month)
+
+    def intent_codes(self, query, dated=True):
+        """The categories the query asks for, scored 0..1 against the best one.
+
+        Season decides which categories get in, not just how their cards are ordered. A
+        search for "cards for the family" matches more family categories than any page can
+        hold, and ranking cards by season afterwards cannot help a category that was never
+        recalled. Every category here scored within `INTENT_KEEP` of the best, so they are
+        all plausible answers; when the query named no date, the one whose occasion is now
+        is the better answer.
+        """
+        # A broad query such as "family" matches hundreds of categories at the same score,
+        # and the intent table breaks that tie by card count. Season cannot reorder what was
+        # already cut, so when it has an opinion, look far enough down to find it.
+        results = self.intent.lookup(query, top=INTENT_TOP * (3 if dated else 25))
         if not results:
             return {}, []
         best = results[0][1] or 1.0
-        codes = {code: round(score / best, 4) for code, score, _, _ in results
-                 if score >= best * INTENT_KEEP}
-        why = [f"{code} ({'; '.join(reasons)})" for code, _, _, reasons in results
-               if code in codes]
-        return codes, why
+        passing = [(code, round(score / best, 4), reasons)
+                   for code, score, _, reasons in results if score >= best * INTENT_KEEP]
+        if not dated and len(passing) > INTENT_TOP:
+            passing.sort(key=lambda row: -(row[1] + SEASON_INTENT * self.category_season(row[0])))
+        passing = passing[:INTENT_TOP]
+        return ({code: score for code, score, _ in passing},
+                [f"{code} ({'; '.join(reasons)})" for code, _, reasons in passing])
 
     def query(self, text, top=24, per_category=PER_CODE_RESULTS, explain=False):
         words = normalise(text)
@@ -177,15 +228,15 @@ class Search:
         lex_words = [singular(w) for w in fixed if len(w) > 1 or w.isdigit()]
 
         phrases = self.intent.match(understood)
-        codes, why = self.intent_codes(understood)
 
         # A query that names a date or an occasion has said when it means. Only a query that
         # does not -- "cards for my sister", "funny" -- gets the calendar's opinion.
         dated = any(self.intent.term_dim.get(term) in ("month", "occasion")
                     for _, terms in phrases for term, _ in terms)
+        codes, why = self.intent_codes(understood, dated)
         formats = {w for w in fixed if w in FORMAT_WORDS} if self.has_format else set()
 
-        scores, matched = self.lexical(lex_words)
+        scores, matched, covered, information = self.lexical(lex_words)
         best_lex = max(scores.values(), default=0.0)
 
         # Retrieve, then rerank. A word like "happy" matches a large part of the catalogue,
@@ -204,7 +255,8 @@ class Search:
         ranked = []
         for doc_id in candidates:
             doc = self.docs[doc_id]
-            lex = scores.get(doc_id, 0.0) / best_lex if best_lex else 0.0
+            coverage = covered.get(doc_id, 0.0) / information if information else 0.0
+            lex = (scores.get(doc_id, 0.0) / best_lex * coverage) if best_lex else 0.0
             intent = codes.get(doc["code"], 0.0)
             season = 0.0 if dated else season_weight(doc["months"], self.today.month)
             score = (W_LEX * lex + W_INTENT * intent + W_QUALITY * doc["quality"]
@@ -227,7 +279,7 @@ class Search:
             }
             if explain:
                 result["why"] = {
-                    "lexical": round(lex, 4), "intent": intent,
+                    "lexical": round(lex, 4), "covered": round(coverage, 2), "intent": intent,
                     "quality": doc["quality"], "season": round(season, 4),
                     "fresh": doc["recency"], "bonus": bonuses,
                     "words": sorted(set(matched.get(doc_id, ()))),

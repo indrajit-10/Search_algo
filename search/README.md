@@ -30,7 +30,7 @@ python3 -m unittest discover -s search -v
 | `index.py` | one pass over the export to one index: documents, BM25F postings, category facets, intent table |
 | `rank.py` | query understanding, recall, the blended score, the page layout |
 | `eval.py` | zero-result rate and intent coverage over real queries, against the all-words keyword baseline |
-| `test_search.py` | 31 tests on a made-up 15-card export |
+| `test_search.py` | 34 tests on a made-up 16-card export |
 
 `output/` is generated from a private export and is not committed.
 

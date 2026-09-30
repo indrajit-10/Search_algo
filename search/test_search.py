@@ -53,6 +53,10 @@ CARDS = [
      "get well soon health", "gen_getwell", "1", "0", "950", "static", "2024-05-05"),
     ("G2", "Feel Better Fast", "Thinking of you until you feel better.",
      "get well better", "gen_getwell", "1", "0", "200", "static", "2023-03-03"),
+    # A real trap: I Forgot Day is an August novelty holiday, the dictionaries label it
+    # belated, and its title is the one place the word "forgot" appears. It is popular too.
+    ("A1", "I Forgot Day Fun", "Celebrate I Forgot Day with a laugh.",
+     "i forgot day", "eaug_iforgotday", "1", "0", "1400", "animated", "2024-07-01"),
     ("X1", "Retired Birthday Card", "This card is no longer live.",
      "birthday", "birth_belated", "0", "0", "9999", "static", "2020-01-01"),
     ("X2", "Flagged Birthday Card", "This card is flagged invalid.",
@@ -100,7 +104,7 @@ class SearchTest(unittest.TestCase):
         indexed = {doc["id"] for doc in self.index["docs"]}
         self.assertNotIn("X1", indexed, "status_id 0 is not live")
         self.assertNotIn("X2", indexed, "invalid_card 1 is not live")
-        self.assertEqual(len(indexed), 13)
+        self.assertEqual(len(indexed), 14, "16 rows in, 2 not live")
 
     def test_category_codes_become_searchable_facets(self):
         categories = {c["code"]: c for c in self.index["categories"]}
@@ -124,6 +128,16 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(and_keyword_hits(self.search, query), 0,
                          "all-words keyword search finds nothing, which is the point")
         self.assertEqual(self.codes(query)[0], "birth_belated")
+
+    def test_one_rare_word_cannot_carry_a_card(self):
+        """The whole query decides, not its most unusual word."""
+        found = self.search.query("sorry i forgot your birthday", explain=True)
+        self.assertEqual(found["results"][0]["code"], "birth_belated")
+        forgot_day = next(r for r in found["results"] if r["code"] == "eaug_iforgotday")
+        self.assertIn("forgot", forgot_day["why"]["words"], "it is the only card saying it")
+        self.assertLess(forgot_day["why"]["covered"], 1.0, "and it says nothing else")
+        self.assertLess(forgot_day["score"], found["results"][0]["score"],
+                        "belated birthday matches belated and birthday, I Forgot Day only belated")
 
     def test_husband_birthday(self):
         self.assertEqual(self.codes("funny birthday cards to hubby")[0], "birth_hubbywife")
@@ -172,6 +186,20 @@ class SearchTest(unittest.TestCase):
         self.assertFalse(christmas["seasonal"], "the query said when it means")
         self.assertEqual(christmas["results"][0]["code"], "edec_c_family")
 
+    def test_the_season_decides_which_categories_are_boosted(self):
+        """Ranking cards by season cannot help a category that was never recalled."""
+        import rank
+        was = rank.INTENT_TOP
+        rank.INTENT_TOP = 1   # force a choice between the two family categories
+        try:
+            october = self.search.query("cards for the family")
+            january = Search(index=self.index, today=datetime.date(2027, 1, 5))
+            january = january.query("cards for the family")
+        finally:
+            rank.INTENT_TOP = was
+        self.assertEqual([c for c, _ in october["intent"]], ["eoct_diwali_family"])
+        self.assertEqual([c for c, _ in january["intent"]], ["edec_c_family"])
+
     def test_format_words_boost_but_never_filter(self):
         found = self.search.query("video birthday sister", explain=True)
         bonuses = {r["id"]: r["why"]["bonus"] for r in found["results"]}
@@ -185,6 +213,13 @@ class SearchTest(unittest.TestCase):
         self.assertIn("birth_bronsis", top)
         self.assertGreater(len(self.codes("birthday", top=5, per_category=0)), 0,
                            "a cap of 0 turns the rule off, it does not empty the page")
+
+    def test_a_word_in_most_of_the_catalogue_is_not_a_search_term(self):
+        """On a card site, "cards", "for" and "free" are in half the queries and say nothing."""
+        self.assertTrue(Search.is_stopword(3000, 10000), "30% of the catalogue")
+        self.assertFalse(Search.is_stopword(1000, 10000), "10% still discriminates")
+        self.assertFalse(Search.is_stopword(9, 10),
+                         "a frequency means nothing on a catalogue this small")
 
     def test_only_the_best_text_matches_are_reranked(self):
         """A common word matches much of the catalogue; the weak matches are not answers."""

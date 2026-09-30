@@ -110,7 +110,7 @@ title 5.0    tags 3.0    category words 2.5    description 1.0
 Then every signal on a 0..1 scale, so the weights mean what they say:
 
 ```
-score = 0.40 x text match          BM25F, normalised against the best hit for this query
+score = 0.40 x text match          BM25F x coverage, against the best hit for this query
       + 0.35 x intent match        how well the card's category fits what was asked
       + 0.14 x card quality        the popularity column, log-compressed
       + 0.08 x seasonality         how near this card's occasion is, today
@@ -119,11 +119,25 @@ score = 0.40 x text match          BM25F, normalised against the best hit for th
       + 0.08 if the card is the format the query asked for
 ```
 
-Two details that matter more than their size suggests:
+Four details that matter more than their size suggests. Each of them is here because the
+obvious version of the score got a real query wrong:
 
-- **Seasonality only when the query names no date.** "cards for the family" in October
-  should surface Diwali. "merry christmas" in October should not be second-guessed — the
-  person said when they mean. Next month outranks last month, because people shop ahead.
+- **Coverage.** The text match is scaled by the share of the query's *information* a card
+  covered. Without it, "sorry i forgot your birthday" returns cards for **I Forgot Day**, a
+  real August novelty holiday, because `forgot` is rare and the title is short. Matching one
+  word out of five is not a text match. Share of information, not share of words, because
+  on a card site half of every query is "cards", "for", "my" and "free" — counted, three
+  stopwords outvote `hubby`.
+- **A common-word cutoff.** A word in more than a fifth of the catalogue is not a search
+  term at all. Without it, "bday cards for my hubby" ranks on *card*, *for* and *my* —
+  every informative word in that query is absent from card text — and returns generic
+  cards-for-him above cards for a husband. Lucene's common-terms cutoff works the same way.
+- **Seasonality only when the query names no date, and it picks the categories.** "cards
+  for the family" in October should surface Diwali; "merry christmas" in October should not
+  be second-guessed. Season has to choose *which* categories are boosted, not just reorder
+  the cards inside them: hundreds of categories match `family` at an identical score, and
+  reranking cards by season cannot help a category that was never recalled. Next month
+  outranks last month, because people shop ahead.
 - **A relevance floor.** A card matching only the word "your" is noise, not a result. Drop
   anything under 30% of the top score, unless that would cut the page below eight results.
 
@@ -169,7 +183,7 @@ python3 intent/build_intent_table.py card_export.csv   # the intent tables, for 
 python3 search/index.py card_export.csv                # the search index
 python3 search/rank.py --explain "sorry i forgot your birthday"
 python3 search/eval.py queries.txt                     # measure it on real queries
-python3 -m unittest discover -s search -v              # 31 tests, no export needed
+python3 -m unittest discover -s search -v              # 34 tests, no export needed
 ```
 
 `search/rank.py --explain` prints the parts of every score. A ranking nobody can explain is
