@@ -294,7 +294,9 @@ class Search:
             "understood": understood,
             "corrections": corrections,
             "phrases": [(phrase, [t for t, _ in terms]) for phrase, terms in phrases],
-            "intent": sorted(codes.items(), key=lambda kv: -kv[1]),
+            # In the order they were chosen, which for an undated query is season first.
+            # Re-sorting by score here would hide why a category is on the list.
+            "intent": list(codes.items()),
             "why_intent": why,
             "seasonal": not dated,
             "candidates": len(candidates),

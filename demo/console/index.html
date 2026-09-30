@@ -1,0 +1,827 @@
+<title>Card Search Console</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a two-pane relevance console - query understanding beside the ranked page. */
+:root {
+  --bg: #f1f3f0;
+  --surface: #ffffff;
+  --surface-2: #e9ece8;
+  --line: #d6dbd5;
+  --line-strong: #b9c1b8;
+  --fg: #151a17;
+  --muted: #5f6a62;
+  --faint: #8b958c;
+  --accent: #14594f;
+  --accent-ink: #0c3b34;
+  --accent-soft: #d7e8e3;
+
+  --c-text: #17796b;
+  --c-intent: #5b4fb5;
+  --c-quality: #a9702a;
+  --c-season: #3f7d34;
+  --c-fresh: #7d8a81;
+  --c-bonus: #ab3f74;
+
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --r: 3px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101311;
+    --surface: #191d1a;
+    --surface-2: #212722;
+    --line: #2c332d;
+    --line-strong: #414a42;
+    --fg: #e8ebe6;
+    --muted: #9ba79d;
+    --faint: #6f7c73;
+    --accent: #6ed0bf;
+    --accent-ink: #a8e5da;
+    --accent-soft: #1b2f2b;
+
+    --c-text: #4cc0ad;
+    --c-intent: #9b90ee;
+    --c-quality: #d9a55c;
+    --c-season: #74bd63;
+    --c-fresh: #8d9a91;
+    --c-bonus: #e07aa9;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101311;
+  --surface: #191d1a;
+  --surface-2: #212722;
+  --line: #2c332d;
+  --line-strong: #414a42;
+  --fg: #e8ebe6;
+  --muted: #9ba79d;
+  --faint: #6f7c73;
+  --accent: #6ed0bf;
+  --accent-ink: #a8e5da;
+  --accent-soft: #1b2f2b;
+
+  --c-text: #4cc0ad;
+  --c-intent: #9b90ee;
+  --c-quality: #d9a55c;
+  --c-season: #74bd63;
+  --c-fresh: #8d9a91;
+  --c-bonus: #e07aa9;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; }
+
+/* ---- header ---- */
+header { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 22px; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 4.4vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.lede { margin: 0; color: var(--muted); max-width: 64ch; }
+.lede b { color: var(--fg); font-weight: 600; }
+.statline {
+  margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 18px;
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--faint);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.statline span b { color: var(--muted); font-weight: 600; }
+
+/* ---- query ---- */
+.queryrow { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+#q {
+  flex: 1 1 260px; min-width: 0;
+  font-family: var(--font-body); font-size: 1.05rem; color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: var(--r);
+  padding: 13px 14px;
+}
+#q:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.monthpick {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 6px 12px; font-size: 0.8rem; color: var(--muted);
+}
+.monthpick label { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.7rem; }
+select {
+  font-family: var(--font-body); font-size: 0.85rem; color: var(--fg);
+  background: transparent; border: 0; padding: 2px; max-width: 130px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip {
+  font-family: var(--font-mono); font-size: 0.76rem;
+  background: var(--surface); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 11px; cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+
+/* ---- verdict ---- */
+.verdict {
+  margin-top: 20px; display: grid; gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--r);
+  overflow: hidden;
+}
+.cell { background: var(--surface); padding: 12px 14px; min-width: 0; }
+.cell .k {
+  font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--faint); display: block; margin-bottom: 3px;
+}
+.cell .v {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.5rem;
+  line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.cell .n { font-size: 0.76rem; color: var(--muted); }
+.cell.bad .v { color: var(--c-bonus); }
+.cell.good .v { color: var(--c-season); }
+
+/* ---- panes ---- */
+.panes { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 22px; margin-top: 24px; }
+@media (max-width: 800px) { .panes { grid-template-columns: minmax(0, 1fr); } }
+section.pane { min-width: 0; }
+h2 {
+  font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint);
+  margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
+}
+.block { margin-bottom: 20px; }
+.block h3 {
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+  margin: 0 0 6px;
+}
+.readas { display: flex; flex-direction: column; gap: 5px; }
+.readas div { font-size: 0.84rem; }
+.readas .ph { font-family: var(--font-mono); color: var(--fg); }
+.readas .arrow { color: var(--faint); padding: 0 4px; }
+.readas .tm { color: var(--c-intent); font-weight: 500; }
+.fix { font-size: 0.84rem; font-family: var(--font-mono); }
+.fix s { color: var(--c-bonus); text-decoration-thickness: 1px; }
+.fix b { color: var(--c-season); font-weight: 600; }
+.catlist { display: flex; flex-direction: column; gap: 4px; }
+.catrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: baseline; font-size: 0.78rem; }
+.catrow code { font-family: var(--font-mono); color: var(--fg); overflow-wrap: anywhere; }
+.catrow .sc { font-family: var(--font-mono); color: var(--faint); font-variant-numeric: tabular-nums; }
+.catrow.inseason code::after { content: " ◷"; color: var(--c-season); }
+.note { font-size: 0.8rem; color: var(--muted); margin: 0; }
+
+/* ---- weights ---- */
+details.weights { margin-top: 4px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+details.weights summary {
+  cursor: pointer; padding: 9px 12px; font-family: var(--font-mono);
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+details.weights summary:hover { color: var(--accent); }
+.sliders { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 9px; }
+.slider { display: grid; grid-template-columns: 72px 1fr 42px; gap: 8px; align-items: center; font-size: 0.76rem; }
+.slider .nm { font-family: var(--font-mono); font-size: 0.7rem; }
+.slider .val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+button.reset {
+  align-self: flex-start; font-family: var(--font-mono); font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  background: var(--surface-2); color: var(--muted);
+  border: 1px solid var(--line); border-radius: var(--r); padding: 5px 10px; cursor: pointer;
+}
+button.reset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---- results ---- */
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+ol.results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+ol.results > li { background: var(--surface); padding: 11px 13px; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 4px 11px; align-items: baseline; }
+.rk { font-family: var(--font-mono); font-size: 0.78rem; color: var(--faint); font-variant-numeric: tabular-nums; }
+.ti { font-weight: 500; overflow-wrap: anywhere; }
+.sc2 { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.meta { grid-column: 2 / -1; font-size: 0.75rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 3px 10px; }
+.meta code { font-family: var(--font-mono); color: var(--faint); overflow-wrap: anywhere; }
+.meta .fmt { font-family: var(--font-mono); color: var(--faint); }
+.bar { grid-column: 2 / -1; display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--surface-2); margin-top: 3px; }
+.bar i { display: block; height: 100%; }
+.empty { background: var(--surface); border: 1px dashed var(--line-strong); border-radius: var(--r); padding: 26px 18px; color: var(--muted); }
+.fallback { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--r); padding: 9px 12px; font-size: 0.82rem; color: var(--accent-ink); margin-bottom: 10px; }
+.facets { margin-top: 18px; display: flex; flex-direction: column; gap: 7px; }
+.facetrow { font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.facetrow .fk { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); min-width: 74px; }
+.facetrow .fv { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted); }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); }
+footer p { margin: 0 0 7px; max-width: 76ch; }
+footer code { font-family: var(--font-mono); font-size: 0.92em; color: var(--faint); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Card Search Console</h1>
+    <p class="lede">The 123Greetings card search, running live in this page. Type anything a
+      real person would type. <b>Every score is shown as its parts</b>, and the box on the left
+      says what the query was understood to mean before a single card was ranked.</p>
+    <div class="statline" id="stats"><span>loading the index…</span></div>
+  </header>
+
+  <div class="queryrow">
+    <input id="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="sorry i forgot your birthday" aria-label="Search query">
+    <div class="monthpick">
+      <label for="month">Today</label>
+      <select id="month" aria-label="Month, for the seasonal boost"></select>
+    </div>
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <div class="verdict" id="verdict"></div>
+
+  <div class="panes">
+    <section class="pane">
+      <h2>What the query means</h2>
+      <div id="understanding"></div>
+      <details class="weights">
+        <summary>Score weights</summary>
+        <div class="sliders" id="sliders"></div>
+      </details>
+    </section>
+
+    <section class="pane">
+      <h2>The page it would show</h2>
+      <div class="legend" id="legend"></div>
+      <div id="results"><div class="empty">The ranked cards appear here.</div></div>
+      <div class="facets" id="facets"></div>
+    </section>
+  </div>
+
+  <footer>
+    <p><b>The catalogue is synthetic.</b> The real card export is private, so these 12,510
+      cards were generated from the repository's own dictionaries: the category codes are real
+      and parse exactly as real ones do, but card titles come from templates, and combinations
+      like <code>Events in April / Diwali</code> are artefacts of random generation. Judge the
+      mechanism, not the card names. Roughly 40% of cards carry a title that never names their
+      occasion, which is the case keyword search cannot handle.</p>
+    <p>Ranking runs entirely in your browser and is a direct port of <code>search/rank.py</code>:
+      same BM25F field weights, same coverage scaling, same common-word cutoff, same intent
+      table, same seasonal rule, same relevance floor, same per-category cap.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ constants, from rank.py ============================ */
+const K1 = 1.2, B = 0.75;
+const DEFAULT_W = { lex: 0.40, intent: 0.35, quality: 0.14, season: 0.08, fresh: 0.03 };
+const W = Object.assign({}, DEFAULT_W);
+const TITLE_PHRASE_BONUS = 0.10, FORMAT_BONUS = 0.08;
+const FLOOR = 0.30, FLOOR_KEEPS = 8;
+let INTENT_TOP = 10;
+const INTENT_KEEP = 0.6, PER_CODE_CANDIDATES = 60, PER_CODE_RESULTS = 3;
+const MAX_LEX_CANDIDATES = 400, SEASON_INTENT = 0.5;
+const MIN_CORRECTION_LENGTH = 4, MIN_CORRECTION_FREQUENCY = 3;
+const STOPWORD_SHARE = 0.20, STOPWORD_MIN_CARDS = 500;
+const MAX_PHRASE_WORDS = 5, PAGE = 12;
+const ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+const DIMENSION_WEIGHT = { occasion: 1.0, recipient: 1.0, language: 0.8, tone: 0.6, month: 0.4, keyword: 0.5 };
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August",
+                     "September","October","November","December"];
+const MONTH_NUMBER = {}; MONTH_NAMES.forEach((m, i) => MONTH_NUMBER[m.toLowerCase()] = i + 1);
+const FORMAT_WORDS = new Set(["video","animated","animation","musical","music","song","songs",
+  "printable","print","talking","slideshow","photo","gif","flash","interactive","youtube",
+  "static","postcard","scrapbook"]);
+const FACET_INDEX = { occasion: 3, recipient: 4, tone: 5, language: 6 };
+const COMPONENTS = [
+  ["lex", "text", "--c-text"], ["intent", "intent", "--c-intent"],
+  ["quality", "quality", "--c-quality"], ["season", "season", "--c-season"],
+  ["fresh", "fresh", "--c-fresh"], ["bonus", "bonus", "--c-bonus"],
+];
+
+/* ============================ text normalising, from intent_lookup.py ============================ */
+function normalise(text) {
+  let s = String(text).replace(/%([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+  s = s.normalize("NFKD").replace(/\p{M}/gu, "");
+  s = s.toLowerCase().replace(/['’]/g, "");
+  return s.match(/[a-z0-9]+/g) || [];
+}
+function singular(w) {
+  if (w.endsWith("ies") && w.length > 4) return w.slice(0, -3) + "y";
+  if (w.endsWith("es") && w.length > 4 && "sxz".includes(w[w.length - 3])) return w.slice(0, -2);
+  if (w.endsWith("s") && !w.endsWith("ss") && w.length > 3) return w.slice(0, -1);
+  return w;
+}
+const ORDINAL = /^\d+(st|nd|rd|th)$/;
+
+/* Python's round(), half-to-even, so the ports agree to the last digit. The Python ranker
+   rounds intent scores to 2 places inside the lookup and the final score to 4, and those
+   roundings decide the order of close results, so they are part of the algorithm. */
+function pyRound(x, places) {
+  const f = Math.pow(10, places);
+  const scaled = x * f;
+  const floor = Math.floor(scaled);
+  const rest = scaled - floor;
+  let n;
+  if (Math.abs(rest - 0.5) < 1e-9) n = (floor % 2 === 0) ? floor : floor + 1;
+  else n = Math.round(scaled);
+  return n / f;
+}
+
+function edits1(word) {
+  const out = new Set();
+  for (let i = 0; i <= word.length; i++) {
+    const a = word.slice(0, i), b = word.slice(i);
+    if (b) out.add(a + b.slice(1));
+    if (b.length > 1) out.add(a + b[1] + b[0] + b.slice(2));
+    if (b) for (const c of ALPHABET) out.add(a + c + b.slice(1));
+    for (const c of ALPHABET) out.add(a + c + b);
+  }
+  out.delete(word);
+  return out;
+}
+function seasonWeight(months, month) {
+  const ahead = { 0: 1.0, 1: 0.7, 2: 0.35, 11: 0.25 };
+  let best = 0;
+  for (const m of months) best = Math.max(best, ahead[((m - month) % 12 + 12) % 12] || 0);
+  return best;
+}
+
+/* ============================ the index ============================ */
+const IX = {
+  ready: false, today: new Date().getMonth() + 1,
+  termDim: new Map(), termCodes: new Map(), idf: new Map(), phrases: new Map(),
+  catMonths: [], phraseWords: new Set(), popular: [],
+};
+
+function buildIndex(data) {
+  IX.data = data;
+  IX.total = data.docs.length;
+  IX.avgdl = data.meta.avgLength || 1;
+
+  data.terms.forEach(([term, dim, codes]) => {
+    IX.termDim.set(term, data.dimensions[dim]);
+    IX.termCodes.set(term, codes);
+  });
+  const n = data.codes.length;
+  for (const [term, codes] of IX.termCodes) IX.idf.set(term, Math.log(1 + n / codes.length));
+
+  data.phrases.forEach(([phrase, terms]) => IX.phrases.set(phrase, terms));
+  for (const term of IX.termCodes.keys()) {
+    const key = term.replace(/_/g, " ");
+    if (!IX.phrases.has(key)) IX.phrases.set(key, [[term, 1.0]]);
+  }
+  for (const phrase of IX.phrases.keys()) for (const w of phrase.split(" ")) IX.phraseWords.add(w);
+
+  // cats rows are [group, event, cards, occasions, recipients, tones, languages, months, keywords]
+  IX.catMonths = data.cats.map(c => (c[7] || "").split(" ")
+    .filter(t => MONTH_NUMBER[t]).map(t => MONTH_NUMBER[t]));
+
+  IX.popular = data.docs.map((_, i) => i)
+    .sort((a, b) => (data.docs[b][3] - data.docs[a][3]) || (a - b));
+
+  IX.ready = true;
+}
+
+const cardId = i => "C" + String(IX.data.docs[i][0]).padStart(6, "0");
+const cardTitle = i => IX.data.titles[IX.data.docs[i][1]];
+const cardCode = i => { const c = IX.data.docs[i][2]; return c < 0 ? "" : IX.data.codes[c]; };
+const cardFormat = i => IX.data.formats[IX.data.docs[i][5]];
+const cardMonths = i => { const c = IX.data.docs[i][2]; return c < 0 ? [] : IX.catMonths[c]; };
+
+function eachPosting(term, fn) {
+  const flat = IX.data.postings[term];
+  if (!flat) return 0;
+  let card = 0;
+  for (let i = 0; i < flat.length; i += 2) { card += flat[i]; fn(card, flat[i + 1] / 10); }
+  return flat.length / 2;
+}
+const frequency = w => {
+  const a = IX.data.postings[w], b = IX.data.postings[singular(w)];
+  return (a ? a.length / 2 : 0) || (b ? b.length / 2 : 0);
+};
+const isStopword = df => IX.total >= STOPWORD_MIN_CARDS && df / IX.total > STOPWORD_SHARE;
+
+/* ============================ stage 1: understand ============================ */
+function correct(words) {
+  const fixed = [], corrections = [];
+  for (const word of words) {
+    const known = IX.phraseWords.has(word) || frequency(word) > 0;
+    if (known || word.length < MIN_CORRECTION_LENGTH || !/^[a-z]+$/.test(word)) { fixed.push(word); continue; }
+    let best = null, bestFreq = MIN_CORRECTION_FREQUENCY - 1;
+    for (const cand of edits1(word)) {
+      const f = frequency(cand);
+      if (f > bestFreq || (best !== null && f === bestFreq && cand < best)) { best = cand; bestFreq = f; }
+    }
+    if (best === null) for (const cand of edits1(word)) if (IX.phraseWords.has(cand)) { best = cand; break; }
+    fixed.push(best || word);
+    if (best) corrections.push([word, best]);
+  }
+  return { fixed, corrections };
+}
+
+function matchPhrases(query) {
+  const tokens = normalise(query), found = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let hit = false;
+    for (let k = Math.min(MAX_PHRASE_WORDS, tokens.length - i); k > 0; k--) {
+      const phrase = tokens.slice(i, i + k).join(" ");
+      let terms = IX.phrases.get(phrase);
+      if (!terms && k === 1) terms = IX.phrases.get(singular(phrase));
+      if (!terms && k === 1 && ORDINAL.test(phrase)) terms = [["milestone", 0.8]];
+      if (terms) {
+        const kept = terms.filter(([t]) => IX.termCodes.has(t));
+        if (kept.length) found.push([phrase, kept]);
+        i += k; hit = true; break;
+      }
+    }
+    if (!hit) i++;
+  }
+  return found;
+}
+
+function intentLookup(query, top) {
+  const scores = new Map(), reasons = new Map();
+  for (const [phrase, terms] of matchPhrases(query)) {
+    const full = new Map(), fallback = new Map();
+    for (const [term, weight] of terms) {
+      const s = weight * DIMENSION_WEIGHT[IX.termDim.get(term)] * IX.idf.get(term);
+      for (const code of IX.termCodes.get(term)) {
+        if (weight >= 1.0) {
+          const e = full.get(code) || [0, []];
+          e[0] += s; e[1].push(term); full.set(code, e);
+        } else {
+          const e = fallback.get(code);
+          if (!e || s > e[0]) fallback.set(code, [s, term]);
+        }
+      }
+    }
+    const codes = new Set([...full.keys(), ...fallback.keys()]);
+    for (const code of codes) {
+      const [s, matched] = full.has(code)
+        ? [full.get(code)[0], full.get(code)[1].join("+")]
+        : fallback.get(code);
+      scores.set(code, (scores.get(code) || 0) + s);
+      if (!reasons.has(code)) reasons.set(code, []);
+      reasons.get(code).push(`${phrase} = ${matched}`);
+    }
+  }
+  const cats = IX.data.cats;
+  return [...scores.keys()]
+    .sort((a, b) => (scores.get(b) - scores.get(a)) || (cats[b][2] - cats[a][2])
+                 || (IX.data.codes[a] < IX.data.codes[b] ? -1 : 1))
+    .slice(0, top)
+    .map(code => ({ code, score: pyRound(scores.get(code), 2), reasons: reasons.get(code) }));
+}
+
+function intentCodes(query, dated) {
+  const results = intentLookup(query, INTENT_TOP * (dated ? 3 : 25));
+  if (!results.length) return { codes: new Map(), why: [] };
+  const best = results[0].score || 1;
+  let passing = results.filter(r => r.score >= best * INTENT_KEEP)
+    .map(r => ({ code: r.code, score: pyRound(r.score / best, 4), reasons: r.reasons }));
+  if (!dated && passing.length > INTENT_TOP) {
+    passing.sort((a, b) =>
+      (b.score + SEASON_INTENT * seasonWeight(IX.catMonths[b.code], IX.today)) -
+      (a.score + SEASON_INTENT * seasonWeight(IX.catMonths[a.code], IX.today)));
+  }
+  passing = passing.slice(0, INTENT_TOP);
+  return { codes: new Map(passing.map(p => [p.code, p.score])), why: passing };
+}
+
+/* ============================ stages 2-5: recall, rank, lay out ============================ */
+function lexical(words) {
+  const scores = new Map(), matched = new Map(), covered = new Map();
+  let information = 0;
+  for (const word of new Set(words)) {
+    const flat = IX.data.postings[word];
+    if (!flat || isStopword(flat.length / 2)) continue;
+    const df = flat.length / 2;
+    const idf = Math.log(1 + (IX.total - df + 0.5) / (df + 0.5));
+    information += idf;
+    eachPosting(word, (card, tf) => {
+      const norm = tf + K1 * (1 - B + B * IX.data.lengths[card] / IX.avgdl);
+      scores.set(card, (scores.get(card) || 0) + idf * tf * (K1 + 1) / norm);
+      covered.set(card, (covered.get(card) || 0) + idf);
+      if (!matched.has(card)) matched.set(card, []);
+      matched.get(card).push(word);
+    });
+  }
+  return { scores, matched, covered, information };
+}
+
+function titleNames(title, lexWords) {
+  if (!lexWords.length || lexWords.length > 8) return false;
+  const tw = normalise(title).map(singular);
+  for (let i = 0; i + lexWords.length <= tw.length; i++) {
+    let ok = true;
+    for (let j = 0; j < lexWords.length; j++) if (tw[i + j] !== lexWords[j]) { ok = false; break; }
+    if (ok) return true;
+  }
+  return false;
+}
+
+function andKeywordHits(query) {
+  const words = [...new Set(normalise(query).map(singular).filter(w => w.length > 1 || /\d/.test(w)))];
+  if (!words.length) return 0;
+  let hits = null;
+  for (const w of words) {
+    const seen = new Set();
+    if (!eachPosting(w, card => seen.add(card))) return 0;
+    hits = hits === null ? seen : new Set([...hits].filter(c => seen.has(c)));
+    if (!hits.size) return 0;
+  }
+  return hits.size;
+}
+
+function applyFloor(ranked) {
+  if (!ranked.length) return ranked;
+  const cutoff = ranked[0].score * FLOOR;
+  const above = ranked.filter(r => r.score >= cutoff);
+  return above.length >= FLOOR_KEEPS ? above : ranked.slice(0, FLOOR_KEEPS);
+}
+function diversify(ranked, cap) {
+  if (cap <= 0) return ranked;
+  const kept = [], overflow = [], seen = new Map();
+  for (const r of ranked) {
+    const n = seen.get(r.code) || 0;
+    if (n < cap) { seen.set(r.code, n + 1); kept.push(r); } else overflow.push(r);
+  }
+  return kept.concat(overflow);
+}
+
+function runQuery(text) {
+  const t0 = performance.now();
+  const words = normalise(text);
+  const { fixed, corrections } = correct(words);
+  const understood = fixed.join(" ");
+  const lexWords = fixed.filter(w => w.length > 1 || /\d/.test(w)).map(singular);
+
+  const phrases = matchPhrases(understood);
+  const dated = phrases.some(([, terms]) =>
+    terms.some(([t]) => ["month", "occasion"].includes(IX.termDim.get(t))));
+  const { codes, why } = intentCodes(understood, dated);
+  const formats = new Set(fixed.filter(w => FORMAT_WORDS.has(w)));
+
+  const { scores, matched, covered, information } = lexical(lexWords);
+  let bestLex = 0;
+  for (const v of scores.values()) if (v > bestLex) bestLex = v;
+
+  let candidates;
+  if (scores.size > MAX_LEX_CANDIDATES) {
+    candidates = new Set([...scores.keys()]
+      .sort((a, b) => scores.get(b) - scores.get(a)).slice(0, MAX_LEX_CANDIDATES));
+  } else candidates = new Set(scores.keys());
+  for (const code of codes.keys())
+    for (const card of IX.data.codeDocs[code].slice(0, PER_CODE_CANDIDATES)) candidates.add(card);
+
+  let fallback = null;
+  if (!candidates.size) { fallback = "popular"; candidates = new Set(IX.popular.slice(0, PAGE * 4)); }
+
+  const ranked = [];
+  for (const card of candidates) {
+    const doc = IX.data.docs[card], codeIdx = doc[2];
+    const coverage = information ? (covered.get(card) || 0) / information : 0;
+    const lex = bestLex ? (scores.get(card) || 0) / bestLex * coverage : 0;
+    const intent = codes.get(codeIdx) || 0;
+    const season = dated ? 0 : seasonWeight(cardMonths(card), IX.today);
+    const parts = {
+      lex: W.lex * lex, intent: W.intent * intent, quality: W.quality * doc[3],
+      season: W.season * season, fresh: W.fresh * doc[4], bonus: 0,
+    };
+    const bonuses = [];
+    if (titleNames(cardTitle(card), lexWords)) { parts.bonus += TITLE_PHRASE_BONUS; bonuses.push("title"); }
+    if (formats.size && [...formats].some(f => cardFormat(card).includes(f))) {
+      parts.bonus += FORMAT_BONUS; bonuses.push("format");
+    }
+    const score = pyRound(Object.values(parts).reduce((a, b) => a + b, 0), 4);
+    ranked.push({
+      card, code: codeIdx, score, parts, bonuses,
+      words: [...new Set(matched.get(card) || [])].sort(),
+      coverage,
+    });
+  }
+  ranked.sort((a, b) => (b.score - a.score)
+    || (IX.data.codes[a.code] < IX.data.codes[b.code] ? -1 : 1) || (a.card - b.card));
+  const kept = applyFloor(ranked);
+  const page = diversify(kept, PER_CODE_RESULTS).slice(0, PAGE);
+
+  return {
+    query: text, understood, corrections, phrases, why, dated, fallback,
+    candidates: candidates.size, kept: kept.length, results: page,
+    keyword: andKeywordHits(text),
+    facets: facetsOf(page), ms: performance.now() - t0,
+  };
+}
+
+function facetsOf(results) {
+  const out = {};
+  for (const [dim, column] of Object.entries(FACET_INDEX)) {
+    const counts = new Map();
+    for (const r of results) {
+      if (r.code < 0) continue;
+      for (const term of (IX.data.cats[r.code][column] || "").split(" ").filter(Boolean))
+        counts.set(term, (counts.get(term) || 0) + 1);
+    }
+    if (counts.size) out[dim] = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  }
+  const groups = new Map();
+  for (const r of results) {
+    if (r.code < 0) continue;
+    const g = IX.data.cats[r.code][0];
+    if (g) groups.set(g, (groups.get(g) || 0) + 1);
+  }
+  if (groups.size) out.group = [...groups.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  return out;
+}
+
+/* ============================ rendering ============================ */
+const el = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const PRESETS = [
+  "sorry i forgot your birthday", "bday cards for my hubby", "50th birthday",
+  "birthdya wishes for sistre", "Feliz Cumplea%F1os", "send off", "sorry for your loss",
+  "cards for the family", "merry christmas", "video birthday card", "thank you teacher",
+  "happy mother's day", "asdfghjk",
+];
+
+function renderShell() {
+  el("chips").innerHTML = PRESETS.map(p =>
+    `<button class="chip" type="button" data-q="${esc(p)}">${esc(p)}</button>`).join("");
+  el("chips").addEventListener("click", e => {
+    const b = e.target.closest(".chip");
+    if (b) { el("q").value = b.dataset.q; go(); }
+  });
+
+  el("month").innerHTML = MONTH_NAMES.map((m, i) =>
+    `<option value="${i + 1}"${i + 1 === IX.today ? " selected" : ""}>${m}</option>`).join("");
+  el("month").addEventListener("change", e => { IX.today = +e.target.value; go(); });
+
+  el("legend").innerHTML = COMPONENTS.map(([, label, v]) =>
+    `<span><i style="background:var(${v})"></i>${label}</span>`).join("");
+
+  el("sliders").innerHTML = Object.keys(DEFAULT_W).map(k => `
+    <div class="slider">
+      <span class="nm">${k}</span>
+      <input type="range" id="w-${k}" min="0" max="0.8" step="0.01" value="${DEFAULT_W[k]}"
+             aria-label="weight for ${k}">
+      <span class="val" id="wv-${k}">${DEFAULT_W[k].toFixed(2)}</span>
+    </div>`).join("") + `<button class="reset" type="button" id="wreset">Reset weights</button>`;
+  for (const k of Object.keys(DEFAULT_W)) {
+    el("w-" + k).addEventListener("input", e => {
+      W[k] = +e.target.value; el("wv-" + k).textContent = W[k].toFixed(2); go();
+    });
+  }
+  el("wreset").addEventListener("click", () => {
+    for (const k of Object.keys(DEFAULT_W)) {
+      W[k] = DEFAULT_W[k]; el("w-" + k).value = W[k]; el("wv-" + k).textContent = W[k].toFixed(2);
+    }
+    go();
+  });
+
+  const m = IX.data.meta;
+  el("stats").innerHTML = [
+    ["cards", m.cards.toLocaleString()], ["categories", m.categories.toLocaleString()],
+    ["export rows", m.rows.toLocaleString()], ["terms", Object.keys(IX.data.postings).length],
+    ["intent phrases", IX.data.phrases.length],
+  ].map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join("");
+}
+
+function renderVerdict(f) {
+  const rescued = f.keyword === 0 && f.results.length && !f.fallback;
+  el("verdict").innerHTML = `
+    <div class="cell ${f.keyword === 0 ? "bad" : ""}">
+      <span class="k">All-words keyword search</span>
+      <div class="v">${f.keyword}</div>
+      <div class="n">${f.keyword === 0 ? "an empty page today" : "cards carry every word"}</div>
+    </div>
+    <div class="cell ${f.results.length && !f.fallback ? "good" : ""}">
+      <span class="k">This search</span>
+      <div class="v">${f.kept}</div>
+      <div class="n">${f.fallback ? "no match: popular cards" : rescued ? "found by intent alone" : "above the relevance floor"}</div>
+    </div>
+    <div class="cell">
+      <span class="k">Candidates recalled</span>
+      <div class="v">${f.candidates.toLocaleString()}</div>
+      <div class="n">text ∪ intent, never ∩</div>
+    </div>
+    <div class="cell">
+      <span class="k">Ranked in</span>
+      <div class="v">${f.ms < 1 ? "<1" : Math.round(f.ms)}<span style="font-size:.6em"> ms</span></div>
+      <div class="n">in this browser</div>
+    </div>`;
+}
+
+function renderUnderstanding(f) {
+  const bits = [];
+  if (f.corrections.length) bits.push(`<div class="block"><h3>Did you mean</h3>` +
+    f.corrections.map(([a, b]) => `<div class="fix"><s>${esc(a)}</s> → <b>${esc(b)}</b></div>`).join("") +
+    `</div>`);
+
+  if (f.phrases.length) bits.push(`<div class="block"><h3>Read as</h3><div class="readas">` +
+    f.phrases.map(([p, terms]) => `<div><span class="ph">${esc(p)}</span>` +
+      `<span class="arrow">→</span><span class="tm">${terms.map(([t, w]) =>
+        esc(t) + (w < 1 ? ` (${w})` : "")).join(", ")}</span></div>`).join("") +
+    `</div></div>`);
+  else bits.push(`<div class="block"><h3>Read as</h3><p class="note">No intent recognised. ` +
+    `Ranking falls back to words, card quality and the season.</p></div>`);
+
+  if (f.why.length) {
+    const rows = f.why.map(p => {
+      const inSeason = !f.dated && seasonWeight(IX.catMonths[p.code], IX.today) > 0;
+      return `<div class="catrow${inSeason ? " inseason" : ""}">` +
+        `<code>${esc(IX.data.codes[p.code])}</code>` +
+        `<span class="sc">${p.score.toFixed(2)}</span></div>`;
+    }).join("");
+    bits.push(`<div class="block"><h3>Categories boosted (${f.why.length})</h3>` +
+      `<div class="catlist">${rows}</div>` +
+      `<p class="note" style="margin-top:7px">${f.dated
+        ? "The query named a date, so the calendar stays out of it."
+        : "◷ marks a category whose occasion is near. No date in the query, so season helps choose these."
+      }</p></div>`);
+  }
+  el("understanding").innerHTML = bits.join("");
+}
+
+function renderResults(f) {
+  if (!f.results.length) {
+    el("results").innerHTML = `<div class="empty">Nothing at all — and that should never happen. ` +
+      `A real page would show popular cards here.</div>`;
+    el("facets").innerHTML = ""; return;
+  }
+  const head = f.fallback
+    ? `<div class="fallback">Nothing matched the words or any intent, so these are the
+       catalogue's most popular cards. Never an empty page.</div>` : "";
+
+  const items = f.results.map((r, i) => {
+    const cat = r.code >= 0 ? IX.data.cats[r.code] : null;
+    const label = cat ? [cat[0], cat[1]].filter(Boolean).join(" / ") : "no category";
+    const segs = COMPONENTS.map(([key, , v]) => {
+      const pct = Math.max(0, r.parts[key]) * 100;
+      return pct > 0.4 ? `<i style="width:${pct.toFixed(2)}%;background:var(${v})"></i>` : "";
+    }).join("");
+    const bits = [`<code>${esc(r.code >= 0 ? IX.data.codes[r.code] : "—")}</code>`,
+      `<span>${esc(label)}</span>`,
+      `<span class="fmt">${esc(cardFormat(r.card) || "—")}</span>`];
+    if (r.words.length) bits.push(`<span class="fmt">on ${r.words.map(esc).join(", ")}</span>`);
+    if (r.bonuses.length) bits.push(`<span class="fmt" style="color:var(--c-bonus)">+${r.bonuses.join("+")}</span>`);
+    return `<li>
+      <span class="rk">${i + 1}</span>
+      <span class="ti">${esc(cardTitle(r.card))}</span>
+      <span class="sc2">${r.score.toFixed(3)}</span>
+      <span class="meta">${bits.join("")}</span>
+      <span class="bar" title="score parts, to scale">${segs}</span>
+    </li>`;
+  }).join("");
+
+  el("results").innerHTML = head + `<ol class="results">${items}</ol>`;
+
+  const order = ["group", "occasion", "recipient", "tone", "language"];
+  el("facets").innerHTML = order.filter(k => f.facets[k]).map(k =>
+    `<div class="facetrow"><span class="fk">${k}</span>` +
+    f.facets[k].map(([v, n]) => `<span class="fv">${esc(v)} (${n})</span>`).join("") +
+    `</div>`).join("");
+}
+
+let pending = null;
+function go() {
+  if (!IX.ready) return;
+  const text = el("q").value.trim() || el("q").placeholder;
+  const found = runQuery(text);
+  renderVerdict(found);
+  renderUnderstanding(found);
+  renderResults(found);
+  document.querySelectorAll(".chip").forEach(c =>
+    c.setAttribute("aria-pressed", String(c.dataset.q === text)));
+}
+
+fetch("search-data.json")
+  .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+  .then(data => {
+    buildIndex(data);
+    renderShell();
+    el("q").addEventListener("input", () => {
+      clearTimeout(pending); pending = setTimeout(go, 120);
+    });
+    go();
+  })
+  .catch(err => {
+    el("stats").innerHTML = `<span>could not load the index: ${esc(err.message)}</span>`;
+    el("results").innerHTML = `<div class="empty">The index did not load, so nothing can be ranked.</div>`;
+  });
+</script>
